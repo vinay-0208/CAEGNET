@@ -347,6 +347,44 @@ class ContextGatingNetwork(nn.Module):
         return weights
 
 
+class HorizonContextGatingNetwork(nn.Module):
+    """
+    Horizon-dependent routing network mapping latent context embedding e_C to 24 x 3 convex expert weights:
+    W = Softmax(MLP(e_C)) in R^[24, 3], where for each forecast horizon step h in [1..24]:
+    sum_{i=1}^3 w_{h, i} = 1.0, and w_{h, i} > 0.
+
+    Input: [B, 16] (latent context embedding)
+    Output: [B, 24, 3] (horizon-dependent routing weights)
+    """
+    def __init__(
+        self,
+        latent_dim: int = 16,
+        horizon: int = 24,
+        num_experts: int = 3,
+        hidden_dim: int = 48,
+        dropout: float = 0.1,
+    ):
+        super().__init__()
+        self.horizon = horizon
+        self.num_experts = num_experts
+        self.routing_mlp = nn.Sequential(
+            nn.Linear(latent_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, horizon * num_experts),
+        )
+
+    def forward(self, e_c: torch.Tensor) -> torch.Tensor:
+        """
+        e_c: [B, 16]
+        Returns: [B, 24, 3] routing weights summing to 1.0 along dim=-1 for each horizon step
+        """
+        B = e_c.shape[0]
+        logits = self.routing_mlp(e_c).view(B, self.horizon, self.num_experts)  # [B, 24, 3]
+        weights = F.softmax(logits, dim=-1)                                    # [B, 24, 3]
+        return weights
+
+
 # =====================================================================
 # 6. Complete CAEG-Net Architecture
 # =====================================================================
@@ -355,13 +393,17 @@ class CAEGNet(nn.Module):
     """
     CAEG-Net: Context-Adaptive Expert Gating Network for Short-Term Load Forecasting.
 
-    Dynamic Fusion Equation:
+    Dynamic Fusion Equation (Standard / V1):
     Y_hat_CAEG = w_LSTM * Y_hat_LSTM + w_TCN * Y_hat_TCN + w_CNN * Y_hat_CNN
+
+    Horizon-Dependent Dynamic Fusion Equation (V2):
+    Y_hat_CAEG[h] = w_LSTM[h] * Y_hat_LSTM[h] + w_TCN[h] * Y_hat_TCN[h] + w_CNN[h] * Y_hat_CNN[h]
+    for each horizon step h in {1, ..., 24}.
 
     Strict Research Principles:
     - No direct output residual error correction.
     - Context signal exclusively informs the gating mechanism.
-    - Zero future leakage: Lookback=168, Horizon=24, Context=4.
+    - Zero future leakage: Lookback=168, Horizon=24, Context=4 (or 5).
     """
     def __init__(
         self,
@@ -373,11 +415,13 @@ class CAEGNet(nn.Module):
         lstm_layers: int = 2,
         tcn_channels: int = 32,
         dropout: float = 0.1,
+        horizon_dependent: bool = False,
     ):
         super().__init__()
         self.input_dim = input_dim
         self.horizon = horizon
         self.context_dim = context_dim
+        self.horizon_dependent = horizon_dependent
 
         # 1. Specialized Forecasting Experts
         self.lstm_expert = LSTMExpert(
@@ -406,12 +450,21 @@ class CAEGNet(nn.Module):
             context_dim=context_dim,
             latent_dim=latent_context_dim,
         )
-        self.gating_network = ContextGatingNetwork(
-            latent_dim=latent_context_dim,
-            num_experts=3,
-            hidden_dim=32,
-            dropout=dropout,
-        )
+        if horizon_dependent:
+            self.gating_network = HorizonContextGatingNetwork(
+                latent_dim=latent_context_dim,
+                horizon=horizon,
+                num_experts=3,
+                hidden_dim=48,
+                dropout=dropout,
+            )
+        else:
+            self.gating_network = ContextGatingNetwork(
+                latent_dim=latent_context_dim,
+                num_experts=3,
+                hidden_dim=32,
+                dropout=dropout,
+            )
 
     def forward(
         self,
@@ -425,15 +478,15 @@ class CAEGNet(nn.Module):
         Parameters:
         -----------
         x: torch.Tensor, shape [B, 168, 1] (Lookback sequence)
-        c: torch.Tensor, shape [B, 4]      (Context vector: Trend, Vol, Per, Recent_Error)
-        return_diagnostics: bool           (If True, returns predictions, gating weights, and expert outputs)
+        c: torch.Tensor, shape [B, context_dim] (Context vector)
+        return_diagnostics: bool (If True, returns predictions, gating weights, and expert outputs)
 
         Returns:
         --------
         If return_diagnostics is True:
             (y_pred, weights, expert_predictions)
             - y_pred: [B, 24] (CAEG-Net fused prediction)
-            - weights: [B, 3] (Softmax routing weights: [w_LSTM, w_TCN, w_CNN])
+            - weights: [B, 3] or [B, 24, 3] (Softmax routing weights)
             - expert_predictions: dict with keys "lstm", "tcn", "cnn", each [B, 24]
         Else:
             y_pred: [B, 24]
@@ -444,16 +497,24 @@ class CAEGNet(nn.Module):
         y_cnn = self.cnn_expert(x)    # [B, 24]
 
         # 2. Compute Routing Weights from Context Vector
-        e_c = self.context_encoder(c)      # [B, 16]
-        weights = self.gating_network(e_c) # [B, 3]
+        e_c = self.context_encoder(c)      # [B, latent_dim]
+        weights = self.gating_network(e_c) # [B, 3] or [B, 24, 3]
 
         # 3. Dynamic Weighted Fusion
-        # weights[:, 0:1] -> w_LSTM, weights[:, 1:2] -> w_TCN, weights[:, 2:3] -> w_CNN
-        y_pred = (
-            weights[:, 0:1] * y_lstm
-            + weights[:, 1:2] * y_tcn
-            + weights[:, 2:3] * y_cnn
-        )  # [B, 24]
+        if self.horizon_dependent:
+            # weights: [B, 24, 3]
+            y_pred = (
+                weights[:, :, 0] * y_lstm
+                + weights[:, :, 1] * y_tcn
+                + weights[:, :, 2] * y_cnn
+            )  # [B, 24]
+        else:
+            # weights: [B, 3]
+            y_pred = (
+                weights[:, 0:1] * y_lstm
+                + weights[:, 1:2] * y_tcn
+                + weights[:, 2:3] * y_cnn
+            )  # [B, 24]
 
         if return_diagnostics:
             expert_dict = {
