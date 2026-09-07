@@ -1,0 +1,21 @@
+{
+  "model_name": "CAEG_Net_V2",
+  "horizon_dependent": true,
+  "context_dim": 4,
+  "seed": 123,
+  "best_epoch": 6,
+  "best_val_mse_scaled": 0.14257,
+  "train_time_s": 186.4,
+  "parameters": {
+    "total_trainable": 125232,
+    "total_params": 125232,
+    "submodules": {
+      "lstm_expert": 56152,
+      "tcn_expert": 36952,
+      "cnn_expert": 27400,
+      "context_encoder": 384,
+      "gating_network": 4344
+    }
+  },
+  "timestamp": "2026-09-07T09:35:48.734152+00:00"
+}

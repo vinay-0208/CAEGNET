@@ -53,7 +53,7 @@ consistently improve 24-hour short-term electricity load forecasts compared to i
 - **Source:** PJM Interconnection operational hourly metered electricity load series.
 - **Temporal Span:** October 1, 2023, 04:00:00 UTC to October 1, 2024, 03:00:00 UTC ($8,784$ consecutive hourly intervals, 366 days, leap year).
 - **Data Continuity:** Exactly $8,784$ steps; zero missing hours; zero NaN values; strictly regular 1-hour intervals.
-- **Load Range:** Minimum $= 3,652.63 \\text{ MW}$, Maximum $= 8,649.89 \\text{ MW}$, Mean $= 5,027.64 \\text{ MW}$.
+- **Load Range:** Minimum $= 3,652.63 \\text{ MW}$, Maximum $= 8,937.58 \\text{ MW}$, Mean $= 5,552.46 \\text{ MW}$, Std $= 963.68 \\text{ MW}$.
 - **Academic Caveat:** In compliance with strict research integrity, the dataset is documented as PJM operational load; exact regional sub-zone provenance within the PJM system is unconfirmed in the raw data header.
 """
     ))
@@ -105,7 +105,7 @@ display(setup_table.set_index("Parameter"))
 ### Leakage-Free Chronological Data Flow
 To prevent temporal contamination and lookahead bias:
 1. **Partitioning BEFORE Windowing:** The raw 8,784-hour series is split chronologically into Train ($70\\%$, hours $0 - 6,147$), Validation ($15\\%$, hours $6,148 - 7,465$), and Test ($15\\%$, hours $7,466 - 8,783$).
-2. **Train-Only Scaling:** Scaler parameters ($\\mu = 5027.6 \\text{ MW}, \\sigma = 952.8 \\text{ MW}$) are computed strictly on the training partition.
+2. **Train-Only Scaling:** Scaler parameters ($\\mu = 5,458.03 \\text{ MW}, \\sigma = 855.39 \\text{ MW}$) are computed strictly on the training partition.
 3. **Causal Boundary Preservation:** Validation and test lookback windows consult only historical data; target horizons $y_{t+1 \\dots t+24}$ remain strictly isolated.
 """
     ))
@@ -368,11 +368,11 @@ comp_v2_path = os.path.join(repo_dir, "results", "caeg_v2", "v1_vs_v2_comparison
 df_comp_v2 = pd.read_csv(comp_v2_path)
 
 ablation_summary = pd.DataFrame([
-    {"Ablation": "Full CAEG-Net V1 (Baseline Champion)", "MAE (MW)": "251.44 ± 9.74", "RMSE (MW)": "334.32 ± 11.09", "Advantage": "Champion benchmark"},
-    {"Ablation": "CAEG-Net without Recent Error", "MAE (MW)": "254.55 ± 16.10", "RMSE (MW)": "339.43 ± 19.53", "Advantage": "+3.12 MW MAE reduction via error feedback; 39.5% variance reduction"},
-    {"Ablation": "Standard Input-Based MoE", "MAE (MW)": "276.30 ± 13.64", "RMSE (MW)": "370.01 ± 17.26", "Advantage": "+24.87 MW MAE reduction via explicit physical context"},
-    {"Ablation": "Static Equal Ensemble (1/3 each)", "MAE (MW)": "295.48 ± 15.54", "RMSE (MW)": "404.24 ± 14.61", "Advantage": "+44.04 MW MAE reduction via dynamic soft gating"},
-    {"Ablation": "CAEG-Net V2 (Horizon-Dependent)", "MAE (MW)": "255.72 ± 9.76", "RMSE (MW)": "340.38 ± 10.54", "Advantage": "Improved Seed 42 (-9.9 MW) and Seed 123 (-7.5 MW); comparable overall"}
+    {"Ablation": "Full CAEG-Net V1 (Primary Predictive Champion)", "MAE (MW)": "251.44 ± 9.74", "RMSE (MW)": "334.32 ± 11.09", "Advantage": "Primary predictive champion across 5 canonical seeds"},
+    {"Ablation": "CAEG-Net without Recent Error", "MAE (MW)": "254.55 ± 16.10", "RMSE (MW)": "339.43 ± 19.53", "Advantage": "+3.12 MW MAE reduction & 39.5% variance reduction; not statistically significant (p = 0.6776, improved 3/5 seeds)"},
+    {"Ablation": "Standard Input-Based MoE", "MAE (MW)": "276.30 ± 13.64", "RMSE (MW)": "370.01 ± 17.26", "Advantage": "+24.87 MW MAE reduction via explicit domain context (p = 0.0597, marginally misses alpha=0.05)"},
+    {"Ablation": "Static Equal Ensemble (1/3 each)", "MAE (MW)": "295.48 ± 15.54", "RMSE (MW)": "404.24 ± 14.61", "Advantage": "+44.04 MW MAE reduction via dynamic soft gating (statistically significant, p = 0.0039)"},
+    {"Ablation": "CAEG-Net V2 (Horizon-Dependent Experimental Variant)", "MAE (MW)": "255.72 ± 9.76", "RMSE (MW)": "340.38 ± 10.54", "Advantage": "Retained as experimental variant; +4.28 MW diff vs V1 is not statistically significant (p = 0.5279)"}
 ])
 display(ablation_summary.set_index("Ablation"))
 """
@@ -386,33 +386,43 @@ display(ablation_summary.set_index("Ablation"))
 ## Section 10 — Learned Expert Routing Dynamics
 
 ### Analysis of Routing Allocation Across Context & Horizons
-- **Average Learned Expert Weights (V1):** LSTM receives $37.5\\%$, CNN receives $33.2\\%$, and TCN receives $29.3\\%$ on average across random initializations.
-- **Dynamic Convexity:** The gate never collapses into a hard winner-take-all partition; it maintains smooth convex blending that hedges against single-expert catastrophic errors.
-- **Horizon Dynamics (V2):** Horizon-dependent gating demonstrates that the network dynamically adjusts expert trust across the dispatch cycle.
+- **Average Learned Expert Weights (V1):** Over the 1,294 test evaluation windows, the global gating network assigns an average allocation of **$40.5\\%$ to LSTM**, **$30.8\\%$ to TCN**, and **$28.8\\%$ to CNN**.
+- **Context Associations (Pearson Correlation):**
+  - Strong diurnal periodicity is positively associated with LSTM weight ($r = +0.6089$) and negatively associated with CNN ($r = -0.7552$).
+  - Higher recent forecast errors are associated with increased LSTM weighting ($r = +0.2397$) and decreased TCN weighting ($r = -0.1803$).
+  - *(Note: In accordance with scientific rigor, these correlations reflect empirical statistical associations rather than proven causal mechanisms.)*
+- **Dynamic Convexity:** Softmax gating ensures all weights remain positive and strictly sum to $1.0$, preventing hard winner-take-all gate collapse.
+- **Horizon Dynamics (V2 Experimental Variant):** Evaluates how routing evolves dynamically from short lead times ($h=1$) through end-of-day dispatch ($h=24$).
 """
     ))
 
     cells.append(nbf.v4.new_code_cell(
 """cache_v2 = np.load(os.path.join(repo_dir, "results", "caeg_v2", "phase7_v2_multiseed_cache.npz"), allow_pickle=True)
-w_v2_seed42 = cache_v2["weights_v2_seed_42"]  # [1294, 24, 3]
-
-# Average routing weight across all test origins as a function of horizon step
-mean_w_horizon = np.mean(w_v2_seed42, axis=0) # [24, 3]
+seeds = [42, 123, 2024, 3407, 999]
+all_weights = [cache_v2[f"weights_v2_seed_{s}"] for s in seeds]
+mean_w_5seeds = np.mean(np.array(all_weights), axis=(0, 1)) # [24, 3]
 
 h_axis = np.arange(1, 25)
-plt.figure(figsize=(10, 4.5))
-plt.plot(h_axis, mean_w_horizon[:, 0], "o-", color="#1f77b4", lw=2, label="w_LSTM (Recurrent Backbone)")
-plt.plot(h_axis, mean_w_horizon[:, 1], "s-", color="#2ca02c", lw=2, label="w_TCN (Dilated Causal)")
-plt.plot(h_axis, mean_w_horizon[:, 2], "^-", color="#d62728", lw=2, label="w_CNN (Local Motifs)")
+fig, ax = plt.subplots(figsize=(11, 4.8))
+ax.plot(h_axis, mean_w_5seeds[:, 0], "o-", color="#1f77b4", lw=2.2, label="w_LSTM (Recurrent Backbone)")
+ax.plot(h_axis, mean_w_5seeds[:, 1], "s-", color="#2ca02c", lw=2.2, label="w_TCN (Dilated Causal)")
+ax.plot(h_axis, mean_w_5seeds[:, 2], "^-", color="#d62728", lw=2.2, label="w_CNN (Local Motifs)")
 
-plt.title("CAEG-Net V2 Learned Routing Allocation Across the 24-Hour Horizon", fontsize=12, fontweight="bold")
-plt.xlabel("Forecast Horizon Step (Hour 1 to 24)", fontsize=11)
-plt.ylabel("Softmax Routing Weight", fontsize=11)
-plt.ylim(0.20, 0.45)
-plt.grid(True, alpha=0.3)
-plt.legend(loc="center right", fontsize=10)
+ax.set_title("CAEG-Net V2 Learned Routing Allocation Across the 24-Hour Forecast Horizon (5-Seed Mean)", fontsize=12, fontweight="bold")
+ax.set_xlabel("Forecast Horizon Step (Hour h = 1 to 24)", fontsize=11)
+ax.set_ylabel("Softmax Routing Weight (Sums to 1.0)", fontsize=11)
+ax.set_ylim(0.20, 0.50)
+ax.grid(True, alpha=0.3)
+ax.legend(loc="center right", fontsize=10)
 plt.tight_layout()
 plt.show()
+
+# Display verified sample horizon weights
+w_df = pd.DataFrame([
+    {"Lead Time": f"h = {h}", "w_LSTM": f"{mean_w_5seeds[h-1, 0]:.4f}", "w_TCN": f"{mean_w_5seeds[h-1, 1]:.4f}", "w_CNN": f"{mean_w_5seeds[h-1, 2]:.4f}", "Convex Sum": f"{np.sum(mean_w_5seeds[h-1]):.4f}"}
+    for h in [1, 6, 12, 18, 24]
+])
+display(w_df.set_index("Lead Time"))
 """
     ))
 

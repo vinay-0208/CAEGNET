@@ -34,6 +34,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+import argparse
+import datetime
+import json
+
 from data_utils import (
     load_and_clean_data,
     chronological_split,
@@ -48,9 +52,10 @@ from caeg_net import CAEGNet, count_parameters
 from train import create_criterion, create_optimizer_and_scheduler, train_model
 
 
-def run_v2_multiseed():
+def run_v2_multiseed(force_retrain: bool = False, evaluate_only: bool = False):
     print("=" * 85)
     print("STARTING CAEG-NET V2 5-SEED BENCHMARK TRAINING & EVALUATION")
+    print(f"Mode: {'Force Retrain' if force_retrain else ('Evaluate Only' if evaluate_only else 'Train / Verify')}")
     print("=" * 85)
 
     # 1. Pipeline Setup (Strictly Preserved)
@@ -82,7 +87,7 @@ def run_v2_multiseed():
     v2_weights = {}
 
     for s in seeds:
-        print(f"\n>>> Training CAEG-Net V2 (Horizon-Dependent Gating) on Seed {s} <<<")
+        print(f"\n>>> Processing CAEG-Net V2 (Horizon-Dependent Gating) on Seed {s} <<<")
         torch.manual_seed(s)
         np.random.seed(s)
 
@@ -100,23 +105,56 @@ def run_v2_multiseed():
         ckpt_dir = f"checkpoints/caeg_v2/seed_{s}"
         os.makedirs(ckpt_dir, exist_ok=True)
         ckpt_path = os.path.join(ckpt_dir, "caeg_v2.pt")
+        meta_path = os.path.join(ckpt_dir, "metadata.json")
 
-        t0 = time.time()
-        train_res = train_model(
-            model,
-            tr_loader,
-            val_loader,
-            criterion,
-            optimizer,
-            scheduler,
-            max_epochs=25,
-            patience=6,
-            checkpoint_path=ckpt_path,
-            device=device,
-            model_name=f"CAEG_V2_Seed_{s}",
-            verbose=False,
-        )
-        train_time = time.time() - t0
+        ckpt_exists = os.path.exists(ckpt_path) and os.path.exists(meta_path)
+        should_train = force_retrain or (not ckpt_exists and not evaluate_only)
+
+        if should_train:
+            print(f"Training Seed {s} from scratch...")
+            t0 = time.time()
+            train_res = train_model(
+                model,
+                tr_loader,
+                val_loader,
+                criterion,
+                optimizer,
+                scheduler,
+                max_epochs=25,
+                patience=6,
+                checkpoint_path=ckpt_path,
+                device=device,
+                model_name=f"CAEG_V2_Seed_{s}",
+                verbose=False,
+            )
+            train_time = time.time() - t0
+            best_epoch = train_res["best_epoch"]
+            best_val_loss = float(train_res.get("best_val_loss", train_res["val_losses"][best_epoch-1]))
+
+            # Save full traceability metadata
+            metadata = {
+                "model_name": "CAEG_Net_V2",
+                "horizon_dependent": True,
+                "context_dim": 4,
+                "seed": s,
+                "best_epoch": int(best_epoch),
+                "best_val_loss": round(best_val_loss, 5),
+                "train_time_s": round(train_time, 2),
+                "parameters": count_parameters(model),
+                "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat()
+            }
+            with open(meta_path, "w") as mf:
+                json.dump(metadata, mf, indent=2)
+        else:
+            if not os.path.exists(ckpt_path):
+                raise FileNotFoundError(f"Checkpoint not found: {ckpt_path}. Run with --force-retrain.")
+            with open(meta_path, "r") as mf:
+                metadata = json.load(mf)
+            assert metadata["seed"] == s, f"Seed mismatch: expected {s}, got {metadata['seed']}"
+            assert metadata["horizon_dependent"] is True, "Config mismatch: horizon_dependent must be True"
+            train_time = metadata.get("train_time_s", 0.0)
+            best_epoch = metadata.get("best_epoch", 0)
+            print(f"Loaded verified checkpoint for Seed {s} (Best Epoch: {best_epoch}, Runtime: {train_time}s)")
 
         # Load best early-stopped checkpoint
         model.load_state_dict(torch.load(ckpt_path, map_location=device))
@@ -146,7 +184,7 @@ def run_v2_multiseed():
         assert np.isclose(rmse_mw, np.sqrt(mse_mw), atol=1e-5), "RMSE mismatch!"
         assert np.allclose(w_all.sum(axis=-1), np.ones((len(w_all), 24)), atol=1e-4), "Horizon routing weights convexity violated!"
 
-        print(f"Seed {s} Results: MAE = {mae_mw:.2f} MW | RMSE = {rmse_mw:.2f} MW | R^2 = {r2:.4f} | MAPE = {mape:.2f}% | Best Epoch = {train_res['best_epoch']}")
+        print(f"Seed {s} Results: MAE = {mae_mw:.2f} MW | RMSE = {rmse_mw:.2f} MW | R^2 = {r2:.4f} | MAPE = {mape:.2f}% | Best Epoch = {best_epoch}")
 
         v2_seed_metrics.append({
             "model": "CAEG_Net_V2",
@@ -157,7 +195,7 @@ def run_v2_multiseed():
             "R2": round(r2, 4),
             "MAPE_percent": round(mape, 2),
             "Train_Time_s": round(train_time, 1),
-            "Best_Epoch": train_res["best_epoch"],
+            "Best_Epoch": best_epoch,
         })
         v2_predictions[f"caeg_v2_seed_{s}"] = p_raw
         v2_weights[f"weights_v2_seed_{s}"] = w_all
@@ -269,4 +307,9 @@ def run_v2_multiseed():
 
 
 if __name__ == "__main__":
-    run_v2_multiseed()
+    parser = argparse.ArgumentParser(description="CAEG-Net V2 Multi-Seed Benchmark Runner")
+    parser.add_argument("--force-retrain", action="store_true", help="Force retraining models from scratch")
+    parser.add_argument("--evaluate-only", action="store_true", help="Evaluate existing checkpoints without retraining")
+    args = parser.parse_args()
+
+    run_v2_multiseed(force_retrain=args.force_retrain, evaluate_only=args.evaluate_only)
