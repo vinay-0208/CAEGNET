@@ -114,9 +114,9 @@ def train_model(
 
             if len(batch) == 3:
                 bx, by, bc = batch
-                bx = bx.to(device)
-                by = by.to(device)
-                bc = bc.to(device)
+                bx = bx.to(device, non_blocking=True)
+                by = by.to(device, non_blocking=True)
+                bc = bc.to(device, non_blocking=True)
                 # Forward pass: supports models taking (x, c) or only (x)
                 try:
                     out = model(bx, bc, return_diagnostics=False)
@@ -127,8 +127,8 @@ def train_model(
                         out = model(bx)
             else:
                 bx, by = batch
-                bx = bx.to(device)
-                by = by.to(device)
+                bx = bx.to(device, non_blocking=True)
+                by = by.to(device, non_blocking=True)
                 out = model(bx)
 
             # Extract prediction tensor if tuple is returned
@@ -141,10 +141,13 @@ def train_model(
             loss.backward()
             optimizer.step()
 
-            running_train_loss += loss.item()
+            running_train_loss += loss.detach()
             num_train_batches += 1
 
-        avg_train_loss = running_train_loss / max(num_train_batches, 1)
+        if isinstance(running_train_loss, torch.Tensor):
+            avg_train_loss = float((running_train_loss / max(num_train_batches, 1)).item())
+        else:
+            avg_train_loss = float(running_train_loss / max(num_train_batches, 1))
         train_losses.append(avg_train_loss)
 
         if scheduler is not None:
@@ -159,9 +162,9 @@ def train_model(
             for batch in val_loader:
                 if len(batch) == 3:
                     bx, by, bc = batch
-                    bx = bx.to(device)
-                    by = by.to(device)
-                    bc = bc.to(device)
+                    bx = bx.to(device, non_blocking=True)
+                    by = by.to(device, non_blocking=True)
+                    bc = bc.to(device, non_blocking=True)
                     try:
                         out = model(bx, bc, return_diagnostics=False)
                     except TypeError:
@@ -171,8 +174,8 @@ def train_model(
                             out = model(bx)
                 else:
                     bx, by = batch
-                    bx = bx.to(device)
-                    by = by.to(device)
+                    bx = bx.to(device, non_blocking=True)
+                    by = by.to(device, non_blocking=True)
                     out = model(bx)
 
                 if isinstance(out, tuple):
@@ -181,10 +184,13 @@ def train_model(
                     y_pred = out
 
                 val_loss = criterion(y_pred, by)
-                running_val_loss += val_loss.item()
+                running_val_loss += val_loss.detach()
                 num_val_batches += 1
 
-        avg_val_loss = running_val_loss / max(num_val_batches, 1)
+        if isinstance(running_val_loss, torch.Tensor):
+            avg_val_loss = float((running_val_loss / max(num_val_batches, 1)).item())
+        else:
+            avg_val_loss = float(running_val_loss / max(num_val_batches, 1))
         val_losses.append(avg_val_loss)
 
         if verbose and (epoch % 5 == 0 or epoch == 1 or avg_val_loss < best_val_loss):

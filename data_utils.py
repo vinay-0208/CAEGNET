@@ -586,6 +586,7 @@ def create_dataloaders(
     batch_size: int = 64,
     shuffle_train: bool = True,
     seed: int = 42,
+    pin_memory: Optional[bool] = None,
 ) -> Dict[str, DataLoader]:
     """
     Construct reproducible PyTorch DataLoaders for train, validation, and test.
@@ -595,9 +596,16 @@ def create_dataloaders(
     indexed and bound to each origin sample at dataset creation, training batch
     shuffling does NOT leak temporal information across batches.
     Validation and test DataLoaders are never shuffled (shuffle=False).
+
+    Pin Memory:
+    Automatically set to True when CUDA is available to enable page-locked DMA
+    host-to-device memory copies for optimal transfer efficiency.
     """
     generator = torch.Generator()
     generator.manual_seed(seed)
+
+    if pin_memory is None:
+        pin_memory = torch.cuda.is_available()
 
     dataloaders = {}
     for split_name, ds in datasets.items():
@@ -608,5 +616,6 @@ def create_dataloaders(
             shuffle=(is_train and shuffle_train),
             generator=generator if is_train else None,
             drop_last=False,
+            pin_memory=pin_memory,
         )
     return dataloaders

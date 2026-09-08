@@ -90,9 +90,9 @@ def evaluate_model_on_loader(
         for batch in data_loader:
             if len(batch) == 3:
                 bx, by, bc = batch
-                bx = bx.to(device)
-                by = by.to(device)
-                bc = bc.to(device)
+                bx = bx.to(device, non_blocking=True)
+                by = by.to(device, non_blocking=True)
+                bc = bc.to(device, non_blocking=True)
                 try:
                     out = model(bx, bc, return_diagnostics=collect_routing)
                 except TypeError:
@@ -102,22 +102,22 @@ def evaluate_model_on_loader(
                         out = model(bx)
             else:
                 bx, by = batch
-                bx = bx.to(device)
-                by = by.to(device)
+                bx = bx.to(device, non_blocking=True)
+                by = by.to(device, non_blocking=True)
                 out = model(bx)
 
             if isinstance(out, tuple):
                 y_pred = out[0]
                 if collect_routing and len(out) >= 2 and out[1] is not None:
-                    weights_list.append(out[1].cpu().numpy())
+                    weights_list.append(out[1].detach())
             else:
                 y_pred = out
 
-            preds_scaled_list.append(y_pred.cpu().numpy())
-            targets_scaled_list.append(by.cpu().numpy())
+            preds_scaled_list.append(y_pred.detach())
+            targets_scaled_list.append(by.detach())
 
-    preds_scaled = np.concatenate(preds_scaled_list, axis=0)
-    targets_scaled = np.concatenate(targets_scaled_list, axis=0)
+    preds_scaled = torch.cat(preds_scaled_list, dim=0).cpu().numpy()
+    targets_scaled = torch.cat(targets_scaled_list, dim=0).cpu().numpy()
 
     # Invert to raw MW scale
     preds_raw = preds_scaled * scale + mean
@@ -132,6 +132,6 @@ def evaluate_model_on_loader(
     }
 
     if weights_list:
-        result["weights"] = np.concatenate(weights_list, axis=0)
+        result["weights"] = torch.cat(weights_list, dim=0).cpu().numpy()
 
     return result
