@@ -1,0 +1,21 @@
+{
+  "overall_test_origins": 1294,
+  "fused_mae_mw": 245.5,
+  "equal_ensemble_mae_mw": 276.71,
+  "patch_standalone_mae_mw": 275.72,
+  "tcn_standalone_mae_mw": 292.23,
+  "gru_standalone_mae_mw": 426.7,
+  "oracle_mae_mw": 226.41,
+  "mean_regret_vs_oracle_mw": 19.09,
+  "fused_gain_over_equal_ens_mw": 31.21,
+  "fused_gain_over_best_single_mw": 30.22,
+  "theoretical_oracle_headroom_mw": 19.09,
+  "expert_win_shares_pct": {
+    "Patch": 62.98,
+    "TCN": 32.15,
+    "GRU": 4.87
+  },
+  "router_top_choice_accuracy_pct": 62.98,
+  "high_disagreement_fused_gain_vs_equal_mw": 42.22,
+  "high_volatility_fused_gain_vs_equal_mw": 35.95
+}
