@@ -1,0 +1,284 @@
+{
+  "": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CAEG-Net Phase 2 Research Architecture Schema (Corrected)",
+  "version": "2.1.0-spec",
+  "date": "2026-09-08",
+  "input_shapes": {
+    "expert_input_shape": {
+      "batch_size": "variable",
+      "lookback_length": 168,
+      "input_dim": 1,
+      "description": "168 hours (7 days) of historical hourly electricity load observations fed to the 3 forecasting experts"
+    },
+    "context_buffer_shape": {
+      "batch_size": "variable",
+      "lookback_length": 192,
+      "input_dim": 1,
+      "description": "192 hours (8 days) of historical load observations fed to the context extractor to enable weekly lag-168 profile comparison [t-191:t-168] vs [t-23:t]"
+    }
+  },
+  "forecast_horizon": {
+    "horizon_steps": 24,
+    "frequency": "1 hour",
+    "target_shape": [
+      "batch_size",
+      24
+    ],
+    "description": "Next 24 hours of electricity load"
+  },
+  "parameter_budget": {
+    "canonical_v1_total": 121531,
+    "target_budget": 120000,
+    "expected_total_parameters": 116569,
+    "delta_vs_v1_pct": -4.08,
+    "allocation": {
+      "expert_1_recurrent": {
+        "architecture": "2-layer GRU (hidden=54) + Linear projection head",
+        "parameters": 38148,
+        "share_pct": 32.73
+      },
+      "expert_2_causal_conv": {
+        "architecture": "Dilated Causal TCN (5 residual blocks, c=34, k=4, dilations 1,2,4,8,16)",
+        "parameters": 37978,
+        "share_pct": 32.58
+      },
+      "expert_3_patch_linear": {
+        "architecture": "Patch-based temporal linear model (patch_len=24, stride=12, P=13, embed=48)",
+        "parameters": 37848,
+        "share_pct": 32.47
+      },
+      "context_encoder": {
+        "architecture": "Linear(9, 32) + LayerNorm(32) + ReLU + Linear(32, 32) + ReLU",
+        "parameters": 1408,
+        "share_pct": 1.21
+      },
+      "routing_network": {
+        "architecture": "Linear(32, 32) + ReLU + Dropout(0.1) + Linear(32, 3) + Softmax(/tau)",
+        "parameters": 1187,
+        "share_pct": 1.02
+      },
+      "disagreement_module": {
+        "architecture": "Parameter-free consensus tensor calculations (detached)",
+        "parameters": 0,
+        "share_pct": 0.0
+      }
+    }
+  },
+  "experts": {
+    "expert_1": {
+      "name": "GatedRecurrentExpert",
+      "family": "Recurrent",
+      "type": "GRU",
+      "input_dim": 1,
+      "hidden_dim": 54,
+      "num_layers": 2,
+      "dropout": 0.1,
+      "receptive_field": 168,
+      "output_dim": 24,
+      "inductive_bias": "Continuous chronological autoregressive memory and sequential dependency tracking",
+      "parameters": 38148
+    },
+    "expert_2": {
+      "name": "MultiScaleCausalTCNExpert",
+      "family": "Causal Convolution",
+      "type": "Dilated Causal TCN with Residual Connections",
+      "input_dim": 1,
+      "channels": 34,
+      "kernel_size": 4,
+      "dilations": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "dropout": 0.1,
+      "normalization": "BatchNorm1d",
+      "receptive_field": 187,
+      "output_dim": 24,
+      "inductive_bias": "Multi-scale hierarchical temporal feature extraction with strictly causal receptive field covering 187 hours (>168h)",
+      "parameters": 37978
+    },
+    "expert_3": {
+      "name": "PatchTemporalExpert",
+      "family": "Modern Long-Context Patch Model (Research Candidate)",
+      "type": "Patch-based Temporal Linear Architecture",
+      "patch_length": 24,
+      "stride": 12,
+      "num_patches": 13,
+      "patch_embed_dim": 48,
+      "hidden_dim": 96,
+      "dropout": 0.1,
+      "normalization": "LayerNorm",
+      "receptive_field": 168,
+      "output_dim": 24,
+      "inductive_bias": "Sub-series patch tokenization preserving local diurnal shape while modeling inter-patch global relationships without step-by-step decay. Note: Candidate status; subject to empirical validation in Phase 3",
+      "parameters": 37848
+    }
+  },
+  "information_taxonomy": {
+    "type_a_observable_context": {
+      "description": "Features derived exclusively from historical load observations up to origin t",
+      "features": [
+        {
+          "name": "trend_slope",
+          "dim": 1,
+          "lookback": 168,
+          "causal": true,
+          "formula": "beta_1 / (std(z) + eps)"
+        },
+        {
+          "name": "volatility",
+          "dim": 1,
+          "lookback": 168,
+          "causal": true,
+          "formula": "std(diff(z), ddof=1)"
+        },
+        {
+          "name": "rolling_range",
+          "dim": 1,
+          "lookback": 48,
+          "causal": true,
+          "formula": "(max(z_48) - min(z_48)) / (std(z_48) + eps)"
+        },
+        {
+          "name": "diurnal_periodicity",
+          "dim": 1,
+          "lookback": 168,
+          "causal": true,
+          "formula": "lag-24 autocorrelation r_24"
+        },
+        {
+          "name": "weekly_periodicity",
+          "dim": 1,
+          "lookback": 192,
+          "causal": true,
+          "formula": "Corr(y[t-23:t], y[t-191:t-168]) over 192h context buffer"
+        }
+      ],
+      "dimension": 5
+    },
+    "type_b_post_forecast_error_feedback": {
+      "description": "Features evaluating past completed forecast cycles against observed actuals",
+      "features": [
+        {
+          "name": "recent_baseline_mae",
+          "dim": 1,
+          "lookback": 24,
+          "causal": true,
+          "formula": "MAE of completed 24h cycle [t-23:t] from expanding Ridge baseline"
+        }
+      ],
+      "dimension": 1
+    },
+    "type_c_forecast_difficulty": {
+      "description": "Inference-time consensus metrics derived from candidate expert forecasts before gating (gradient-detached)",
+      "features": [
+        {
+          "name": "inter_expert_pairwise_mae",
+          "dim": 1,
+          "causal": true,
+          "formula": "mean(|y_1 - y_2| + |y_1 - y_3| + |y_2 - y_3|) / 3"
+        },
+        {
+          "name": "inter_expert_std",
+          "dim": 1,
+          "causal": true,
+          "formula": "mean_h(std_i(y_i,h)) across 24h"
+        },
+        {
+          "name": "inter_expert_range",
+          "dim": 1,
+          "causal": true,
+          "formula": "mean_h(max_i(y_i,h) - min_i(y_i,h)) across 24h"
+        }
+      ],
+      "dimension": 3
+    }
+  },
+  "context_dimensions": {
+    "observable_context_dim": 6,
+    "disagreement_difficulty_dim": 3,
+    "total_router_input_dim": 9
+  },
+  "forecast_aware_routing": {
+    "mathematical_sequence": [
+      "1. y_hat_i = Expert_i(X_t) for i in {1, 2, 3}",
+      "2. D_t = detach(Disagreement(y_hat_1, y_hat_2, y_hat_3))",
+      "3. u_t = [C_t || D_t]",
+      "4. w_t = Router(u_t)",
+      "5. y_hat = sum_{i=1}^3 w_i * y_hat_i"
+    ],
+    "detachment_guarantee": "D_t is detached from autograd to prevent experts from manipulating routing gradients"
+  },
+  "router": {
+    "architecture": "ContextAdaptiveRouter",
+    "input_dim": 9,
+    "encoder": "Linear(9, 32) -> LayerNorm(32) -> ReLU -> Linear(32, 32) -> ReLU",
+    "gating_head": "Linear(32, 32) -> ReLU -> Dropout(0.1) -> Linear(32, 3)",
+    "temperature": {
+      "parameter": "tau",
+      "default_proposed_value": 0.5,
+      "role": "Controls Softmax sharpness; proposed specification value, not an empirically proven optimum. Does NOT guarantee de-collapse.",
+      "validation_tuning_protocol": "Evaluate tau in {0.2, 0.5, 0.8, 1.0} strictly on validation MSE. Never use test set."
+    },
+    "routing_type": "Global scalar routing (w in R^3) primary; Horizon-Aware (w in R^[24, 3]) as controlled ablation"
+  },
+  "fusion": {
+    "formula": "y_hat = w_1 * y_1 + w_2 * y_2 + w_3 * y_3",
+    "constraints": [
+      "w_i >= 0",
+      "sum(w_i) == 1.0"
+    ],
+    "convex_hull_guarantee": true
+  },
+  "losses": {
+    "primary_fused_loss": "MSE on standardized targets: (1/24) * sum_{h=1}^24 (y_hat_h - y_h)^2",
+    "auxiliary_expert_loss": {
+      "lambda": 0.15,
+      "formula": "L_expert_aux = (1/3) * sum_{i=1}^3 MSE(y_expert_i, y_true)",
+      "normalization": "Mean across the 3 experts: (1/3) * sum_{i=1}^3 L_expert_i",
+      "purpose": "Encourages independent forecasting competence of every expert, reducing the risk of destructive co-adaptation"
+    },
+    "entropy_regularization": {
+      "beta": 0.001,
+      "formula": "H(w) = - sum_{i=1}^3 w_i * log(w_i + eps)",
+      "loss_term": "+ beta * H(w)",
+      "purpose": "Penalizes high entropy (diffuse/uniform distributions), encouraging lower routing entropy / more concentrated expert weighting. Does NOT guarantee dynamic routing."
+    },
+    "total_objective": "L_total = L_fused + 0.15 * L_expert_aux + 0.001 * H(w) = L_fused + 0.15 * (1/3) * sum_{i=1}^3 L_expert_i + 0.001 * H(w)"
+  },
+  "baseline_models": [
+    "Seasonal_Naive_24",
+    "DLinear_Standalone",
+    "GRU_Standalone",
+    "TCN_Standalone",
+    "PatchTemporal_Standalone",
+    "Static_Equal_Ensemble_3Experts",
+    "Static_Learned_Ensemble_3Experts",
+    "Standard_Input_MoE",
+    "CAEG_Net_V1_Canonical_Reference",
+    "Proposed_Research_CAEGNet"
+  ],
+  "ablations": [
+    "A0_Best_Standalone_Expert",
+    "A1_Static_Equal_Ensemble",
+    "A2_Static_Learned_Ensemble",
+    "A3_Standard_Input_MoE",
+    "A4_Proposed_No_Physical_Context",
+    "A5_Proposed_No_Seasonality_Features",
+    "A6_Proposed_No_Difficulty_Features",
+    "A7_Proposed_No_Expert_Disagreement",
+    "A8_Proposed_No_Auxiliary_Loss (lambda=0)",
+    "A9_Proposed_Unscaled_Temperature (tau=1.0)",
+    "A10_Proposed_Horizon_Aware_Routing (24x3)",
+    "A11_Full_Proposed_Research_CAEGNet"
+  ],
+  "statistical_blocks": {
+    "test_window_count": 1294,
+    "non_overlapping_stride": 24,
+    "subsampled_origins_count": 54,
+    "full_non_overlapping_episodes_count": 53,
+    "notes": "Stride-24 sampling yields 54 evaluation points; exactly 53 complete non-overlapping 24h episodes fit within 1294 test steps"
+  }
+}
