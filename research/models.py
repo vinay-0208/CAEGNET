@@ -1255,3 +1255,168 @@ def compute_shrinkage_loss(
     return l_total, telemetry
 
 
+# =====================================================================
+# 11. Bounded / Conservative CAEG-Net (CAEG-Net BR)
+# =====================================================================
+
+class BoundedRoutingCAEG(nn.Module):
+    """
+    Phase 5 Bounded / Conservative CAEG-Net (CAEG-Net BR).
+    
+    Explicitly bounds the router's deviations from the equal ensemble w0 = [1/3, 1/3, 1/3]
+    via convex combination:
+        w_t = (1 - rho) * w0 + rho * q_t
+    where q_t = softmax(delta_t / tau), rho in [0, 1].
+
+    Guarantees:
+    - rho = 0.0 -> exact equal ensemble identity: w_t = [1/3, 1/3, 1/3]
+    - rho = 1.0 -> unconstrained D-CAEG routing: w_t = q_t
+    - w_t in simplex: sum(w_t) = 1.0, w_t >= (1 - rho) / 3 >= 0
+    - Explicit gradient isolation: frozen expert backbones, only router learns.
+    """
+    def __init__(
+        self,
+        gru_expert: nn.Module,
+        tcn_expert: nn.Module,
+        patch_expert: nn.Module,
+        rho: float = 0.2,
+        temperature: float = 1.0,
+        context_dim: int = 6,
+        disagreement_dim: int = 3,
+        hidden_dim: int = 32,
+        dropout: float = 0.1,
+    ):
+        super().__init__()
+        self.gru_expert = gru_expert
+        self.tcn_expert = tcn_expert
+        self.patch_expert = patch_expert
+        self.rho = float(rho)
+        self.temperature = float(temperature)
+
+        self.freeze_experts()
+
+        router_in_dim = context_dim + disagreement_dim
+        self.context_encoder = nn.Sequential(
+            nn.Linear(router_in_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+        )
+        self.router = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, 3),
+        )
+
+        # Base equal weight prior: [1/3, 1/3, 1/3]
+        w0 = torch.tensor([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0], dtype=torch.float32)
+        self.register_buffer("w0", w0)
+
+    def freeze_experts(self):
+        for expert in [self.gru_expert, self.tcn_expert, self.patch_expert]:
+            expert.eval()
+            for p in expert.parameters():
+                p.requires_grad = False
+
+    def compute_expert_disagreement(
+        self,
+        y1: torch.Tensor,
+        y2: torch.Tensor,
+        y3: torch.Tensor,
+    ) -> torch.Tensor:
+        diff_12 = torch.abs(y1 - y2)
+        diff_13 = torch.abs(y1 - y3)
+        diff_23 = torch.abs(y2 - y3)
+        d_pair = ((diff_12 + diff_13 + diff_23) / 3.0).mean(dim=-1, keepdim=True)
+
+        stacked = torch.stack([y1, y2, y3], dim=-1)
+        d_std = stacked.std(dim=-1, unbiased=False).mean(dim=-1, keepdim=True)
+        d_range = (stacked.max(dim=-1).values - stacked.min(dim=-1).values).mean(dim=-1, keepdim=True)
+
+        d_vec = torch.cat([d_pair, d_std, d_range], dim=-1).detach()
+        return d_vec
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: torch.Tensor,
+        rho: Optional[float] = None,
+        temperature: Optional[float] = None,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        tau = temperature if temperature is not None else self.temperature
+        r = rho if rho is not None else self.rho
+
+        with torch.no_grad():
+            y1 = self.gru_expert(x)
+            y2 = self.tcn_expert(x)
+            y3 = self.patch_expert(x)
+
+        disagreement = self.compute_expert_disagreement(y1, y2, y3)
+        u = torch.cat([c, disagreement], dim=-1)
+
+        e = self.context_encoder(u)
+        delta = self.router(e)
+
+        # q_t = softmax(delta / tau)
+        q = F.softmax(delta / tau, dim=-1)
+
+        # w_t = (1 - rho) * w0 + rho * q_t
+        w0 = self.w0.unsqueeze(0)  # [1, 3]
+        weights = (1.0 - r) * w0 + r * q
+
+        w1 = weights[:, 0:1]
+        w2 = weights[:, 1:2]
+        w3 = weights[:, 2:3]
+        y_fused = w1 * y1 + w2 * y2 + w3 * y3
+
+        # KL(w || w0) = sum_i w_i * log(3 * w_i)
+        eps = 1e-8
+        kl_div = torch.sum(weights * torch.log(3.0 * weights + eps), dim=-1)
+
+        if return_diagnostics:
+            diag = {
+                "expert_predictions": {"gru": y1, "tcn": y2, "patch": y3},
+                "weights": weights,
+                "q_weights": q,
+                "disagreement": disagreement,
+                "delta": delta,
+                "kl_div": kl_div,
+                "mean_kl": kl_div.mean(),
+                "rho": r,
+            }
+            return y_fused, weights, diag
+        return y_fused
+
+
+CAEGNetBR = BoundedRoutingCAEG
+
+
+def compute_bounded_loss(
+    y_pred: torch.Tensor,
+    y_true: torch.Tensor,
+    weights: torch.Tensor,
+    lambda_dev: float = 0.0,
+    eps: float = 1e-8,
+) -> Tuple[torch.Tensor, Dict[str, float]]:
+    """
+    Phase 5 Bounded Routing Loss Function:
+    L = MSE(y_pred, y_true) + lambda_dev * KL(w || w0)
+    where w0 = [1/3, 1/3, 1/3].
+    """
+    l_forecast = F.mse_loss(y_pred, y_true)
+    kl = torch.sum(weights * torch.log(3.0 * weights + eps), dim=-1).mean()
+    l_total = l_forecast + lambda_dev * kl
+
+    telemetry = {
+        "loss_total": float(l_total.item()),
+        "loss_forecast": float(l_forecast.item()),
+        "loss_kl": float(kl.item()),
+        "lambda_dev": float(lambda_dev),
+    }
+    return l_total, telemetry
+
+
+
