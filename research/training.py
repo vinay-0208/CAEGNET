@@ -27,8 +27,11 @@ from research.models import (
     CAEGNetV3,
     DecoupledCAEGNet,
     LearnedStaticEnsemble,
+    ShrinkageRegularizedCAEG,
+    CAEGNetSR,
     compute_caeg_v2_loss,
     compute_caeg_v3_loss,
+    compute_shrinkage_loss,
     count_parameters,
 )
 
@@ -895,3 +898,265 @@ def evaluate_decoupled_caeg(
         "equal_ens_mw": equal_ens_mw,
         "entropy_per_origin": entropy_per_origin,
     }
+
+
+# =====================================================================
+# 13. Phase 5 Optimization: Shrinkage-Regularized Router Training
+# =====================================================================
+
+def train_shrinkage_router(
+    model: ShrinkageRegularizedCAEG,
+    train_loader: DataLoader,
+    val_loader: DataLoader,
+    alpha: float = 1.0,
+    lambda_dev: float = 0.0,
+    lr: float = 1e-3,
+    weight_decay: float = 1e-4,
+    max_epochs: int = 35,
+    patience: int = 7,
+    device: Optional[torch.device] = None,
+    verbose: bool = False,
+) -> Dict[str, Union[float, int, List[float]]]:
+    """
+    Train Shrinkage-Regularized CAEG Router with frozen backbones and optional KL deviation loss:
+    L = MSE(y_fused, y_true) + lambda_dev * KL(w_t || [1/3, 1/3, 1/3])
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = model.to(device)
+    model.freeze_experts()
+
+    # Collect only trainable parameters (context encoder and router)
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
+    optimizer = AdamW(trainable_params, lr=lr, weight_decay=weight_decay)
+    scheduler = ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=3, min_lr=1e-6)
+
+    best_val_loss = float("inf")
+    best_epoch = 0
+    patience_counter = 0
+    best_router_weights = None
+    start_time = time.time()
+
+    train_loss_history = []
+    val_loss_history = []
+
+    for epoch in range(1, max_epochs + 1):
+        model.train()
+        model.freeze_experts()
+
+        total_train_loss = 0.0
+        n_train_batches = 0
+
+        for x, y, c in train_loader:
+            x = x.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
+            c = c.to(device, non_blocking=True)
+
+            optimizer.zero_grad(set_to_none=True)
+            y_fused, weights, diag = model(x, c, alpha=alpha)
+
+            loss, _ = compute_shrinkage_loss(y_fused, y, weights, lambda_dev=lambda_dev)
+            loss.backward()
+
+            nn.utils.clip_grad_norm_(trainable_params, max_norm=1.0)
+            optimizer.step()
+
+            total_train_loss += loss.item()
+            n_train_batches += 1
+
+        # Validation pass
+        model.eval()
+        total_val_loss = 0.0
+        n_val_batches = 0
+
+        with torch.no_grad():
+            for x, y, c in val_loader:
+                x = x.to(device, non_blocking=True)
+                y = y.to(device, non_blocking=True)
+                c = c.to(device, non_blocking=True)
+
+                y_fused, weights, _ = model(x, c, alpha=alpha)
+                val_mse = F.mse_loss(y_fused, y)
+                total_val_loss += val_mse.item()
+                n_val_batches += 1
+
+        val_loss = total_val_loss / max(n_val_batches, 1)
+        train_loss_epoch = total_train_loss / max(n_train_batches, 1)
+
+        train_loss_history.append(train_loss_epoch)
+        val_loss_history.append(val_loss)
+
+        scheduler.step(val_loss)
+
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            best_epoch = epoch
+            patience_counter = 0
+            best_router_weights = {
+                k: v.cpu().clone()
+                for k, v in model.state_dict().items()
+                if "expert" not in k
+            }
+        else:
+            patience_counter += 1
+            if patience_counter >= patience:
+                if verbose:
+                    print(f"Early stopping at epoch {epoch} (best epoch: {best_epoch})")
+                break
+
+    if best_router_weights is not None:
+        model.load_state_dict(best_router_weights, strict=False)
+
+    return {
+        "best_epoch": best_epoch,
+        "total_epochs": epoch,
+        "best_val_loss": best_val_loss,
+        "training_time_seconds": time.time() - start_time,
+        "train_loss_history": train_loss_history,
+        "val_loss_history": val_loss_history,
+        "alpha": alpha,
+        "lambda_dev": lambda_dev,
+    }
+
+
+def evaluate_shrinkage_caeg(
+    model: ShrinkageRegularizedCAEG,
+    data_loader: DataLoader,
+    scaler: object,
+    alpha: Optional[float] = None,
+    temperature: Optional[float] = None,
+    device: Optional[torch.device] = None,
+) -> Dict[str, Union[float, np.ndarray, Dict]]:
+    """
+    Evaluate Shrinkage-Regularized CAEG-Net on a data partition and return
+    unstandardized physical metrics (MW) along with shrinkage routing telemetry.
+    """
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = model.to(device)
+    model.eval()
+
+    all_y_pred = []
+    all_y_true = []
+    all_weights = []
+    all_gru_pred = []
+    all_tcn_pred = []
+    all_patch_pred = []
+    all_disagreement = []
+    all_context = []
+    all_kl = []
+
+    with torch.no_grad():
+        for x, y, c in data_loader:
+            x = x.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
+            c = c.to(device, non_blocking=True)
+
+            y_fused, weights, diag = model(x, c, alpha=alpha, temperature=temperature)
+
+            all_y_pred.append(y_fused)
+            all_y_true.append(y)
+            all_weights.append(weights)
+            all_context.append(c)
+
+            preds = diag["expert_predictions"]
+            all_gru_pred.append(preds["gru"])
+            all_tcn_pred.append(preds["tcn"])
+            all_patch_pred.append(preds["patch"])
+            all_kl.append(diag["kl_div"])
+
+            if "disagreement" in diag and diag["disagreement"] is not None:
+                all_disagreement.append(diag["disagreement"])
+
+    y_pred_sc = torch.cat(all_y_pred, dim=0).cpu().numpy()
+    y_true_sc = torch.cat(all_y_true, dim=0).cpu().numpy()
+    weights_np = torch.cat(all_weights, dim=0).cpu().numpy()
+    context_np = torch.cat(all_context, dim=0).cpu().numpy()
+    kl_np = torch.cat(all_kl, dim=0).cpu().numpy()
+
+    gru_sc = torch.cat(all_gru_pred, dim=0).cpu().numpy()
+    tcn_sc = torch.cat(all_tcn_pred, dim=0).cpu().numpy()
+    patch_sc = torch.cat(all_patch_pred, dim=0).cpu().numpy()
+    disagree_np = torch.cat(all_disagreement, dim=0).cpu().numpy() if all_disagreement else None
+
+    scale = float(scaler.scale_[0])
+    mean = float(scaler.mean_[0])
+
+    y_pred_mw = y_pred_sc * scale + mean
+    y_true_mw = y_true_sc * scale + mean
+    gru_mw = gru_sc * scale + mean
+    tcn_mw = tcn_sc * scale + mean
+    patch_mw = patch_sc * scale + mean
+    equal_ens_mw = (gru_mw + tcn_mw + patch_mw) / 3.0
+
+    def calc_metrics(pred: np.ndarray, true: np.ndarray) -> Dict[str, float]:
+        err = pred - true
+        abs_err = np.abs(err)
+        mae = float(np.mean(abs_err))
+        rmse = float(np.sqrt(np.mean(err ** 2)))
+        ss_res = np.sum(err ** 2)
+        ss_tot = np.sum((true - np.mean(true)) ** 2)
+        r2 = float(1.0 - (ss_res / max(ss_tot, 1e-6)))
+        mape = float(np.mean(abs_err / np.maximum(np.abs(true), 1e-6)) * 100.0)
+        return {
+            "mae_mw": mae,
+            "mse_mw2": float(np.mean(err ** 2)),
+            "rmse_mw": rmse,
+            "r2": r2,
+            "mape_pct": mape,
+        }
+
+    fused_metrics = calc_metrics(y_pred_mw, y_true_mw)
+    gru_metrics = calc_metrics(gru_mw, y_true_mw)
+    tcn_metrics = calc_metrics(tcn_mw, y_true_mw)
+    patch_metrics = calc_metrics(patch_mw, y_true_mw)
+    equal_metrics = calc_metrics(equal_ens_mw, y_true_mw)
+
+    eps = 1e-8
+    entropy_per_origin = -np.sum(weights_np * np.log(weights_np + eps), axis=-1)
+    mean_entropy = float(np.mean(entropy_per_origin))
+    mean_n_eff = float(np.mean(np.exp(entropy_per_origin)))
+
+    # Deviation from uniform [1/3, 1/3, 1/3]
+    w0 = np.array([1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0])
+    l2_dev = np.linalg.norm(weights_np - w0, axis=-1)
+    mean_l2_dev = float(np.mean(l2_dev))
+    max_l2_dev = float(np.max(l2_dev))
+    mean_kl = float(np.mean(kl_np))
+
+    overall_mean_weights = [float(w) for w in np.mean(weights_np, axis=0)]
+
+    weight_stats = {
+        "mean_weights": overall_mean_weights,
+        "std_weights": [float(s) for s in np.std(weights_np, axis=0)],
+        "min_weights": [float(m) for m in np.min(weights_np, axis=0)],
+        "max_weights": [float(m) for m in np.max(weights_np, axis=0)],
+        "mean_entropy": mean_entropy,
+        "mean_n_eff": mean_n_eff,
+        "mean_l2_dev_from_equal": mean_l2_dev,
+        "max_l2_dev_from_equal": max_l2_dev,
+        "mean_kl_divergence": mean_kl,
+    }
+
+    return {
+        "fused_metrics": fused_metrics,
+        "gru_metrics": gru_metrics,
+        "tcn_metrics": tcn_metrics,
+        "patch_metrics": patch_metrics,
+        "equal_ensemble_metrics": equal_metrics,
+        "weight_stats": weight_stats,
+        "y_pred_mw": y_pred_mw,
+        "y_true_mw": y_true_mw,
+        "weights": weights_np,
+        "context_6d": context_np,
+        "disagreement": disagree_np,
+        "gru_mw": gru_mw,
+        "tcn_mw": tcn_mw,
+        "patch_mw": patch_mw,
+        "equal_ens_mw": equal_ens_mw,
+        "entropy_per_origin": entropy_per_origin,
+        "kl_divergence": kl_np,
+    }
+

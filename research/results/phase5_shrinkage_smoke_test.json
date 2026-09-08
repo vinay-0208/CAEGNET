@@ -1,0 +1,16 @@
+{
+  "smoke_test": "PASSED",
+  "best_epoch": 2,
+  "val_mae_mw": 404.570068359375,
+  "mean_l2_dev": 0.2069162202916794,
+  "mean_kl": 0.07913322746753693,
+  "param_accounting": {
+    "total": 142433,
+    "trainable": 2595,
+    "gru_expert": 31344,
+    "tcn_expert": 44870,
+    "patch_expert": 63624,
+    "context_encoder": 1440,
+    "router": 1155
+  }
+}

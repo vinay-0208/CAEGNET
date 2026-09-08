@@ -1,0 +1,162 @@
+{
+  "phase": "Phase 5 CAEG-Net SR Shrinkage-Regularized Scientific Validation",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "locked_hyperparameters": {
+    "best_alpha": 1.0,
+    "best_lambda_dev": 0.0
+  },
+  "results_summary": {
+    "caeg_sr_mean_mae_mw": 238.0563201904297,
+    "static_equal_mean_mae_mw": 232.50658569335937,
+    "decoupled_caeg_mean_mae_mw": 239.52535705566407,
+    "caeg_v2_mean_mae_mw": 239.66549682617188,
+    "caeg_sr_vs_equal_gap_mw": 5.549734497070318,
+    "caeg_sr_vs_decoupled_gain_mw": 1.4690368652343864,
+    "caeg_sr_vs_v2_gain_mw": 1.6091766357421875
+  },
+  "success_criteria": {
+    "C1_improves_over_standalone_experts": true,
+    "C2_improves_over_decoupled_caeg": true,
+    "C3_improves_over_static_equal_ensemble": false,
+    "C4_statistically_significant": false,
+    "C5_five_seed_reproducible": true,
+    "C6_zero_temporal_leakage": true,
+    "C7_interpretable_non_collapsed_routing": true,
+    "C8_routing_deviation_measured": true,
+    "C9_parameter_efficiency_verified": true
+  },
+  "statistical_tests": [
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_diff_mw": 3.639006272801813,
+      "ci_95_lower": -5.070628103408362,
+      "ci_95_upper": 12.348640649011989,
+      "paired_t_stat": 0.818915236461981,
+      "paired_t_pval": 0.4165721252714553,
+      "wilcoxon_stat": 577.0,
+      "wilcoxon_pval": 0.22015807331573622,
+      "dm_stat": 0.8267519244587854,
+      "dm_pval": 0.40837768412513853,
+      "cohens_d": 0.11248665867182056
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Decoupled_CAEG_Unconstrained",
+      "mean_diff_mw": -0.5570369216631044,
+      "ci_95_lower": -1.7926456484696713,
+      "ci_95_upper": 0.6785718051434626,
+      "paired_t_stat": -0.8836068755207194,
+      "paired_t_pval": 0.3809755494226127,
+      "wilcoxon_stat": 551.0,
+      "wilcoxon_pval": 0.14531529274102764,
+      "dm_stat": -0.8920626363699174,
+      "dm_pval": 0.3723593603134936,
+      "cohens_d": -0.12137273846600609
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "CAEG_Net_V2_Full",
+      "mean_diff_mw": -1.4395590728183962,
+      "ci_95_lower": -11.041916199033201,
+      "ci_95_upper": 8.16279805339641,
+      "paired_t_stat": -0.29383783019495857,
+      "paired_t_pval": 0.7700514915974674,
+      "wilcoxon_stat": 620.0,
+      "wilcoxon_pval": 0.39786576540629603,
+      "dm_stat": -0.29664973952863327,
+      "dm_pval": 0.7667339325501779,
+      "cohens_d": -0.04036173005372219
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Standalone_TCN",
+      "mean_diff_mw": -4.633304811873526,
+      "ci_95_lower": -16.81550902825831,
+      "ci_95_upper": 7.548899404511262,
+      "paired_t_stat": -0.7454543750841083,
+      "paired_t_pval": 0.459353504900769,
+      "wilcoxon_stat": 568.0,
+      "wilcoxon_pval": 0.191626437068243,
+      "dm_stat": -0.7525880723134162,
+      "dm_pval": 0.45169748740219173,
+      "cohens_d": -0.10239603333694114
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Learned_Static_Weights",
+      "mean_diff_mw": -3.6984493327590653,
+      "ci_95_lower": -6.443132368660692,
+      "ci_95_upper": -0.9537662968574385,
+      "paired_t_stat": -2.6410921033096586,
+      "paired_t_pval": 0.010887508232984547,
+      "wilcoxon_stat": 420.0,
+      "wilcoxon_pval": 0.008896865621109945,
+      "dm_stat": -2.6663662878197454,
+      "dm_pval": 0.007667610104040268,
+      "cohens_d": -0.3627819003951902
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Standalone_Patch",
+      "mean_diff_mw": -17.946590495559406,
+      "ci_95_lower": -25.166404642884693,
+      "ci_95_upper": -10.726776348234118,
+      "paired_t_stat": -4.872053027061338,
+      "paired_t_pval": 1.0757754446877039e-05,
+      "wilcoxon_stat": 214.0,
+      "wilcoxon_pval": 9.010049806711219e-06,
+      "dm_stat": -4.918676606373308,
+      "dm_pval": 8.713128338833087e-07,
+      "cohens_d": -0.6692279511355079
+    },
+    {
+      "model_1": "CAEG_Net_SR_Optimal",
+      "model_2": "Standalone_GRU",
+      "mean_diff_mw": -49.33390376252948,
+      "ci_95_lower": -75.22818580223355,
+      "ci_95_upper": -23.439621722825407,
+      "paired_t_stat": -3.7342009029752123,
+      "paired_t_pval": 0.0004683657717768074,
+      "wilcoxon_stat": 326.0,
+      "wilcoxon_pval": 0.0005644366741647919,
+      "dm_stat": -3.7699356971163396,
+      "dm_pval": 0.0001632896133971773,
+      "cohens_d": -0.5129319418770487
+    },
+    {
+      "model_1": "CAEG_Net_SR_Shrinkage_Only",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_diff_mw": 4.813396093980321,
+      "ci_95_lower": -3.9928428590995804,
+      "ci_95_upper": 13.619635047060223,
+      "paired_t_stat": 1.0713150522564328,
+      "paired_t_pval": 0.2889750212583725,
+      "wilcoxon_stat": 540.0,
+      "wilcoxon_pval": 0.12026549352667248,
+      "dm_stat": 1.0815671045287603,
+      "dm_pval": 0.27944492805716337,
+      "cohens_d": 0.1471564396996738
+    },
+    {
+      "model_1": "CAEG_Net_SR_KL_Only",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_diff_mw": -0.14562210946712853,
+      "ci_95_lower": -5.985733055276117,
+      "ci_95_upper": 5.69448883634186,
+      "paired_t_stat": -0.048872245271366986,
+      "paired_t_pval": 0.9612083414186277,
+      "wilcoxon_stat": 678.0,
+      "wilcoxon_pval": 0.7399053628732605,
+      "dm_stat": -0.04933993291575578,
+      "dm_pval": 0.9606483963902497,
+      "cohens_d": -0.0067131191688189
+    }
+  ]
+}
