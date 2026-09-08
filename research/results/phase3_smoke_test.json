@@ -1,0 +1,84 @@
+{
+  "status": "PASSED",
+  "device": "cuda",
+  "total_parameters": 142433,
+  "trainable_parameters": 142433,
+  "parameter_breakdown": {
+    "total": 142433,
+    "trainable": 142433,
+    "gru_expert": 31344,
+    "tcn_expert": 44870,
+    "patch_expert": 63624,
+    "context_encoder": 1440,
+    "router": 1155
+  },
+  "initial_train_loss": 1.0565334558486938,
+  "final_train_loss": 0.9817196130752563,
+  "mean_val_loss": 1.3315777778625488,
+  "batches_trained": 5,
+  "batches_evaluated": 2,
+  "peak_cuda_memory_mb": 60.73,
+  "smoke_test_runtime_seconds": 4.38,
+  "train_telemetry": [
+    {
+      "batch": 1,
+      "loss_total": 1.0565334558486938,
+      "loss_fused": 0.8972072601318359,
+      "loss_aux": 1.0549266338348389,
+      "loss_entropy": 1.0871431827545166,
+      "mean_weights": [
+        0.35376426577568054,
+        0.26855283975601196,
+        0.3776828646659851
+      ]
+    },
+    {
+      "batch": 2,
+      "loss_total": 1.2020121812820435,
+      "loss_fused": 1.0259029865264893,
+      "loss_aux": 1.1668472290039062,
+      "loss_entropy": 1.0820155143737793,
+      "mean_weights": [
+        0.35144686698913574,
+        0.256256639957428,
+        0.39229652285575867
+      ]
+    },
+    {
+      "batch": 3,
+      "loss_total": 0.9138074517250061,
+      "loss_fused": 0.781894326210022,
+      "loss_aux": 0.8722323775291443,
+      "loss_entropy": 1.078229308128357,
+      "mean_weights": [
+        0.3632098436355591,
+        0.24476420879364014,
+        0.3920259475708008
+      ]
+    },
+    {
+      "batch": 4,
+      "loss_total": 0.8693009614944458,
+      "loss_fused": 0.7445318102836609,
+      "loss_aux": 0.8246352672576904,
+      "loss_entropy": 1.0738615989685059,
+      "mean_weights": [
+        0.3665611743927002,
+        0.23703345656394958,
+        0.3964053690433502
+      ]
+    },
+    {
+      "batch": 5,
+      "loss_total": 0.9817196130752563,
+      "loss_fused": 0.8403028845787048,
+      "loss_aux": 0.9356355667114258,
+      "loss_entropy": 1.0714167356491089,
+      "mean_weights": [
+        0.3609323799610138,
+        0.23574374616146088,
+        0.40332385897636414
+      ]
+    }
+  ]
+}
