@@ -1,0 +1,69 @@
+{
+  "diagnostic_phase": "Phase 6 Router Diagnosis",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "overall_metrics": {
+    "standalone_tcn_mae": 250.07403182983398,
+    "standalone_patch_mae": 265.4899730682373,
+    "standalone_gru_mae": 279.64660263061523,
+    "static_equal_ensemble_mae": 237.467622756958,
+    "v2_fused_mae": 247.1707706451416,
+    "oracle_standalone_mae": 150.15521224339804,
+    "oracle_headroom_over_equal_mw": 87.31241051355997,
+    "internal_tcn_mae": 314.4944604237874,
+    "internal_patch_mae": 280.008846282959,
+    "internal_gru_mae": 484.0986963907878
+  },
+  "horizon_breakdown": {
+    "near_horizon_h1_h6": {
+      "tcn_mae": 181.53273264567056,
+      "patch_mae": 189.56870778401694,
+      "equal_mae": 162.57420349121094,
+      "v2_mae": 190.17889912923178,
+      "tcn_best_pct": 34.03400309119011,
+      "patch_best_pct": 34.03400309119011
+    },
+    "mid_horizon_h7_h18": {
+      "tcn_mae": 272.9332160949707,
+      "patch_mae": 284.691167195638,
+      "equal_mae": 260.898255666097,
+      "v2_mae": 264.4149971008301,
+      "tcn_best_pct": 34.694744976816075,
+      "patch_best_pct": 33.845955692941786
+    },
+    "far_horizon_h19_h24": {
+      "tcn_mae": 272.89696248372394,
+      "patch_mae": 303.00885009765625,
+      "equal_mae": 265.49977620442706,
+      "v2_mae": 269.6741892496745,
+      "tcn_best_pct": 35.06182380216383,
+      "patch_best_pct": 32.43431221020092
+    }
+  },
+  "regime_breakdown": {
+    "high_disagreement_v2_gain": -6.003570556640625,
+    "low_disagreement_v2_gain": -14.17730712890625,
+    "high_baseline_v2_gain": -10.94229736328125,
+    "low_baseline_v2_gain": -8.9301025390625
+  },
+  "representation_collapse_deltas": {
+    "gru_degradation_mw": 204.45209376017254,
+    "tcn_degradation_mw": 64.42042859395343,
+    "patch_degradation_mw": 14.51887321472168
+  },
+  "router_weights_mean": {
+    "w_patch": 0.651435136795044,
+    "w_tcn": 0.28525349497795105,
+    "w_gru": 0.06331130117177963
+  },
+  "calibration_correlations": {
+    "mean_corr_w_neg_error_int_patch": -0.27787049029942396,
+    "mean_corr_w_neg_error_int_tcn": -0.0681896419109261,
+    "mean_corr_w_neg_error_int_gru": 0.5750548371135096
+  }
+}

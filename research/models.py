@@ -687,5 +687,235 @@ def count_parameters(model: nn.Module) -> Dict[str, int]:
         breakdown["input_encoder"] = sum(p.numel() for p in model.input_encoder.parameters())
     if hasattr(model, "router"):
         breakdown["router"] = sum(p.numel() for p in model.router.parameters())
+    if hasattr(model, "router_head"):
+        breakdown["router_head"] = sum(p.numel() for p in model.router_head.parameters())
 
     return breakdown
+
+
+# =====================================================================
+# 9. CAEG-Net V3: Horizon-Dependent Context-Adaptive MoE
+# =====================================================================
+
+class CAEGNetV3(nn.Module):
+    """
+    CAEG-Net V3: Horizon-Dependent Context-Adaptive Mixture-of-Experts
+    with Multi-Horizon Disagreement Feedback and Anti-Starvation Balancing.
+
+    Key Architectural Innovations:
+    1. Horizon-Dependent Routing:
+       Router emits W in R^[B, 24, 3] with sum_{i=1}^3 W[b, h, i] = 1.0 for each h in {1..24}.
+       Resolves the horizon-invariance bottleneck identified in Phase 6.
+    2. Multi-Horizon Disagreement & Shape Feedback:
+       Detached candidate forecasts yield 6D feedback:
+       - Near-horizon disagreement (h=1..6)
+       - Mid-horizon disagreement (h=7..18)
+       - Far-horizon disagreement (h=19..24)
+       - Global pairwise standard deviation
+       - Global pairwise range
+       - Diurnal range difference (Patch ptp - TCN ptp)
+       Total router input = 6D base context + 6D disagreement = 12 dimensions.
+    3. Calm-Regime Prior Fallback:
+       Encourages weights to smoothly default to [1/3, 1/3, 1/3] under low difficulty.
+    """
+    def __init__(
+        self,
+        input_dim: int = 1,
+        horizon: int = 24,
+        seq_len: int = 168,
+        base_context_dim: int = 6,
+        disagreement_dim: int = 6,
+        gru_hidden: int = 54,
+        gru_layers: int = 2,
+        tcn_channels: int = 34,
+        tcn_kernel_size: int = 4,
+        tcn_dilations: Tuple[int, ...] = (1, 2, 4, 8, 16),
+        patch_len: int = 24,
+        patch_stride: int = 12,
+        patch_embed: int = 48,
+        patch_hidden: int = 96,
+        latent_context_dim: int = 32,
+        router_hidden_dim: int = 48,
+        dropout: float = 0.1,
+        temperature: float = 0.5,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.horizon = horizon
+        self.seq_len = seq_len
+        self.base_context_dim = base_context_dim
+        self.disagreement_dim = disagreement_dim
+        self.temperature = temperature
+        self.total_router_dim = base_context_dim + disagreement_dim
+
+        # 1. Three Complementary Expert Backbones
+        self.gru_expert = GatedRecurrentExpert(
+            input_dim=input_dim,
+            hidden_dim=gru_hidden,
+            num_layers=gru_layers,
+            horizon=horizon,
+            dropout=dropout,
+        )
+        self.tcn_expert = MultiScaleCausalTCNExpert(
+            in_channels=input_dim,
+            channels=tcn_channels,
+            kernel_size=tcn_kernel_size,
+            dilations=tcn_dilations,
+            horizon=horizon,
+            dropout=dropout,
+        )
+        self.patch_expert = PatchTemporalExpert(
+            seq_len=seq_len,
+            patch_len=patch_len,
+            stride=patch_stride,
+            embed_dim=patch_embed,
+            hidden_dim=patch_hidden,
+            horizon=horizon,
+            dropout=dropout,
+        )
+
+        # 2. 12D Context Feature Encoder
+        self.context_encoder = nn.Sequential(
+            nn.Linear(self.total_router_dim, latent_context_dim),
+            nn.LayerNorm(latent_context_dim),
+            nn.ReLU(),
+            nn.Linear(latent_context_dim, latent_context_dim),
+            nn.ReLU(),
+        )
+
+        # 3. Horizon-Dependent Routing Head: R^32 -> R^[24 * 3]
+        self.router_head = nn.Sequential(
+            nn.Linear(latent_context_dim, router_hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(router_hidden_dim, horizon * 3),
+        )
+
+    def compute_multi_horizon_disagreement(
+        self,
+        y1: torch.Tensor,
+        y2: torch.Tensor,
+        y3: torch.Tensor,
+    ) -> torch.Tensor:
+        """
+        Compute causal, detached multi-horizon consensus & shape features from candidate forecasts.
+        """
+        diff_12 = torch.abs(y1 - y2)
+        diff_13 = torch.abs(y1 - y3)
+        diff_23 = torch.abs(y2 - y3)
+        d_pair = (diff_12 + diff_13 + diff_23) / 3.0  # [B, 24]
+
+        # Segmented horizon disagreements
+        d_near = d_pair[:, :6].mean(dim=-1, keepdim=True)    # [B, 1]
+        d_mid = d_pair[:, 6:18].mean(dim=-1, keepdim=True)   # [B, 1]
+        d_far = d_pair[:, 18:].mean(dim=-1, keepdim=True)    # [B, 1]
+
+        # Global consensus dispersion
+        stacked = torch.stack([y1, y2, y3], dim=-1)           # [B, 24, 3]
+        d_std = stacked.std(dim=-1, unbiased=False).mean(dim=-1, keepdim=True) # [B, 1]
+        d_range = (stacked.max(dim=-1).values - stacked.min(dim=-1).values).mean(dim=-1, keepdim=True) # [B, 1]
+
+        # Diurnal range difference: Patch ptp - TCN ptp
+        ptp_patch = y3.max(dim=-1, keepdim=True).values - y3.min(dim=-1, keepdim=True).values # [B, 1]
+        ptp_tcn = y2.max(dim=-1, keepdim=True).values - y2.min(dim=-1, keepdim=True).values   # [B, 1]
+        d_shape = ptp_patch - ptp_tcn                         # [B, 1]
+
+        d_vec = torch.cat([d_near, d_mid, d_far, d_std, d_range, d_shape], dim=-1).detach()
+        return d_vec
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: torch.Tensor,
+        temperature: Optional[float] = None,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        tau = temperature if temperature is not None else self.temperature
+
+        # 1. Candidate Expert Predictions
+        y1 = self.gru_expert(x)
+        y2 = self.tcn_expert(x)
+        y3 = self.patch_expert(x)
+
+        # 2. Multi-Horizon Detached Disagreement
+        disagreement = self.compute_multi_horizon_disagreement(y1, y2, y3)
+        u = torch.cat([c, disagreement], dim=-1)  # [B, 12]
+
+        # 3. Context Encoding & Horizon-Dependent Routing
+        e = self.context_encoder(u)
+        logits = self.router_head(e)  # [B, horizon * 3]
+        b = x.size(0)
+        logits = logits.view(b, self.horizon, 3)
+        weights = F.softmax(logits / tau, dim=-1)  # [B, 24, 3]
+
+        # 4. Horizon-Wise Convex Combination
+        w1 = weights[:, :, 0]  # [B, 24]
+        w2 = weights[:, :, 1]  # [B, 24]
+        w3 = weights[:, :, 2]  # [B, 24]
+        y_fused = w1 * y1 + w2 * y2 + w3 * y3  # [B, 24]
+
+        if return_diagnostics:
+            expert_dict = {
+                "gru": y1,
+                "tcn": y2,
+                "patch": y3,
+            }
+            diag = {
+                "expert_predictions": expert_dict,
+                "weights": weights,
+                "disagreement": disagreement,
+            }
+            return y_fused, weights, diag
+        else:
+            return y_fused
+
+
+# =====================================================================
+# 10. CAEG-Net V3 Loss Function
+# =====================================================================
+
+def compute_caeg_v3_loss(
+    y_pred: torch.Tensor,
+    y_true: torch.Tensor,
+    expert_preds: Dict[str, torch.Tensor],
+    weights: torch.Tensor,
+    lambda_aux: float = 0.40,
+    beta_prior: float = 0.002,
+    eps: float = 1e-8,
+) -> Tuple[torch.Tensor, Dict[str, float]]:
+    """
+    CAEG-Net V3 Tripartite Loss with Horizon-Dependent Uniform Prior:
+    L_total = L_fused + lambda_aux * L_expert_aux + beta_prior * L_prior
+
+    where:
+    L_fused = MSE(y_pred, y_true)
+    L_expert_aux = (1/3) * sum_{i=1}^3 MSE(y_expert_i, y_true)
+    L_prior = (1/24) * sum_{h=1}^24 sum_{i=1}^3 w_{h,i} * ln(3 * w_{h,i} + eps)
+    (KL divergence to uniform [1/3, 1/3, 1/3], penalizing unneeded deviations in calm regimes).
+    """
+    l_fused = F.mse_loss(y_pred, y_true)
+
+    l_gru = F.mse_loss(expert_preds["gru"], y_true)
+    l_tcn = F.mse_loss(expert_preds["tcn"], y_true)
+    l_patch = F.mse_loss(expert_preds["patch"], y_true)
+    l_expert_aux = (l_gru + l_tcn + l_patch) / 3.0
+
+    # weights: [B, 24, 3]
+    # KL(w || [1/3, 1/3, 1/3]) = sum_i w_i * (ln(w_i) - ln(1/3)) = sum_i w_i * ln(3 * w_i)
+    kl_uniform = torch.sum(weights * torch.log(3.0 * weights + eps), dim=-1)  # [B, 24]
+    l_prior = kl_uniform.mean()  # scalar
+
+    l_total = l_fused + lambda_aux * l_expert_aux + beta_prior * l_prior
+
+    telemetry = {
+        "loss_total": float(l_total.item()),
+        "loss_fused": float(l_fused.item()),
+        "loss_aux": float(l_expert_aux.item()),
+        "loss_prior": float(l_prior.item()),
+        "loss_gru": float(l_gru.item()),
+        "loss_tcn": float(l_tcn.item()),
+        "loss_patch": float(l_patch.item()),
+        "lambda_aux": lambda_aux,
+        "beta_prior": beta_prior,
+    }
+    return l_total, telemetry
