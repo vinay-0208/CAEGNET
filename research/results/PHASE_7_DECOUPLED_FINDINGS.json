@@ -1,0 +1,128 @@
+{
+  "phase": "Phase 7 Decoupled CAEG-Net Scientific Evaluation",
+  "seeds": [
+    42,
+    43,
+    44,
+    45,
+    46
+  ],
+  "results_summary": {
+    "decoupled_caeg_mean_mae_mw": 239.52535705566407,
+    "learned_static_mean_mae_mw": 244.0142852783203,
+    "static_equal_mean_mae_mw": 232.5065887451172,
+    "caeg_net_v2_mean_mae_mw": 239.66549682617188,
+    "decoupled_vs_equal_gap_mw": 7.018768310546875,
+    "decoupled_vs_v2_gap_mw": -0.14013977050780113
+  },
+  "success_criteria": {
+    "C1_improves_over_standalone_experts": true,
+    "C2_improves_over_v2": true,
+    "C3_improves_over_static_equal_ensemble": false,
+    "C4_gains_in_difficult_regimes": false,
+    "C5_zero_temporal_leakage": true,
+    "C6_parameter_accountability_verified": true,
+    "C7_interpretable_routing": true,
+    "C8_five_seed_reproducibility": true
+  },
+  "statistical_tests": [
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 235.2485455207105,
+      "mean_difference_mw": 4.196044777924159,
+      "paired_t_stat": 0.8763004058286054,
+      "paired_t_pval": 0.38489701554085143,
+      "wilcoxon_stat": 585.0,
+      "wilcoxon_pval": 0.2479734158903102,
+      "dm_stat": 0.8846862467144351,
+      "dm_pval": 0.37632587544115115,
+      "cohens_d": 0.12036911789855281
+    },
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "Exp_B_Learned_Static_Weights",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 242.58600270973062,
+      "mean_difference_mw": -3.141412411095961,
+      "paired_t_stat": -2.9649301722539665,
+      "paired_t_pval": 0.00456184997607278,
+      "wilcoxon_stat": 435.0,
+      "wilcoxon_pval": 0.013020778497332392,
+      "dm_stat": -2.993303356263401,
+      "dm_pval": 0.002759752884857525,
+      "cohens_d": -0.40726448000129556
+    },
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "CAEG_Net_V2_Full",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 240.32711244978995,
+      "mean_difference_mw": -0.8825221511552919,
+      "paired_t_stat": -0.18288862298844447,
+      "paired_t_pval": 0.8555966138567856,
+      "wilcoxon_stat": 622.0,
+      "wilcoxon_pval": 0.4078214471933147,
+      "dm_stat": -0.1846387932291616,
+      "dm_pval": 0.8535123564524807,
+      "cohens_d": -0.02512168438634082
+    },
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "Standalone_TCN",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 243.52085818884507,
+      "mean_difference_mw": -4.0762678902104215,
+      "paired_t_stat": -0.6490019890407638,
+      "paired_t_pval": 0.5191933445621661,
+      "wilcoxon_stat": 589.0,
+      "wilcoxon_pval": 0.26276715045811594,
+      "dm_stat": -0.6552126758993835,
+      "dm_pval": 0.5123308341847292,
+      "cohens_d": -0.08914727919896384
+    },
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "Standalone_Patch",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 256.83414387253094,
+      "mean_difference_mw": -17.3895535738963,
+      "paired_t_stat": -5.158797662810931,
+      "paired_t_pval": 3.9420106768252344e-06,
+      "wilcoxon_stat": 211.0,
+      "wilcoxon_pval": 7.961383389943982e-06,
+      "dm_stat": -5.208165272451162,
+      "dm_pval": 1.9071701795603246e-07,
+      "cohens_d": -0.7086153559721312
+    },
+    {
+      "model_1": "Exp_C_Decoupled_CAEGNet",
+      "model_2": "Standalone_GRU",
+      "mean_block_mae_m1": 239.44459029863467,
+      "mean_block_mae_m2": 288.221457139501,
+      "mean_difference_mw": -48.776866840866376,
+      "paired_t_stat": -3.6108274546184163,
+      "paired_t_pval": 0.0006867834983441832,
+      "wilcoxon_stat": 341.0,
+      "wilcoxon_pval": 0.0009152505823408143,
+      "dm_stat": -3.6453816146977824,
+      "dm_pval": 0.0002669953050178364,
+      "cohens_d": -0.495985295437361
+    },
+    {
+      "model_1": "Exp_B_Learned_Static_Weights",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_block_mae_m1": 242.58600270973062,
+      "mean_block_mae_m2": 235.2485455207105,
+      "mean_difference_mw": 7.337457189020121,
+      "paired_t_stat": 1.3595460333478027,
+      "paired_t_pval": 0.17984014168264492,
+      "wilcoxon_stat": 523.0,
+      "wilcoxon_pval": 0.08835172469508357,
+      "dm_stat": 1.3725563396728753,
+      "dm_pval": 0.1698903127916167,
+      "cohens_d": 0.1867480098073275
+    }
+  ]
+}

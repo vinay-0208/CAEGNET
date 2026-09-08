@@ -919,3 +919,181 @@ def compute_caeg_v3_loss(
         "beta_prior": beta_prior,
     }
     return l_total, telemetry
+
+
+# =====================================================================
+# 11. Decoupled CAEG-Net (D-CAEG) & Learned Static Ensemble
+# =====================================================================
+
+class LearnedStaticEnsemble(nn.Module):
+    """
+    Experiment B Baseline: 3 Learned Global Scalar Weights on Frozen Experts.
+    w_i = Softmax(alpha_i / tau)
+    No context features u_t used. Fuses: y = sum_i w_i * y_i.
+    """
+    def __init__(
+        self,
+        gru_expert: nn.Module,
+        tcn_expert: nn.Module,
+        patch_expert: nn.Module,
+        temperature: float = 0.5,
+    ):
+        super().__init__()
+        self.gru_expert = gru_expert
+        self.tcn_expert = tcn_expert
+        self.patch_expert = patch_expert
+        self.temperature = temperature
+
+        # Freeze all expert parameters
+        self.freeze_experts()
+
+        # Learnable unconstrained scalar logits for the 3 experts
+        self.logits = nn.Parameter(torch.zeros(3))
+
+    def freeze_experts(self):
+        for expert in [self.gru_expert, self.tcn_expert, self.patch_expert]:
+            expert.eval()
+            for p in expert.parameters():
+                p.requires_grad = False
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: Optional[torch.Tensor] = None,
+        temperature: Optional[float] = None,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        tau = temperature if temperature is not None else self.temperature
+
+        with torch.no_grad():
+            y1 = self.gru_expert(x)
+            y2 = self.tcn_expert(x)
+            y3 = self.patch_expert(x)
+
+        weights = F.softmax(self.logits / tau, dim=-1)
+        b = x.size(0)
+        weights_expanded = weights.unsqueeze(0).expand(b, -1)
+
+        w1 = weights_expanded[:, 0:1]
+        w2 = weights_expanded[:, 1:2]
+        w3 = weights_expanded[:, 2:3]
+        y_fused = w1 * y1 + w2 * y2 + w3 * y3
+
+        if return_diagnostics:
+            diag = {
+                "expert_predictions": {"gru": y1, "tcn": y2, "patch": y3},
+                "weights": weights_expanded,
+            }
+            return y_fused, weights_expanded, diag
+        return y_fused
+
+
+class DecoupledCAEGNet(nn.Module):
+    """
+    CAEG-Net Decoupled (D-CAEG) Architecture:
+    Stage 1: Frozen independently-trained complementary temporal experts.
+    Stage 2: Context-adaptive scalar routing head trained on frozen predictions.
+
+    Zero gradient flow into expert backbones.
+    Router input u_t = [C_t (6D) || D_t (3D)] in R^9.
+    """
+    def __init__(
+        self,
+        gru_expert: nn.Module,
+        tcn_expert: nn.Module,
+        patch_expert: nn.Module,
+        base_context_dim: int = 6,
+        disagreement_dim: int = 3,
+        latent_context_dim: int = 32,
+        dropout: float = 0.1,
+        temperature: float = 0.5,
+    ):
+        super().__init__()
+        self.gru_expert = gru_expert
+        self.tcn_expert = tcn_expert
+        self.patch_expert = patch_expert
+        self.base_context_dim = base_context_dim
+        self.disagreement_dim = disagreement_dim
+        self.total_router_dim = base_context_dim + disagreement_dim
+        self.temperature = temperature
+
+        # Explicitly freeze all expert parameters
+        self.freeze_experts()
+
+        # Context Feature Encoder (Linear(9, 32) -> LayerNorm -> ReLU -> Linear(32, 32) -> ReLU)
+        self.context_encoder = nn.Sequential(
+            nn.Linear(self.total_router_dim, latent_context_dim),
+            nn.LayerNorm(latent_context_dim),
+            nn.ReLU(),
+            nn.Linear(latent_context_dim, latent_context_dim),
+            nn.ReLU(),
+        )
+
+        # Context-Adaptive Scalar Routing Head
+        self.router = nn.Sequential(
+            nn.Linear(latent_context_dim, latent_context_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(latent_context_dim, 3),
+        )
+
+    def freeze_experts(self):
+        for expert in [self.gru_expert, self.tcn_expert, self.patch_expert]:
+            expert.eval()
+            for p in expert.parameters():
+                p.requires_grad = False
+
+    def compute_expert_disagreement(
+        self,
+        y1: torch.Tensor,
+        y2: torch.Tensor,
+        y3: torch.Tensor,
+    ) -> torch.Tensor:
+        diff_12 = torch.abs(y1 - y2)
+        diff_13 = torch.abs(y1 - y3)
+        diff_23 = torch.abs(y2 - y3)
+        d_pair = ((diff_12 + diff_13 + diff_23) / 3.0).mean(dim=-1, keepdim=True)
+
+        stacked = torch.stack([y1, y2, y3], dim=-1)
+        d_std = stacked.std(dim=-1, unbiased=False).mean(dim=-1, keepdim=True)
+        d_range = (stacked.max(dim=-1).values - stacked.min(dim=-1).values).mean(dim=-1, keepdim=True)
+
+        d_vec = torch.cat([d_pair, d_std, d_range], dim=-1).detach()
+        return d_vec
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: torch.Tensor,
+        temperature: Optional[float] = None,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        tau = temperature if temperature is not None else self.temperature
+
+        # Generate candidate forecasts from frozen experts (zero autograd tracking)
+        with torch.no_grad():
+            y1 = self.gru_expert(x)
+            y2 = self.tcn_expert(x)
+            y3 = self.patch_expert(x)
+
+        disagreement = self.compute_expert_disagreement(y1, y2, y3)
+        u = torch.cat([c, disagreement], dim=-1)
+
+        e = self.context_encoder(u)
+        logits = self.router(e)
+        weights = F.softmax(logits / tau, dim=-1)
+
+        w1 = weights[:, 0:1]
+        w2 = weights[:, 1:2]
+        w3 = weights[:, 2:3]
+        y_fused = w1 * y1 + w2 * y2 + w3 * y3
+
+        if return_diagnostics:
+            diag = {
+                "expert_predictions": {"gru": y1, "tcn": y2, "patch": y3},
+                "weights": weights,
+                "disagreement": disagreement,
+            }
+            return y_fused, weights, diag
+        return y_fused
+

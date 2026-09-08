@@ -67,3 +67,6 @@ desktop.ini
 
 # Temporary and test logs
 *.log
+
+# Phase checkpoints
+research/checkpoints/phase7/
