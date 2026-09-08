@@ -1,0 +1,170 @@
+{
+  "phase": "Phase 5 Original CAEG-Net Methodology Correction & Optimization",
+  "governing_roadmap": "14-Phase Original Research Roadmap",
+  "frozen_v1_reference": {
+    "mae_mw": 251.44,
+    "rmse_mw": 334.32,
+    "r2": 0.8723,
+    "mape_pct": 4.71,
+    "params": 121531
+  },
+  "phase5_candidate_architecture": {
+    "model_name": "CAEGNet_Phase5_Candidate",
+    "experts": "LSTM (56,152) + TCN (36,952) + CNN (27,400)",
+    "context_dim": 7,
+    "context_signals": "Trend, Volatility, Periodicity, Recent Baseline Error, 3D Detached Disagreement",
+    "router": "Conservative Bounded Router (rho=0.20)",
+    "training_protocol": "AdamW (lr=1e-3), GradClip (1.0), ReduceLROnPlateau, Auxiliary Loss (0.10), Entropy (0.0001)",
+    "total_params": 121579
+  },
+  "benchmark_summary": [
+    {
+      "model": "Original_CAEGNet_V1",
+      "mae_mean": 247.86830129726596,
+      "mae_std": 4.393090314640285,
+      "rmse_mean": 331.4334652559554,
+      "rmse_std": 3.14328479109575,
+      "r2_mean": 0.8746177860885493,
+      "r2_std": 0.002383516838499691,
+      "mape_mean": 4.609724242720418,
+      "mape_std": 0.10904378385211955
+    },
+    {
+      "model": "Standalone_TCN",
+      "mae_mean": 254.51610857075724,
+      "mae_std": 1.8423696420155542,
+      "rmse_mean": 344.6440207556024,
+      "rmse_std": 6.4260749903336,
+      "r2_mean": 0.8643954574208091,
+      "r2_std": 0.005064236401873565,
+      "mape_mean": 4.678131642428839,
+      "mape_std": 0.0350131179766399
+    },
+    {
+      "model": "CAEGNet_Phase5_Candidate",
+      "mae_mean": 272.6511446575969,
+      "mae_std": 15.955956624771499,
+      "rmse_mean": 366.2236525709037,
+      "rmse_std": 17.870473082328573,
+      "r2_mean": 0.8466332392889051,
+      "r2_std": 0.014911086170373735,
+      "mape_mean": 5.008958394410212,
+      "mape_std": 0.3164125120652626
+    },
+    {
+      "model": "Standalone_LSTM",
+      "mae_mean": 292.65595111011663,
+      "mae_std": 19.60471507462067,
+      "rmse_mean": 404.35199203937805,
+      "rmse_std": 26.58712898487215,
+      "r2_mean": 0.8127461957713299,
+      "r2_std": 0.02480373295070227,
+      "mape_mean": 5.403208907948605,
+      "mape_std": 0.38142221871145415
+    },
+    {
+      "model": "Static_Equal_Ensemble",
+      "mae_mean": 300.8789602241339,
+      "mae_std": 55.024914016864905,
+      "rmse_mean": 406.4600620890198,
+      "rmse_std": 53.114857855074284,
+      "r2_mean": 0.8088648696612971,
+      "r2_std": 0.05274453383709155,
+      "mape_mean": 5.636440428787195,
+      "mape_std": 1.1832144104229174
+    },
+    {
+      "model": "Standalone_CNN",
+      "mae_mean": 502.26593067576016,
+      "mae_std": 164.66625432980086,
+      "rmse_mean": 656.5830600151698,
+      "rmse_std": 176.52372227072053,
+      "r2_mean": 0.4795186085100502,
+      "r2_std": 0.2999839637146761,
+      "mape_mean": 9.683279124359299,
+      "mape_std": 3.5352969817073774
+    }
+  ],
+  "statistical_tests": [
+    {
+      "model_1": "CAEGNet_Phase5_Candidate",
+      "model_2": "Standalone_CNN",
+      "mean_paired_diff_mw": -199.1403926633439,
+      "ci_95_low": -227.52343170205495,
+      "ci_95_high": -170.75735362463286,
+      "cohen_d": -1.8889419043022186,
+      "paired_t_stat": -13.75170463909137,
+      "paired_t_pval": 5.901142494041335e-19,
+      "wilcoxon_stat": 4.0,
+      "wilcoxon_pval": 3.000709076479719e-10,
+      "dm_hln_stat": -111.88734347349107,
+      "dm_hln_pval": 0.0,
+      "holm_bonferroni_thresh": 0.01,
+      "statistically_significant": true
+    },
+    {
+      "model_1": "CAEGNet_Phase5_Candidate",
+      "model_2": "Static_Equal_Ensemble",
+      "mean_paired_diff_mw": -30.90102127363097,
+      "ci_95_low": -43.68895827060599,
+      "ci_95_high": -18.113084276655954,
+      "cohen_d": -0.6505646805532255,
+      "paired_t_stat": -4.736182365509275,
+      "paired_t_pval": 1.720666885169471e-05,
+      "wilcoxon_stat": 261.0,
+      "wilcoxon_pval": 5.731973068076039e-05,
+      "dm_hln_stat": -39.469792989816455,
+      "dm_hln_pval": 0.0,
+      "holm_bonferroni_thresh": 0.0125,
+      "statistically_significant": true
+    },
+    {
+      "model_1": "CAEGNet_Phase5_Candidate",
+      "model_2": "Original_CAEGNet_V1",
+      "mean_paired_diff_mw": 21.173565702618294,
+      "ci_95_low": 11.063725726660417,
+      "ci_95_high": 31.283405678576173,
+      "cohen_d": 0.5638555453342606,
+      "paired_t_stat": 4.10493033280676,
+      "paired_t_pval": 0.0001431939947261486,
+      "wilcoxon_stat": 286.0,
+      "wilcoxon_pval": 0.00014338074678705133,
+      "dm_hln_stat": 34.043446792588135,
+      "dm_hln_pval": 0.0,
+      "holm_bonferroni_thresh": 0.016666666666666666,
+      "statistically_significant": true
+    },
+    {
+      "model_1": "CAEGNet_Phase5_Candidate",
+      "model_2": "Standalone_TCN",
+      "mean_paired_diff_mw": 18.439842943875295,
+      "ci_95_low": 7.006668454056955,
+      "ci_95_high": 29.873017433693633,
+      "cohen_d": 0.43421869980276473,
+      "paired_t_stat": 3.161159851289021,
+      "paired_t_pval": 0.002620905079158002,
+      "wilcoxon_stat": 344.0,
+      "wilcoxon_pval": 0.001006147574359149,
+      "dm_hln_stat": 30.75306397784568,
+      "dm_hln_pval": 0.0,
+      "holm_bonferroni_thresh": 0.025,
+      "statistically_significant": true
+    },
+    {
+      "model_1": "CAEGNet_Phase5_Candidate",
+      "model_2": "Standalone_LSTM",
+      "mean_paired_diff_mw": -15.16377150337651,
+      "ci_95_low": -35.067313605620754,
+      "ci_95_high": 4.739770598867734,
+      "cohen_d": -0.20511385465210505,
+      "paired_t_stat": -1.4932514018832226,
+      "paired_t_pval": 0.1414146228343901,
+      "wilcoxon_stat": 545.0,
+      "wilcoxon_pval": 0.13119752069055934,
+      "dm_hln_stat": -16.530918996774705,
+      "dm_hln_pval": 0.0,
+      "holm_bonferroni_thresh": 0.05,
+      "statistically_significant": false
+    }
+  ]
+}

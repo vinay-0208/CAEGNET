@@ -654,3 +654,7 @@ def print_architecture_summary(model: CAEGNet):
         pct = (sub_cnt / counts["total_trainable"]) * 100.0 if counts["total_trainable"] > 0 else 0.0
         print(f"{name:30s} | {sub_cnt:20,d} | {pct:9.2f}%")
     print("=" * 70)
+
+
+# Canonical V1 Alias
+CAEGNetV1 = CAEGNet
