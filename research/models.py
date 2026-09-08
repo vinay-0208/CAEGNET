@@ -505,7 +505,125 @@ class CAEGNetV2(nn.Module):
 
 
 # =====================================================================
-# 6. Tripartite Training Loss Function
+# 6. Standard Input-Conditioned MoE Baseline
+# =====================================================================
+
+class StandardInputMoE(nn.Module):
+    """
+    Standard Input-Conditioned Mixture-of-Experts Baseline.
+
+    Shares identical expert capacity and backbones with CAEG-Net V2:
+    - Expert 1: GatedRecurrentExpert (GRU-54)
+    - Expert 2: MultiScaleCausalTCNExpert (TCN-34)
+    - Expert 3: PatchTemporalExpert (PatchLinear)
+
+    The router receives the raw lookback load vector X in R^168 directly
+    via an MLP encoder rather than explicit domain context features C or
+    inter-expert disagreement feedback.
+    """
+    def __init__(
+        self,
+        input_dim: int = 1,
+        horizon: int = 24,
+        seq_len: int = 168,
+        gru_hidden: int = 54,
+        gru_layers: int = 2,
+        tcn_channels: int = 34,
+        tcn_kernel_size: int = 4,
+        tcn_dilations: Tuple[int, ...] = (1, 2, 4, 8, 16),
+        patch_len: int = 24,
+        patch_stride: int = 12,
+        patch_embed: int = 48,
+        patch_hidden: int = 96,
+        latent_dim: int = 32,
+        dropout: float = 0.1,
+        temperature: float = 0.5,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.horizon = horizon
+        self.seq_len = seq_len
+        self.temperature = temperature
+
+        # Same 3 complementary experts as CAEG-Net V2
+        self.gru_expert = GatedRecurrentExpert(
+            input_dim=input_dim,
+            hidden_dim=gru_hidden,
+            num_layers=gru_layers,
+            horizon=horizon,
+            dropout=dropout,
+        )
+        self.tcn_expert = MultiScaleCausalTCNExpert(
+            in_channels=input_dim,
+            channels=tcn_channels,
+            kernel_size=tcn_kernel_size,
+            dilations=tcn_dilations,
+            horizon=horizon,
+            dropout=dropout,
+        )
+        self.patch_expert = PatchTemporalExpert(
+            seq_len=seq_len,
+            patch_len=patch_len,
+            stride=patch_stride,
+            embed_dim=patch_embed,
+            hidden_dim=patch_hidden,
+            horizon=horizon,
+            dropout=dropout,
+        )
+
+        # Raw input lookback encoder: Linear(168, 32) -> ReLU -> Dropout -> Linear(32, 32) -> ReLU
+        self.input_encoder = nn.Sequential(
+            nn.Linear(seq_len * input_dim, latent_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(latent_dim, latent_dim),
+            nn.ReLU(),
+        )
+        self.router = ContextAdaptiveRouter(
+            latent_dim=latent_dim,
+            num_experts=3,
+            dropout=dropout,
+            temperature=temperature,
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: Optional[torch.Tensor] = None,  # c is ignored by design
+        temperature: Optional[float] = None,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        y1 = self.gru_expert(x)
+        y2 = self.tcn_expert(x)
+        y3 = self.patch_expert(x)
+
+        # Flatten raw historical load sequence [B, 168, 1] -> [B, 168]
+        x_flat = x.view(x.size(0), -1)
+        e = self.input_encoder(x_flat)
+        weights = self.router(e, temperature=temperature)
+
+        w1 = weights[:, 0:1]
+        w2 = weights[:, 1:2]
+        w3 = weights[:, 2:3]
+        y_fused = w1 * y1 + w2 * y2 + w3 * y3
+
+        if return_diagnostics:
+            expert_dict = {
+                "gru": y1,
+                "tcn": y2,
+                "patch": y3,
+            }
+            diag = {
+                "expert_predictions": expert_dict,
+                "weights": weights,
+            }
+            return y_fused, weights, diag
+        else:
+            return y_fused
+
+
+# =====================================================================
+# 7. Tripartite Training Loss Function
 # =====================================================================
 
 def compute_caeg_v2_loss(
@@ -545,7 +663,7 @@ def compute_caeg_v2_loss(
 
 
 # =====================================================================
-# 7. Helper: Parameter Counting Utility
+# 8. Helper: Parameter Counting Utility
 # =====================================================================
 
 def count_parameters(model: nn.Module) -> Dict[str, int]:
@@ -565,6 +683,8 @@ def count_parameters(model: nn.Module) -> Dict[str, int]:
         breakdown["patch_expert"] = sum(p.numel() for p in model.patch_expert.parameters())
     if hasattr(model, "context_encoder"):
         breakdown["context_encoder"] = sum(p.numel() for p in model.context_encoder.parameters())
+    if hasattr(model, "input_encoder"):
+        breakdown["input_encoder"] = sum(p.numel() for p in model.input_encoder.parameters())
     if hasattr(model, "router"):
         breakdown["router"] = sum(p.numel() for p in model.router.parameters())
 
