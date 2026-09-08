@@ -1,0 +1,6 @@
+Candidate_ID,Model_Name,Context_Type,Forecast_Aware,Total_Context_Dim,Parameters,Val_MSE_Scaled,Test_MAE_MW,Test_RMSE_MW,Test_MSE_MW2,Test_MAPE_pct,Test_R2,Actual_Epochs,Best_Epoch,Train_Time_s,Inference_Time_s,Peak_VRAM_MB
+Variant_A_V1_Canonical,CAEG-Net V1 Canonical (4D Operational),4d,False,4,121531,0.40495,251.53,341.71,116766.43,4.63,0.8667,11,5,13.3,0.082,115.1
+Variant_B_No_Recent_Error,"CAEG-Net (No Recent Error, 3D Operational)",3d,False,3,121515,0.39663,253.53,341.39,116544.43,4.71,0.867,11,5,12.8,0.08,116.1
+Variant_C_Calendar_Context,CAEG-Net Calendar-Context (8D Context),8d,False,8,121595,0.4002,268.25,357.3,127664.5,4.91,0.8543,16,10,19.6,0.097,116.1
+Variant_D_Forecast_Aware,CAEG-Net Forecast-Aware Routing (7D Context),4d,True,7,121579,0.39476,253.8,337.98,114227.2,4.73,0.8696,14,8,18.1,0.091,116.1
+Variant_E_Calendar_Forecast_Aware,CAEG-Net Calendar + Forecast-Aware (11D Context),8d,True,11,121643,0.41717,276.69,364.33,132733.06,5.21,0.8485,14,8,20.7,0.107,116.1

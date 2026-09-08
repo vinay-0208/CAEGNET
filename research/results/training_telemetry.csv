@@ -1,0 +1,11 @@
+Model,Parameters,Avg_Train_Time_s,Inference_Latency_s,Avg_Epochs_Trained,Peak_VRAM_MB,Compute_Device,Batch_Size
+[Baseline] Persistence_Naive24,0,0.0,0.001,0.0,0.0,CPU,64
+[Baseline] LSTM_Standalone,56152,90.4,0.008,14.0,82.0,GPU/CPU,64
+[Baseline] TCN_Standalone,36952,108.5,0.012,10.0,68.0,GPU/CPU,64
+[Baseline] CNN_Standalone,27400,18.5,0.006,19.0,54.0,GPU/CPU,64
+[Baseline] Static_Equal_Ensemble,120504,217.4,0.026,0.0,120.0,GPU/CPU,64
+[Baseline] Standard_Input_MoE,126011,186.8,0.015,7.0,125.0,GPU/CPU,64
+[Research] CAEG-Net Calendar-Context (Variant C),121595,23.2,0.014,13.4,116.1,NVIDIA RTX 4050 (CUDA),64
+[Research] CAEG-Net Forecast-Aware (Variant D),121579,24.1,0.014,12.8,116.1,NVIDIA RTX 4050 (CUDA),64
+[Research] CAEG-Net No Recent Error (Variant B),121515,19.0,0.014,11.6,116.1,NVIDIA RTX 4050 (CUDA),64
+[Research] CAEG-Net V1 (4D Operational),121531,17.2,0.014,12.2,115.9,NVIDIA RTX 4050 (CUDA),64

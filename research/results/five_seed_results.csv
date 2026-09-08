@@ -1,0 +1,21 @@
+variant_id,model_name,seed,MAE_MW,RMSE_MW,MSE_MW2,MAPE_pct,R2,parameters,actual_epochs,best_epoch,best_val_mse,train_time_s,peak_vram_mb
+CAEG_Net_V1_Canonical,CAEG-Net V1 (4D Operational),42,249.56,339.12,115004.1,4.6,0.8687,121531,11,5,0.40488,13.7,115.1
+CAEG_Net_V1_Canonical,CAEG-Net V1 (4D Operational),123,258.84,342.09,117025.18,4.91,0.8664,121531,12,6,0.37757,15.7,116.1
+CAEG_Net_V1_Canonical,CAEG-Net V1 (4D Operational),999,250.22,334.49,111883.69,4.59,0.8723,121531,15,9,0.37414,21.2,116.1
+CAEG_Net_V1_Canonical,CAEG-Net V1 (4D Operational),2024,265.53,351.4,123484.39,4.88,0.8591,121531,13,7,0.4357,20.0,116.1
+CAEG_Net_V1_Canonical,CAEG-Net V1 (4D Operational),3407,265.94,345.8,119578.65,5.08,0.8635,121531,10,4,0.34665,15.6,116.1
+CAEG_Net_Forecast_Aware,CAEG-Net Forecast-Aware (Variant D),42,251.15,341.43,116577.23,4.62,0.8669,121579,11,5,0.4045,20.4,116.1
+CAEG_Net_Forecast_Aware,CAEG-Net Forecast-Aware (Variant D),123,252.61,337.65,114010.9,4.78,0.8699,121579,12,6,0.36196,22.8,116.1
+CAEG_Net_Forecast_Aware,CAEG-Net Forecast-Aware (Variant D),999,257.31,342.0,116967.33,4.76,0.8665,121579,18,12,0.38469,37.1,116.1
+CAEG_Net_Forecast_Aware,CAEG-Net Forecast-Aware (Variant D),2024,252.8,336.36,113138.76,4.67,0.8709,121579,13,7,0.42365,24.0,116.1
+CAEG_Net_Forecast_Aware,CAEG-Net Forecast-Aware (Variant D),3407,269.79,350.01,122507.18,5.16,0.8602,121579,10,4,0.36779,16.3,116.1
+CAEG_Net_Calendar_Context,CAEG-Net Calendar-Context (Variant C),42,266.44,352.49,124246.08,4.9,0.8582,121595,16,10,0.40407,22.1,116.1
+CAEG_Net_Calendar_Context,CAEG-Net Calendar-Context (Variant C),123,264.34,347.26,120588.73,4.93,0.8624,121595,15,9,0.42379,26.6,116.1
+CAEG_Net_Calendar_Context,CAEG-Net Calendar-Context (Variant C),999,270.8,355.07,126074.81,4.93,0.8561,121595,13,7,0.36838,25.2,116.1
+CAEG_Net_Calendar_Context,CAEG-Net Calendar-Context (Variant C),2024,274.3,362.03,131067.1,5.1,0.8504,121595,13,7,0.42867,25.0,116.1
+CAEG_Net_Calendar_Context,CAEG-Net Calendar-Context (Variant C),3407,278.01,359.05,128915.39,5.31,0.8529,121595,10,4,0.37472,17.2,116.1
+CAEG_Net_No_Recent_Error,CAEG-Net No Recent Error (Variant B),42,251.49,340.4,115872.35,4.64,0.8678,121515,11,5,0.40214,19.4,116.1
+CAEG_Net_No_Recent_Error,CAEG-Net No Recent Error (Variant B),123,255.26,339.85,115498.88,4.83,0.8682,121515,12,6,0.41425,21.4,116.1
+CAEG_Net_No_Recent_Error,CAEG-Net No Recent Error (Variant B),999,249.39,334.65,111987.6,4.69,0.8722,121515,12,6,0.37045,24.5,116.1
+CAEG_Net_No_Recent_Error,CAEG-Net No Recent Error (Variant B),2024,259.49,344.01,118340.93,4.84,0.8649,121515,13,7,0.40343,15.6,116.1
+CAEG_Net_No_Recent_Error,CAEG-Net No Recent Error (Variant B),3407,276.34,356.2,126879.2,5.3,0.8552,121515,10,4,0.34995,14.2,116.1

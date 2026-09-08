@@ -1,0 +1,45 @@
+{
+  "dataset": "GEFCom2014_Load",
+  "data_path": "data/GEFCom2014/gefcom2014_load.csv",
+  "temporal_setup": {
+    "lookback_hours": 168,
+    "forecast_horizon_hours": 24,
+    "frequency": "1h"
+  },
+  "partition_protocol": {
+    "train_ratio": 0.70,
+    "val_ratio": 0.15,
+    "test_ratio": 0.15,
+    "scaler_fit_partition": "train_only",
+    "leakage_guard": "chronological_partition_boundary_lookback"
+  },
+  "context_specification": {
+    "operational_features": [
+      "trend_slope",
+      "window_volatility",
+      "lag24_autocorrelation",
+      "out_of_sample_recent_error"
+    ],
+    "context_dim": 4,
+    "forecast_aware_disagreement": true
+  },
+  "training_hyperparameters": {
+    "batch_size": 64,
+    "optimizer": "AdamW",
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "loss": "MSELoss",
+    "scheduler": "StepLR",
+    "scheduler_step_size": 15,
+    "scheduler_gamma": 0.5,
+    "max_epochs": 25,
+    "early_stopping_patience": 6
+  },
+  "evaluation_metrics": [
+    "MAE",
+    "RMSE",
+    "MSE",
+    "MAPE",
+    "R2"
+  ]
+}

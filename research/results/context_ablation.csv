@@ -1,0 +1,8 @@
+Ablation_ID,Description,MAE (MW),RMSE (MW),R^2,MAPE (%),Delta_MAE_MW,Relative_Impact
+Full_Context_7D,Full Context (7D Complete),251.15,341.43,0.8275,4.64,0.0,BASELINE
+Ablate_Trend,Ablate Trend (Zero-out Feature 0),251.15,341.43,0.8275,4.64,-0.0,IMPROVED
+Ablate_Volatility,Ablate Volatility (Zero-out Feature 1),252.14,342.5,0.825,4.66,0.98,DEGRADED
+Ablate_Periodicity,Ablate Periodicity (Zero-out Feature 2),254.89,345.49,0.818,4.71,3.74,DEGRADED
+Ablate_Recent_Error,Ablate Recent Error (Zero-out Feature 3),252.2,342.87,0.824,4.66,1.05,DEGRADED
+Ablate_Disagreement,Ablate Disagreement (Zero-out Features 4-6),248.28,330.81,0.8817,4.62,-2.88,IMPROVED
+Permutation_Negative_Control,Context Shuffling (Negative Control),250.47,341.04,0.8278,4.63,-0.68,IMPROVED

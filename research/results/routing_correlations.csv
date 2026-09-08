@@ -1,0 +1,19 @@
+Context_Variable,Expert,Pearson_r,Pearson_pval,Spearman_rho,Spearman_pval,Significance
+Trend,LSTM_Expert,-0.3857,0.00e+00,-0.493,3.52e-80,***
+Trend,TCN_Expert,-0.4178,0.00e+00,-0.4867,6.32e-78,***
+Trend,CNN_Expert,0.4028,0.00e+00,0.4897,5.22e-79,***
+Volatility,LSTM_Expert,-0.2728,1.60e-23,-0.336,1.64e-35,***
+Volatility,TCN_Expert,-0.2462,2.53e-19,-0.2806,7.65e-25,***
+Volatility,CNN_Expert,0.2598,2.10e-21,0.3027,7.84e-29,***
+Periodicity (Lag-24),LSTM_Expert,-0.0271,3.31e-01,0.1386,5.57e-07,n.s.
+Periodicity (Lag-24),TCN_Expert,-0.0048,8.64e-01,0.146,1.32e-07,n.s.
+Periodicity (Lag-24),CNN_Expert,0.0157,5.71e-01,-0.1435,2.17e-07,n.s.
+Recent_Forecast_Error,LSTM_Expert,0.2855,1.07e-25,-0.0054,8.46e-01,***
+Recent_Forecast_Error,TCN_Expert,0.2902,1.61e-26,0.0363,1.92e-01,***
+Recent_Forecast_Error,CNN_Expert,-0.2884,3.27e-26,-0.0202,4.69e-01,***
+Hour_of_Day,LSTM_Expert,-0.0179,5.21e-01,-0.0196,4.82e-01,n.s.
+Hour_of_Day,TCN_Expert,-0.0215,4.39e-01,-0.0164,5.56e-01,n.s.
+Hour_of_Day,CNN_Expert,0.0198,4.77e-01,0.0175,5.30e-01,n.s.
+Day_of_Week,LSTM_Expert,0.0204,4.63e-01,-0.0074,7.90e-01,n.s.
+Day_of_Week,TCN_Expert,0.0258,3.54e-01,-0.0078,7.80e-01,n.s.
+Day_of_Week,CNN_Expert,-0.0232,4.05e-01,0.0075,7.87e-01,n.s.

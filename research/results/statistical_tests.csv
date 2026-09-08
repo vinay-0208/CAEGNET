@@ -1,0 +1,9 @@
+Comparison,Evaluation_Granularity,Mean_Delta_MAE_MW,Bootstrap_95_CI,t_statistic,p_value,Significance_Status
+Forecast-Aware vs. Static Equal Ensemble,Seed-Level (N=5),38.75,"[22.57, 54.93]",4.0642,1.5296e-02,Significant (p < 0.05)
+Forecast-Aware vs. Standalone TCN Expert,Seed-Level (N=5),3.13,"[-8.87, 12.58]",0.4943,6.4700e-01,Observed / Not Sig (p >= 0.05)
+Forecast-Aware vs. Standard Input-MoE,Seed-Level (N=5),19.57,"[8.74, 32.20]",2.9624,4.1456e-02,Significant (p < 0.05)
+Forecast-Aware vs. CAEG-Net V1 (Research),Seed-Level (N=5),1.29,"[-4.69, 8.11]",0.3565,7.3946e-01,Observed / Not Sig (p >= 0.05)
+Forecast-Aware vs. CAEG-Net V1 (Canonical),Seed-Level (N=5),-5.3,"[-17.67, 7.08]",-0.7624,4.8829e-01,Observed / Not Sig (p >= 0.05)
+Forecast-Aware vs. No Recent Error,Seed-Level (N=5),1.66,"[-3.35, 5.83]",0.62,5.6883e-01,Observed / Not Sig (p >= 0.05)
+CAEG-Net V1 (Canonical) vs. Static Ensemble,Seed-Level (N=5),44.05,"[35.92, 52.57]",9.1219,8.0128e-04,Significant (p < 0.05)
+Forecast-Aware vs. V1 (Non-Overlapping 24h Blocks),Block-Level (53 Episodes),-1.58,"[-5.41, 2.25]",-0.8018,4.2633e-01,Observed / Not Sig (p >= 0.05)
