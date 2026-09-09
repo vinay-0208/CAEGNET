@@ -1,0 +1,8 @@
+router_id,description,val_mae_mw,val_rmse_mw,val_r2,params,best_epoch,gain_vs_r0_mw,improved_over_r0
+R4_Bounded_Rho_0.50,Conservative bounded routing (rho=0.50),397.2382452530937,506.8126782115687,0.8159353184126119,121531,7,26.053783151429116,True
+R4_Bounded_Rho_0.10,Conservative bounded routing (rho=0.10),398.5254315116367,514.6851200318529,0.8101726660975485,121531,7,24.76659689288607,True
+R4_Bounded_Rho_0.20,Conservative bounded routing (rho=0.20),399.7449996138528,509.1028229627304,0.8142680863900951,121531,7,23.54702879066997,True
+R4_Bounded_Rho_0.30,Conservative bounded routing (rho=0.30),401.0878334733274,519.6392284562521,0.8065007074771963,121531,7,22.20419493119539,True
+R0_Canonical_V1,Canonical V1 Softmax router (4D context),423.2920284045228,544.1365920029093,0.7878263793808682,121531,7,0.0,False
+R0_No_Recent_Error_3D,"Router with Trend, Volatility, Periodicity only (3D context)",431.12562131021883,556.3627305734791,0.7781846571379789,121515,11,-7.833592905696037,False
+R3_Detached_Disagreement,4D context + 3D detached pairwise expert disagreement (7D total),434.94770288639376,547.8572467236783,0.7849148908744669,121579,9,-11.65567448187096,False

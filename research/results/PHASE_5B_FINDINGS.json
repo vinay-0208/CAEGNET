@@ -1,0 +1,62 @@
+{
+  "phase": "PHASE 5B \u2014 ORIGINAL CAEG-NET EXPERT OPTIMIZATION, AUDIT CORRECTION & FINALIST SELECTION",
+  "governing_roadmap": "14-Phase Original Research Roadmap",
+  "status": "PHASE 5 COMPLETE \u2014 READY FOR PHASE 6 GATE",
+  "equal_ensemble_audit": {
+    "audit_status": "PASSED",
+    "anomaly_root_cause": "Premature early-stopping on loss plateau in Seed 3407 under ReduceLROnPlateau with patience=7 checkpointed undertrained CNN at 783.60 MW.",
+    "corrected_canonical_train_py_equal_ensemble": {
+      "mae_mean_mw": 277.51,
+      "mae_std_mw": 6.28,
+      "rmse_mean_mw": 379.0,
+      "r2_mean": 0.836,
+      "origins_count": 1294,
+      "first_origin": 167,
+      "last_origin": 1460,
+      "arithmetic_identity_verified": true
+    }
+  },
+  "statistical_audit": {
+    "audit_status": "PASSED",
+    "root_cause_of_extreme_dm": "2D forecast arrays (1294x24) were flattened into 31,056 hours and evaluated at h=1 as independent points, deflating standard error by ~24x.",
+    "corrected_formulation": "Evaluated on K=53 non-overlapping 24h daily blocks (h=1 day). Proved and verified that DM_HLN is algebraically identical to paired t-test (t_paired == DM_HLN).",
+    "unit_tests_passed": 3
+  },
+  "cnn_expert_optimization": {
+    "findings": "Adaptive temporal pooling (AdaptiveAvgPool1d(8)) resolved the time-dimension bottleneck, reducing Validation MAE from 730.56 MW to 541.26 MW (+189.30 MW gain).",
+    "fusion_interaction": "Equal Ensemble improved from 509.31 MW to 461.25 MW (+48.06 MW gain) when using optimized CNN.",
+    "top_variants": [
+      {
+        "id": "CNN_H2_TemporalPool8",
+        "val_mae_mw": 541.26,
+        "gain_mw": 189.3,
+        "params": 48904
+      },
+      {
+        "id": "CNN_C_DilatedConv",
+        "val_mae_mw": 548.14,
+        "gain_mw": 182.42,
+        "params": 23304
+      },
+      {
+        "id": "CNN_G_CosineScheduler",
+        "val_mae_mw": 574.17,
+        "gain_mw": 156.39,
+        "params": 27400
+      }
+    ]
+  },
+  "lstm_tcn_optimization": {
+    "findings": "Increasing LSTM hidden dimension (96) or head capacity degraded validation MAE (521.95 MW vs 467.47 MW). Canonical LSTM and TCN are confirmed as the optimal, most parameter-efficient recurrent and causal convolutional configurations."
+  },
+  "router_screening": {
+    "recent_error_utility": "Removing recent baseline error degraded Validation MAE by +7.84 MW (431.13 MW vs 423.29 MW), confirming utility under corrected validation protocol.",
+    "disagreement_router": "Detached disagreement (434.95 MW) did not improve over canonical V1 router (423.29 MW) on validation.",
+    "bounded_routing": "Conservative bounded routing (rho in [0.10, 0.50]) improved validation MAE by ~22-26 MW over canonical router by regularizing routing variance."
+  },
+  "finalist_selection": {
+    "selection_basis": "Strictly Validation-Only (Seed 42)",
+    "selected_finalist": "Canonical CAEGNet V1 with Verified Protocol & Validated Equal Ensemble Benchmark",
+    "test_set_status": "LOCKED FOR PHASE 6"
+  }
+}

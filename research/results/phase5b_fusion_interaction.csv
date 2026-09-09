@@ -1,0 +1,5 @@
+setup,val_mae_mw
+Standalone_CNN_Control,730.563876466982
+Standalone_CNN_H2_TemporalPool8,541.2596662266852
+Equal_Ensemble_Control_CNN,509.3080492447112
+Equal_Ensemble_CNN_H2_TemporalPool8,461.2480848293707

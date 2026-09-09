@@ -52,14 +52,26 @@ All comparisons are evaluated across $K=53$ independent daily blocks with Holm-B
 
 ---
 
-## 4. Architectural Conclusions & Phase 6 Recommendations
+## 4. Architectural Conclusions & Phase Roadmap Alignment
 
-1. **Reaffirmation of Canonical CAEG-Net V1**:
-   - The original CAEG-Net V1 architecture is mathematically and empirically sound.
+1. **Reaffirmation of Canonical CAEG-Net V1 Architecture**:
+   - The original CAEG-Net V1 architecture (LSTM + TCN + CNN) is mathematically sound.
    - Its unconstrained softmax gating is uniquely suited to prune asymmetric/weak experts while exploiting temporal context.
-2. **Resolution of the Undertrained CNN Mystery**:
-   - The severe historical degradation of the CNN expert ($502$ MW) was the primary reason CAEG-Net V1 appeared to outperform static ensembling so dramatically.
-   - When constructing multi-expert architectures, future iterations should ensure individual expert backbones are well-matched in capacity and representational power before applying equal regularization.
-3. **Roadmap Readiness for Phase 6**:
-   - Phase 5 is officially complete with clean, reproducible, multi-seed results and non-overlapping daily statistical hypothesis testing.
-   - Next Phase: Proceed to **Phase 6: Multi-Dataset Generalization** (evaluating on GEFCom2014 and European ISO load benchmarks).
+2. **Reclassification of Exploratory Phase 5 Synthesized Candidate**:
+   - The previously synthesized combined candidate (with bounded routing, disagreement, and auxiliary losses) is reclassified as:
+     > *Exploratory combined candidate — rejected as a finalist because its construction was not supported by the validation-only screening protocol.*
+3. **Roadmap Alignment (Governing 14-Phase Research Roadmap)**:
+   - PHASE 1 — Methodology Audit (Complete)
+   - PHASE 2 — Formal Specification (Complete)
+   - PHASE 3 — Architecture Prototype (Complete)
+   - PHASE 4 — PJM Screening (Complete)
+   - **PHASE 5 — Controlled Ablations / Original CAEG-Net Optimization and Validation (ACTIVE — Phase 5B)**
+   - PHASE 6 — Five-Seed Finalists (Locked, Pending Phase 5 Gate)
+   - PHASE 7 — Strong Baselines
+   - PHASE 8 — GEFCom2014
+   - PHASE 9 — Dataset 3
+   - PHASE 10 — Multi-Horizon Experiments
+   - PHASE 11 — Regime / Difficulty Analysis
+   - PHASE 12 — Statistical + Computational Analysis
+   - PHASE 13 — Final Paper Model
+   - PHASE 14 — Paper

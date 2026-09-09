@@ -1,0 +1,6 @@
+model,description,val_mae_mw,val_rmse_mw,params,best_epoch
+LSTM_Control,Canonical 2-layer LSTM (dim=64),467.47071546724567,613.976850532968,56152,30
+LSTM_Wider_96,Wider hidden dimension (hidden=96),521.9487186767956,679.5620110387993,120280,14
+LSTM_HeadCap,Expanded MLP head (64->128->64->24),524.762263907777,679.1442918446867,68568,16
+TCN_Control,Canonical 6-stage TCN (channels=32),444.402370061781,584.3674898538678,36952,11
+TCN_Wider_48,Wider channel width (channels=48),445.59025881893547,572.4375569755027,81528,9
