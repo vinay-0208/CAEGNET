@@ -127,5 +127,79 @@
     "march_spring_forward": "Values between 01:00 and 02:00 set to 0.0 for all clients (96 intervals maintained)",
     "october_fall_back": "Values between 01:00 and 02:00 aggregate consumption of 2 hours (96 intervals maintained)",
     "uniform_day_length": "Every calendar day has exactly 96 measures (24 * 4)"
+  },
+  "cohort_audit": {
+    "total_clients_in_dataset": 370,
+    "onboarding_progression": {
+      "2011_01_01_row0": 158,
+      "2011_end": 160,
+      "2012_01_01_00_15_00": 320,
+      "2012_01_08_early_jan": 321,
+      "2012_end": 333,
+      "2013_end": 351,
+      "2014_end": 370
+    },
+    "zero_structure_finding": "212 clients exhibit solid leading zero blocks before first non-zero observation. Post-activation median zero rate is 0.01% (mean 1.19%). Leading zeros represent uncreated meters as confirmed by official UCI documentation.",
+    "evaluated_cohort_definitions": [
+      {
+        "name": "All 370 Clients (all_370)",
+        "client_count": 370,
+        "flaw": "Non-stationary cohort membership. 49 clients onboarded during 2012-2014, causing artificial +5.70% aggregate demand growth due to meter addition."
+      },
+      {
+        "name": "Fixed Cohort 320 Clients (cohort_320, RECOMMENDED)",
+        "client_count": 320,
+        "inclusion_rule": "first_nonzero_ts <= '2012-01-01 00:15:00'",
+        "period": "2012-01-01 to 2014-12-31 (26,304 hours)",
+        "merits": "100% of the 320 clients are established on or before day 1 hour 1 of the study period. Zero onboarding expansion occurs during 2012-2014. Represents 99.76% of total 2012 load."
+      },
+      {
+        "name": "Canonical Literature Cohort 321 (cohort_321)",
+        "client_count": 321,
+        "inclusion_rule": "first_nonzero_ts <= '2012-01-08 00:00:00'",
+        "period": "2012-01-08 to 2014-12-31 (26,136 hours) or 2012-01-01 to 2014-12-31 with MT_146 6.5-day leading zeros",
+        "merits": "Aligns with LSTNet (Lai et al. 2018) and DeepAR (Salinas et al. 2020) 321-client benchmark. Differs from Cohort 320 by exactly 1 client (MT_146, which activated 2012-01-07 16:30:00)."
+      }
+    ],
+    "comparative_descriptive_stats_2012_2014": {
+      "all_370_clients": {
+        "hours": 26304,
+        "mean_mw": 219.8154,
+        "std_mw": 81.6268,
+        "min_mw": 33.1015,
+        "q25_mw": 143.3939,
+        "median_mw": 224.9771,
+        "q75_mw": 267.8651,
+        "max_mw": 447.5793,
+        "annual_means_mw": {
+          "2012": 212.3189,
+          "2013": 222.7368,
+          "2014": 224.4112
+        },
+        "growth_2012_to_2014_pct": 5.7
+      },
+      "fixed_cohort_320_clients": {
+        "hours": 26304,
+        "mean_mw": 203.4974,
+        "std_mw": 79.7306,
+        "min_mw": 28.0701,
+        "q25_mw": 127.3003,
+        "median_mw": 210.366,
+        "q75_mw": 249.9086,
+        "max_mw": 446.8423,
+        "annual_means_mw": {
+          "2012": 211.8091,
+          "2013": 200.4891,
+          "2014": 198.1713
+        },
+        "growth_2012_to_2014_pct": -6.44
+      }
+    },
+    "dst_audit_empirical_confirmation": {
+      "march_spring_forward": "Confirmed. Values between 01:00:00 and 01:45:00 drop to near-zero (e.g. 0.4 - 4.4 MW sum across all clients) because civil hour did not exist and was filled with zeros by data donor to maintain exactly 96 intervals per day.",
+      "october_fall_back": "Confirmed. Values between 01:00:00 and 01:45:00 double (e.g. 240-275 MW vs 120-135 MW) because repeated civil hour was aggregated together into the four 15-minute intervals.",
+      "calendar_integrity": "Every day has strictly 96 intervals. Total hourly count for 2012-2014 is exactly 26,304 hours (1,096 days * 24)."
+    },
+    "hourly_timestamp_convention": "Hour-Ending (e.g. 00:15, 00:30, 00:45, 01:00 are averaged to represent the hour ending at 01:00:00). First hourly timestamp: 2012-01-01 01:00:00. Last hourly timestamp: 2015-01-01 00:00:00."
   }
 }

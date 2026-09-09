@@ -2,27 +2,26 @@
 UCI ElectricityLoadDiagrams20112014 Dataset Adapter for CAEG-Net
 ================================================================
 Provides a reproducible, memory-efficient data loading and preprocessing adapter
-for the UCI ElectricityLoadDiagrams20112014 dataset.
+for the UCI ElectricityLoadDiagrams20112014 dataset with rigorous fixed-cohort selection.
 
-Dataset Provenance:
-- Source: UCI Machine Learning Repository (Dataset ID: 321, DOI: 10.24432/C58C86)
-- Donor: Artur Trindade (2015), University of Porto / INESC TEC
-- Raw Path: data/ElectricityLoadDiagrams20112014/LD2011_2014.txt
-- Raw Structure: 140,256 fifteen-minute intervals across 370 client meters (2011-01-01 to 2014-12-31)
-- Units: Power in kW per 15-minute interval (kWh = kW / 4)
-
-Scientific Aggregation & Formulation:
-- Aggregation: 4 consecutive 15-minute kW readings -> 1 hourly average kW reading:
+Phase 9A Methodological Correction:
+- Avoids non-stationary cohort contamination (where 49 clients onboarded during 2012-2014).
+- Implements the objective Fixed Cohort 320 rule:
+    Inclusion: first_active_timestamp <= "2012-01-01 00:15:00"
+- Invariant cohort membership (exactly 320 clients continuously active throughout 2012-2014).
+- Hourly aggregation via exact arithmetic mean of four 15-minute readings:
     P_hour = (P_15m1 + P_15m2 + P_15m3 + P_15m4) / 4.0
-- System Aggregate Load: Sum of all 370 clients (or active cohort) in MW (kW / 1000.0)
-- Horizon: 168-hour history -> 24-hour forecast
-- Temporal Split: Strictly chronological 70% train / 15% validation / 15% test
-- Scaling: In-sample only StandardScaler fitted strictly on training partition
-- Context: 4D context vector (trend, volatility, lag-24 periodicity, causal recent error)
+- Timestamp Convention: Hour-Ending (00:15, 00:30, 00:45, 01:00 -> 01:00:00).
+- Scale: System aggregate load in Megawatts (MW = kW / 1000.0).
+- Lookback: 168 hours -> 24 hours forecast.
+- Chronological Split: 70% train / 15% val / 15% test prior to windowing.
+- Scaler: In-sample only StandardScaler fitted strictly on training partition.
+- Context: 4D context vector (trend, volatility, lag-24 periodicity, causal recent error).
 """
 
 import os
-from typing import Dict, List, Optional, Tuple, Union
+import csv
+from typing import Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -39,23 +38,67 @@ from data_utils import (
 )
 
 
+def get_fixed_cohort_client_ids(
+    audit_csv_path: Optional[str] = None,
+    cohort: str = "cohort_320"
+) -> Set[str]:
+    """
+    Load pre-audited fixed cohort client IDs.
+    
+    Parameters:
+    -----------
+    audit_csv_path: Path to phase9_cohort_audit.csv
+    cohort: 'cohort_320' (320 clients active by 2012-01-01), 
+            'cohort_321' (321 clients active by 2012-01-08),
+            or 'all_370' (all clients)
+    """
+    if cohort == "all_370":
+        return set() # Empty set signals include all
+
+    if audit_csv_path is None:
+        audit_csv_path = os.path.join(
+            os.path.dirname(__file__), "results", "phase9_cohort_audit.csv"
+        )
+    
+    if not os.path.isfile(audit_csv_path):
+        raise FileNotFoundError(f"Cohort audit CSV not found at '{audit_csv_path}'. Run audit first.")
+
+    col_name = "included_in_fixed_cohort_320" if cohort == "cohort_320" else "included_in_cohort_321"
+    
+    cohort_ids = set()
+    with open(audit_csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get(col_name) == "YES":
+                cohort_ids.add(row["client_id"])
+                
+    if not cohort_ids:
+        raise ValueError(f"Cohort '{cohort}' returned 0 clients from '{audit_csv_path}'")
+        
+    return cohort_ids
+
+
 def stream_uci_hourly_aggregate_load(
     raw_path: str,
     unit: str = "MW",
-    start_year: int = 2011,
+    start_year: int = 2012,
+    cohort: str = "cohort_320",
+    audit_csv_path: Optional[str] = None,
     client_subset: Optional[List[str]] = None,
     max_hours: Optional[int] = None,
 ) -> pd.DataFrame:
     """
     Stream through raw 678 MB UCI file and compute hourly aggregated load
-    without loading the entire dataset into memory.
+    for a strictly invariant fixed client cohort without loading the full raw dataset.
 
     Parameters:
     -----------
     raw_path: Path to LD2011_2014.txt
     unit: 'MW' (divide kW by 1000) or 'kW'
-    start_year: 2011 (full 4-year, 35064 hours) or 2012 (stable 3-year, 26304 hours)
-    client_subset: Optional list of client column names to sum (default: all 370 clients)
+    start_year: 2012 (stable 3-year, 26304 hours) or 2011 (full 4-year, 35064 hours)
+    cohort: 'cohort_320' (default, invariant fixed cohort), 'cohort_321', or 'all_370'
+    audit_csv_path: Optional path to phase9_cohort_audit.csv
+    client_subset: Explicit client IDs if custom
     max_hours: Optional cutoff for lightweight testing
 
     Returns:
@@ -65,18 +108,26 @@ def stream_uci_hourly_aggregate_load(
     if not os.path.isfile(raw_path):
         raise FileNotFoundError(f"UCI Electricity raw dataset not found at '{raw_path}'")
 
+    # Determine client filter
+    if client_subset is not None:
+        target_clients = set(client_subset)
+    elif cohort in ("cohort_320", "cohort_321"):
+        target_clients = get_fixed_cohort_client_ids(audit_csv_path=audit_csv_path, cohort=cohort)
+    else:
+        target_clients = set() # all clients
+
     hourly_records = []
-    min_ts_str = f"{start_year}-01-01 00:00:00"
+    # Note: 00:00:00 on Jan 1 is the 24th hour of Dec 31 of prior year.
+    # The first interval of the calendar year is 00:15:00.
+    min_ts_str = f"{start_year}-01-01 00:15:00"
     
     with open(raw_path, 'r', encoding='utf-8') as f:
         header_line = f.readline().strip()
         cols = [c.strip().strip('"').strip("'") for c in header_line.split(';')]
         client_cols = cols[1:]
         
-        # If client subset specified, find their indices
-        if client_subset is not None:
-            subset_set = set(client_subset)
-            selected_indices = [i + 1 for i, c in enumerate(client_cols) if c in subset_set]
+        if target_clients:
+            selected_indices = [i + 1 for i, c in enumerate(client_cols) if c in target_clients]
         else:
             selected_indices = list(range(1, len(cols)))
 
@@ -91,11 +142,11 @@ def stream_uci_hourly_aggregate_load(
             parts = line.split(';')
             ts_str = parts[0].strip().strip('"').strip("'")
             
-            # Skip rows before start_year
+            # Skip rows before start_year 00:15:00
             if ts_str < min_ts_str:
                 continue
             
-            # Sum selected clients for this 15-minute row
+            # Sum selected cohort clients for this 15-minute interval
             row_sum = 0.0
             for idx in selected_indices:
                 val_str = parts[idx].strip().replace(',', '.')
@@ -106,6 +157,7 @@ def stream_uci_hourly_aggregate_load(
             
             if quarter_count == 4:
                 # 4 quarters = 1 hour. Average kW across the 4 quarters
+                # Timestamp assigned to the hour-ending observation (ts_str)
                 hourly_kw = acc_sum / 4.0
                 hourly_val = (hourly_kw / 1000.0) if unit == "MW" else hourly_kw
                 hourly_records.append({
@@ -139,6 +191,7 @@ class UCIElectricityDatasetAdapter:
         test_ratio: float = 0.15,
         unit: str = "MW",
         start_year: int = 2012,
+        cohort: str = "cohort_320",
     ):
         self.lookback = lookback
         self.horizon = horizon
@@ -147,12 +200,14 @@ class UCIElectricityDatasetAdapter:
         self.test_ratio = test_ratio
         self.unit = unit
         self.start_year = start_year
+        self.cohort = cohort
         self.scaler = StandardScaler()
         self.is_prepared = False
 
     def load_and_preprocess(
         self,
         raw_path: str,
+        audit_csv_path: Optional[str] = None,
         max_hours: Optional[int] = None,
     ) -> Dict[str, Union[pd.DataFrame, Dict, np.ndarray]]:
         """
@@ -162,6 +217,8 @@ class UCIElectricityDatasetAdapter:
             raw_path=raw_path,
             unit=self.unit,
             start_year=self.start_year,
+            cohort=self.cohort,
+            audit_csv_path=audit_csv_path,
             max_hours=max_hours
         )
 
@@ -226,5 +283,6 @@ class UCIElectricityDatasetAdapter:
                 "num_train_windows": len(windows["train"]["X"]),
                 "num_val_windows": len(windows["val"]["X"]),
                 "num_test_windows": len(windows["test"]["X"]),
+                "cohort": self.cohort,
             }
         }
