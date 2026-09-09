@@ -12,10 +12,15 @@ Phase 6 provides the locked statistical evaluation of the Phase-5-selected final
 1. **The Flattening Fallacy ($T=31,056$)**: Flattening the $(1294, 24)$ forecast array inflated sample size by $24\times$, artificially deflating standard errors and generating astronomically high Diebold-Mariano statistics ($|\text{DM}| > 30$).
 2. **Rolling Overlap Dependency**: Adjacent 24-step forecast origins overlap for 23 hours, violating the independence assumption required for standard hypothesis tests.
 
+### Metric Hierarchy & Checkpoint Selection Notice
+- **Primary Research & Evaluation Metric**: **Mean Absolute Error (MAE in MW)** is the primary metric for all hypothesis tests, effect sizes, and model comparisons.
+- **Training Loss & Checkpoint Selection**: Model training optimizes standardized Mean Squared Error (MSE), and Phase 6 checkpoints were saved based on standardized Validation MSE. This distinction is intentional and adheres to machine learning forecasting practice.
+
 Under the corrected framework established in Phase 5:
 - All models are evaluated across **$K=53$ contiguous, non-overlapping 24-hour daily blocks** ($53 \times 24 = 1,272$ hours).
-- For each day $k \in \{1, \dots, 53\}$, the daily block Mean Absolute Error (MAE) is computed.
-- The loss differential $d_k = \bar{e}_k^{(1)} - \bar{e}_k^{(2)}$ represents the daily performance delta.
+- For each day $k \in \{1, \dots, 53\}$, the daily block Mean Absolute Error (MAE) is computed:
+  $$\bar{e}_k^{(m)} = \frac{1}{24} \sum_{h=1}^{24} |y_{k, h} - \hat{y}_{k, h}^{(m)}|$$
+- The loss differential $d_k = \bar{e}_k^{(1)} - \bar{e}_k^{(2)}$ represents the daily performance delta in MAE.
 - Statistical significance is assessed using:
   1. **Paired Student's $t$-test** on daily blocks ($df = 52$).
   2. **Wilcoxon signed-rank test** (non-parametric).
@@ -60,7 +65,7 @@ Under the corrected framework established in Phase 5:
 - **Central Hypothesis**: *Does context-adaptive gating improve upon simple equal-weight fusion of the same LSTM + TCN + CNN experts?*
 - **Numerical Result**: CAEG V1 achieves a **$14.76$ MW** daily MAE advantage over the Static Equal Ensemble ($251.74$ MW vs $279.79$ MW across 5 seeds; daily block $\bar{d} = -14.76$ MW).
 - **Inference**: The paired $t$-test yields $t = -1.204, p = 0.2339$, and Wilcoxon yields $W = 573.0, p = 0.2071$. The 95% confidence interval is $[-39.35, +9.83]$ MW, which spans zero. Holm-Bonferroni adjusted $p = 0.9355$.
-- **Scientific Conclusion**: CAEG-Net V1 demonstrates a **favorable numerical improvement (+28.05 MW 5-seed MAE gain)** over the static equal ensemble by learning to place lower effective weight on the undertrained CNN expert. However, under the non-overlapping daily block protocol, the daily error variance yields a 95% confidence interval that overlaps zero. Thus, while practically advantageous, the difference is **statistically inconclusive**.
+- **Scientific Conclusion**: CAEG-Net V1 demonstrates a **favorable numerical improvement (+28.05 MW 5-seed MAE gain, 10.0%)** over the static equal ensemble by learning to place lower effective weight on the undertrained CNN expert. However, under the non-overlapping daily block protocol, the daily error variance yields a 95% confidence interval that overlaps zero. Thus, while practically advantageous, the difference is **statistically inconclusive**.
 
 ### C5: Bounded CAEG-Net ($\rho=0.50$) vs CAEG-Net V1
 - **Numerical Result**: Bounded CAEG ($\rho=0.50$) achieves a 5-seed mean MAE of $250.56 \pm 7.51$ MW compared to $251.74 \pm 7.79$ MW for unconstrained V1. The daily block difference is $+6.16$ MW ($t = +0.573, p = 0.5691$).
@@ -74,7 +79,8 @@ Under the corrected framework established in Phase 5:
 
 ## 4. Methodological Compliance Verification
 
-1. **Absence of 31,056-Hour Flattening**: Verified that no metric or statistic was computed by treating 31,056 hourly predictions as independent observations.
-2. **Strict Daily Block Independence**: All tests evaluated on $K=53$ non-overlapping blocks of 24 contiguous hours.
-3. **Equivalence Identity**: Verified that for $h=1$ on daily blocks, $\text{DM}_{\text{HLN}} \equiv t_{\text{paired}} = -1.2044$ for C4.
-4. **FWER Multiple Testing Control**: Holm-Bonferroni correction strictly applied across the full family of 6 primary hypotheses.
+1. **MAE Primary Metric**: All loss differentials $d_k$ and hypothesis tests operate strictly on daily MAE errors in Megawatts.
+2. **Absence of 31,056-Hour Flattening**: Verified that no metric or statistic was computed by treating 31,056 hourly predictions as independent observations.
+3. **Strict Daily Block Independence**: All tests evaluated on $K=53$ non-overlapping blocks of 24 contiguous hours.
+4. **Equivalence Identity**: Verified that for $h=1$ on daily blocks, $\text{DM}_{\text{HLN}} \equiv t_{\text{paired}} = -1.2044$ for C4.
+5. **FWER Multiple Testing Control**: Holm-Bonferroni correction strictly applied across the full family of 6 primary hypotheses.

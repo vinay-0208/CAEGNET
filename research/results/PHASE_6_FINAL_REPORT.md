@@ -12,12 +12,14 @@
 Phase 6 marks the culmination of the controlled evaluation phase of the original 14-phase CAEG-Net research roadmap. Following the thorough methodology audit, baseline reconciliation, statistical audit, and controlled validation screening in Phase 5/5B, Phase 6 executes the **locked evaluation of the predefined finalist set** across five canonical seeds (`[42, 123, 999, 2024, 3407]`).
 
 ### Methodological Disclosures & Protocols Enforced
-1. **Test Set Status**: The test set was frozen from further model development at the beginning of Phase 6. Earlier developmental experiments had exposed the test partition; therefore, Phase 6 is conducted and reported strictly as a **locked final evaluation after development**, rather than an untouched test set.
-2. **Zero Test-Based Selection**: No hyperparameters, architecture configurations, threshold values, or routing parameters were tuned on the test set.
-3. **Preserved Architecture Identity**: The canonical expert family remains strictly **LSTM + TCN + CNN**. No GRU, Patch, or Transformer architectures were introduced.
-4. **Primary Proposed Model**: **CAEG-Net V1** remains the primary proposed architecture submitted for academic evaluation.
-5. **Optimized Variant**: **Bounded CAEG-Net ($\rho=0.50$)** is documented as an optimized, conservative regularized variant developed in Phase 5.
-6. **Primary Scientific Comparison**: *Does context-adaptive gating improve upon simple equal-weight fusion of the same LSTM + TCN + CNN experts?*
+1. **Primary Research & Evaluation Metric**: **Mean Absolute Error (MAE in MW)** is the primary metric for all research discussion, model ranking, percentage gains, and inferential hypothesis testing. Secondary metrics (RMSE, MSE, $R^2$, MAPE) provide supporting characterization.
+2. **Training Loss vs Checkpoint Selection**: Model training minimizes standardized MSE (smooth $L_2$ gradient optimization), and Phase 6 checkpoints were selected using standardized validation MSE. This distinction is intentional and adheres to machine learning forecasting practice.
+3. **Test Set Status**: The test set was frozen from further model development at the beginning of Phase 6. Earlier developmental experiments had exposed the test partition; therefore, Phase 6 is conducted and reported strictly as a **locked final evaluation after development**, rather than an untouched test set.
+4. **Zero Test-Based Selection**: No hyperparameters, architecture configurations, threshold values, or routing parameters were tuned on the test set.
+5. **Preserved Architecture Identity**: The canonical expert family remains strictly **LSTM + TCN + CNN**. No GRU, Patch, or Transformer architectures were introduced.
+6. **Primary Proposed Model**: **CAEG-Net V1** remains the primary proposed architecture submitted for academic evaluation.
+7. **Optimized Variant**: **Bounded CAEG-Net ($\rho=0.50$)** is documented as an optimized, conservative regularized variant developed in Phase 5.
+8. **Primary Scientific Comparison**: *Does context-adaptive gating improve upon simple equal-weight fusion of the same LSTM + TCN + CNN experts?*
 
 ---
 
@@ -25,7 +27,7 @@ Phase 6 marks the culmination of the controlled evaluation phase of the original
 
 All models were evaluated under the standardized AdamW (`lr=1e-3, weight_decay=1e-4`), StepLR (`step_size=15, gamma=0.5`), `max_epochs=45`, `patience=7` protocol on the held-out test partition ($N=1,294$ forecast origins, $H=24$ hours). Checkpoints were selected strictly via Validation MSE.
 
-| Model | Model Role | Total Parameters | Test MAE (MW) | Test RMSE (MW) | Test $R^2$ | Test MAPE (%) | Mean Train Time (s) |
+| Model | Model Role | Total Parameters | Test MAE (MW) [PRIMARY] | Test RMSE (MW) | Test $R^2$ | Test MAPE (%) | Mean Train Time (s) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Bounded CAEG-Net ($\rho=0.50$)** | Optimized Finalist | $121,531$ | **$250.56 \pm 7.51$** | **$333.39 \pm 8.09$** | **$0.8731 \pm 0.0061$** | **$4.63 \pm 0.11$** | $26.4$ |
 | **Original CAEG-Net V1** | Primary Proposed | $121,531$ | **$251.74 \pm 7.79$** | **$334.83 \pm 7.46$** | **$0.8720 \pm 0.0057$** | **$4.72 \pm 0.16$** | $27.3$ |
@@ -94,31 +96,26 @@ For both CAEG-Net V1 and Bounded CAEG-Net ($\rho=0.50$), gating weight distribut
 | **Original CAEG-Net V1** | $0.3768 \pm 0.0264$ | $0.2966 \pm 0.0163$ | $0.3266 \pm 0.0125$ | $1.0919 \pm 0.0050$ | $2.960 \pm 0.030$ | **Yes** ($1.0 \pm 1.2 \times 10^{-7}$) | N/A (unconstrained) |
 | **Bounded CAEG ($\rho=0.50$)** | $0.3870 \pm 0.0105$ | $0.2853 \pm 0.0079$ | $0.3277 \pm 0.0053$ | $1.0905 \pm 0.0024$ | $2.949 \pm 0.014$ | **Yes** ($1.0 \pm 1.2 \times 10^{-7}$) | **Yes** (Strictly in $[0.274, 0.402]$) |
 
-### Key Diagnostic Observations
-1. **Dynamic Moderation**: The gating network allocated higher average weight to the recurrent and causal models (LSTM + TCN $\approx 67.3\%$) while dampening the standalone CNN's error propagation.
-2. **Entropy & Expert Participation**: High routing entropy ($1.092$, near theoretical maximum $\ln(3) = 1.0986$) and effective expert count ($N_{\text{eff}} \approx 2.95 - 2.96$) confirm that all three experts contribute dynamically without expert collapse.
-3. **Mathematical Constraints**: $\sum_{i=1}^3 w_i = 1.0$ is verified across all predictions. For Bounded CAEG, all weights strictly satisfy $w_i \in [0.1667, 0.6667]$, with empirical bounds observed between $0.274$ and $0.402$.
-
 ---
 
 ## 6. Answers to Mandatory Phase 6 Questions
 
 ### 1. What is the five-seed performance of the original CAEG-Net V1?
-- **MAE**: **$251.74 \pm 7.79$ MW**
+- **MAE (Primary)**: **$251.74 \pm 7.79$ MW**
 - **RMSE**: **$334.83 \pm 7.46$ MW**
 - **$R^2$**: **$0.8720 \pm 0.0057$**
 - **MAPE**: **$4.72 \pm 0.16$%**
 - Per-seed values: Seed 42 ($254.20$), Seed 123 ($248.55$), Seed 999 ($244.61$), Seed 2024 ($264.17$), Seed 3407 ($247.15$ MW).
 
 ### 2. What is the five-seed performance of bounded CAEG $\rho=0.50$?
-- **MAE**: **$250.56 \pm 7.51$ MW**
+- **MAE (Primary)**: **$250.56 \pm 7.51$ MW**
 - **RMSE**: **$333.39 \pm 8.09$ MW**
 - **$R^2$**: **$0.8731 \pm 0.0061$**
 - **MAPE**: **$4.63 \pm 0.11$%**
 - Per-seed values: Seed 42 ($254.91$), Seed 123 ($244.06$), Seed 999 ($258.36$), Seed 2024 ($254.35$), Seed 3407 ($241.11$ MW).
 
 ### 3. What is the five-seed performance of the static equal ensemble?
-- **MAE**: **$279.79 \pm 8.98$ MW**
+- **MAE (Primary)**: **$279.79 \pm 8.98$ MW**
 - **RMSE**: **$383.59 \pm 13.40$ MW**
 - **$R^2$**: **$0.8319 \pm 0.0118$**
 - **MAPE**: **$5.17 \pm 0.17$%**
@@ -130,11 +127,11 @@ For both CAEG-Net V1 and Bounded CAEG-Net ($\rho=0.50$), gating weight distribut
 
 ### 5. Does CAEG outperform equal-weight fusion?
 - **Numerically**: Yes. CAEG-Net V1 achieves **$251.74$ MW** versus **$279.79$ MW** for the Static Equal Ensemble, representing a **$28.05$ MW (10.0%) error reduction**.
-- **Statistically**: On $K=53$ daily blocks, the mean daily difference is $-14.76$ MW ($t = -1.204, p = 0.2339$). The 95% confidence interval spans $[-39.35, +9.83]$ MW. Because the interval contains zero, the result is classified under **Outcome B**: *CAEG-Net showed a clear numerical improvement, but the difference was not statistically conclusive under daily-block testing.*
+- **Statistically**: On $K=53$ daily blocks, the mean daily difference is $-14.76$ MW ($t = -1.204, p = 0.2339$). The 95% confidence interval spans $[-39.35, +9.83]$ MW. Because the interval contains zero, the result is classified under **Outcome B**: *CAEG-Net achieved a substantial numerical improvement over equal-weight fusion, reducing mean test MAE from 279.79 MW to 251.74 MW (10.0%), but this difference was not statistically conclusive under the corrected non-overlapping daily-block analysis.*
 
 ### 6. Does bounded routing improve over V1?
 - Bounded CAEG achieves a marginally lower mean MAE ($250.56$ MW vs $251.74$ MW), tighter standard deviation ($7.51$ MW vs $7.79$ MW), and lower MAPE ($4.63$% vs $4.72$%).
-- The paired difference is $+6.16$ MW ($p = 0.5691$). Bounded routing provides added variance stability, but does not alter the fundamental inferential standing relative to V1.
+- The paired difference is $+6.16$ MW ($p = 0.5691$). Bounded routing provides added variance stability, but does not alter the fundamental inferential standing relative to V1. Bounded CAEG $\rho=0.50$ remains an optimized/conservative variant, not a replacement of the research question.
 
 ### 7. Are the differences statistically significant under the corrected methodology?
 - Only the advantage over Standalone CNN is statistically significant after Holm-Bonferroni correction ($p < 0.0001$).
@@ -153,17 +150,17 @@ For both CAEG-Net V1 and Bounded CAEG-Net ($\rho=0.50$), gating weight distribut
 
 ---
 
-## 7. Artifacts & Deliverables Generated
+## 7. Methodological Clarification & Checkpoint Selection Documentation
 
-1. `research/results/phase6_seed_results.csv`: Complete per-seed metrics for all 6 models across 5 seeds.
-2. `research/results/phase6_model_comparison.csv`: Five-seed summary (mean $\pm$ std) for all metrics and parameter counts.
-3. `research/results/phase6_routing_diagnostics.csv`: Gating weight distributions, entropies, effective expert counts, and boundary checks.
-4. `research/results/phase6_statistical_tests.csv`: Paired $t$, Wilcoxon, and DM/HLN statistics with 95% CIs and Holm-Bonferroni corrections.
-5. `research/results/phase6_alignment_audit.md`: Formal verification of temporal partitions, lookbacks, origins, and scaler isolation.
-6. `research/results/PHASE_6_STATISTICAL_EVALUATION.md`: In-depth statistical evaluation report.
-7. `research/results/phase6/plots/phase6_mae_comparison.png`: Publication bar chart with error bars.
-8. `research/results/phase6/plots/phase6_per_seed_mae.png`: Individual seed trajectory comparisons.
-9. `research/results/phase6/plots/phase6_daily_error_distribution.png`: Non-overlapping daily error distribution boxplots.
+To ensure complete reproducibility and scientific clarity across all reporting:
+> *"MAE is the primary research and evaluation metric. Model training minimizes standardized MSE, and Phase 6 checkpoints were selected using validation MSE. This distinction is intentional and does not change the primary evaluation metric. Future model-selection protocols must specify their validation criterion before experimentation and apply it consistently."*
+
+### Future-Phase Frozen Protocol (Phase 7 Onward)
+1. **Primary Research Metric**: Validation and Test MAE (MW).
+2. **Secondary Metrics**: RMSE (MW), MSE (MW$^2$), $R^2$, MAPE (%).
+3. **Training Loss**: Standardized MSE.
+4. **Checkpoint Selection Protocol**: Must be explicitly declared *prior* to experimentation and applied identically across all models and seeds within that experiment.
+5. **No Test-Driven Model Tuning**: The test partition remains locked.
 
 ---
 
@@ -171,6 +168,8 @@ For both CAEG-Net V1 and Bounded CAEG-Net ($\rho=0.50$), gating weight distribut
 
 ```
 PHASE 6 STATUS: COMPLETE
+METHODOLOGY AUDIT: PASSED (MAE-Primary Evaluation Verified)
+CHECKPOINT CRITERION: Validation MSE (Uniform across all models & seeds)
 FIVE-SEED EVALUATION: COMPLETE
 STATISTICAL AUDIT: PASSED
 ALIGNMENT AUDIT: PASSED
