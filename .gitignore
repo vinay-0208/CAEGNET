@@ -73,3 +73,6 @@ research/checkpoints/phase7/
 
 # Dataset files
 data/Load/
+
+data/ElectricityLoadDiagrams20112014/
+data/__MACOSX/

@@ -1,0 +1,131 @@
+{
+  "file_path": "C:\\Fall Semister\\2026\\Advanced Predictive Analytics\\data\\ElectricityLoadDiagrams20112014\\LD2011_2014.txt",
+  "file_size_bytes": 710998915,
+  "file_size_mb": 678.06,
+  "encoding": "utf-8",
+  "delimiter": ";",
+  "header_structure": {
+    "first_col": "",
+    "num_cols": 371,
+    "num_client_cols": 370,
+    "first_5_clients": [
+      "MT_001",
+      "MT_002",
+      "MT_003",
+      "MT_004",
+      "MT_005"
+    ],
+    "last_5_clients": [
+      "MT_366",
+      "MT_367",
+      "MT_368",
+      "MT_369",
+      "MT_370"
+    ]
+  },
+  "row_count": 140256,
+  "sampling_frequency": "15 minutes (900 seconds)",
+  "first_timestamp": "2011-01-01 00:15:00",
+  "last_timestamp": "2015-01-01 00:00:00",
+  "timestamp_uniformity": {
+    "time_diffs_seconds_distribution": {
+      "900": 140255
+    },
+    "is_strictly_uniform_15min": true,
+    "duplicate_timestamps": 0,
+    "non_increasing_timestamps": 0,
+    "missing_timestamps_detected": 0
+  },
+  "value_integrity": {
+    "total_values_evaluated": 51894720,
+    "missing_values_count": 0,
+    "negative_values_count": 0,
+    "total_zero_count": 10457342,
+    "total_nonzero_count": 41437378,
+    "zero_percentage": 20.15
+  },
+  "official_units": "kW (kilowatts per 15-minute interval; divide by 4 for kWh)",
+  "client_activity_breakdown": {
+    "total_clients": 370,
+    "active_from_row_0": 158,
+    "starting_after_row_0": 212,
+    "always_zero": 0,
+    "active_on_or_before_2012_01_01": 160,
+    "starting_after_2012_01_01": 210,
+    "starting_later_sample": [
+      {
+        "client": "MT_001",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.29049024640657084
+      },
+      {
+        "client": "MT_002",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24985740360483688
+      },
+      {
+        "client": "MT_003",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.2541780743782797
+      },
+      {
+        "client": "MT_004",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24992157198266027
+      },
+      {
+        "client": "MT_005",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24991444216290212
+      },
+      {
+        "client": "MT_006",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24991444216290212
+      },
+      {
+        "client": "MT_007",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24992157198266027
+      },
+      {
+        "client": "MT_008",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24992157198266027
+      },
+      {
+        "client": "MT_009",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24993583162217659
+      },
+      {
+        "client": "MT_010",
+        "first_nonzero_row": 35040,
+        "first_nonzero_ts": "2012-01-01 00:15:00",
+        "zero_fraction": 0.24992870180241844
+      }
+    ]
+  },
+  "aggregate_series_stats": {
+    "min_kw": 342.5955,
+    "max_kw": 452652.5956,
+    "mean_kw": 195556.9425,
+    "std_kw": 84259.0598,
+    "zero_rows_count": 0
+  },
+  "dst_irregularities_documented": {
+    "source": "UCI Official Documentation",
+    "march_spring_forward": "Values between 01:00 and 02:00 set to 0.0 for all clients (96 intervals maintained)",
+    "october_fall_back": "Values between 01:00 and 02:00 aggregate consumption of 2 hours (96 intervals maintained)",
+    "uniform_day_length": "Every calendar day has exactly 96 measures (24 * 4)"
+  }
+}
