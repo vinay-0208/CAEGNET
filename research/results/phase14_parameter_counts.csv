@@ -1,0 +1,7 @@
+candidate_id,context_dim,expert_core_params,context_encoder_params,router_params,confidence_head_params,total_params,param_increase,pct_increase
+F0_Canonical_V1,4,120504,384,643,0,121531,0,0.0
+F1_A1_OOF,7,120504,432,643,0,121579,48,0.0395
+F2_A2_OOF,7,120504,432,643,145,121724,193,0.1588
+F3_Confidence_Only,4,120504,384,643,97,121628,97,0.0798
+F4_Smoothed_OOF,7,120504,432,643,145,121724,193,0.1588
+F5_Scalar_Shrinkage,7,120504,432,643,0,121579,48,0.0395
