@@ -2,33 +2,35 @@
 
 **Repository:** CAEG-Net (Context-Adaptive Expert Gating Network)  
 **Branch:** `research-track`  
-**Date:** September 2026  
-**Status:** Completed & Frozen  
+**Date:** September 2026 (Audited & Corrected)  
+**Status:** Completed, Audited & Frozen  
 
 ---
 
 ## Executive Summary
 
-Phase 10 addresses the fundamental cross-dataset generalization question for CAEG-Net:
+Phase 10 addresses the cross-dataset generalization question for CAEG-Net:
 > *"Can context-aware adaptive expert gating improve short-term electricity load forecasting by dynamically combining complementary LSTM, TCN, and CNN temporal experts?"*
 
-Prior phases established that while Canonical CAEG-Net V1 demonstrated strong adaptive gains on aggregate consumer data (UCI Cohort 320, Phase 9) and transmission grid data (PJM, Phase 6), its gains over a static equal ensemble were marginal on zonal sub-station data (GEFCom2014, Phase 8). Phase 10 conducted a strictly controlled optimization study across all three tri-benchmark datasets to determine whether targeted modifications—within the frozen canonical expert family (LSTM, TCN, CNN)—could enhance routing efficacy and cross-dataset robustness without test-set overfitting.
+Prior phases established that while Canonical CAEG-Net V1 demonstrated strong adaptive gains on aggregate consumer data (UCI Cohort 320, Phase 9) and transmission grid data (PJM, Phase 6), its gains over a static equal ensemble were marginal on zonal sub-station data (GEFCom2014, Phase 8). Phase 10 conducted a strictly controlled optimization study across all three tri-benchmark datasets to determine whether targeted modifications—within the frozen canonical expert family (LSTM, TCN, CNN)—could enhance routing efficacy and cross-dataset robustness without test-set tuning.
 
-### Key Conclusions
-1. **Screening Qualification:** Out of 14 candidate formulations across 5 hypothesis groups (A–E), only two candidates satisfied the strict cross-dataset validation criterion ($\ge 2$ datasets improved, no dataset degraded by $>2.0\%$):
+### Key Audited Conclusions
+1. **Validation Screening Qualification:** Out of 14 candidate formulations across 5 hypothesis groups (A–E), only two candidates satisfied the predefined cross-dataset validation criterion ($\ge 2$ datasets improved, no dataset degraded by $>2.0\%$ relative to Canonical V1):
    - **B1 (Zero-Recent-Error 3D Context):** PJM $+0.04\%$, GEFCom $+6.42\%$, UCI $+4.46\%$.
    - **C3 (Softer Temperature $\tau=1.5$):** PJM $-0.56\%$, GEFCom $+2.16\%$, UCI $+2.19\%$.
-2. **Untouched 5-Seed Test Benchmark:** When evaluated across 5 canonical seeds (`[42, 123, 999, 2024, 3407]`) on untouched test partitions, **Canonical CAEG-Net V1 demonstrated the strongest overall test performance across datasets**:
-   - **PJM Test MAE:** Canonical V1 = **$248.63 \pm 4.82$ MW** vs B1 = $257.36 \pm 13.15$ MW vs C3 = $258.44 \pm 9.80$ MW.
-   - **GEFCom Test MAE:** Canonical V1 = **$12.75 \pm 0.14$ kW** vs B1 = $12.77 \pm 0.43$ kW vs C3 = $12.76 \pm 0.15$ kW.
-   - **UCI Test MAE:** Canonical V1 = **$8.11 \pm 0.39$ MW** vs B1 = $8.14 \pm 0.12$ MW vs C3 = **$7.98 \pm 0.15$ MW**.
-3. **Definitive Decision:** Canonical CAEG-Net V1 is retained as the definitive, frozen research architecture. No candidate formulation achieved a universal Pareto improvement across all three benchmark regimes.
+2. **Evaluation on Held-Out Test Partitions:** When evaluated across 5 canonical seeds (`[42, 123, 999, 2024, 3407]`) on held-out test partitions under the locked Phase 10 protocol:
+   - **PJM Test MAE:** Canonical V1 achieved **$251.17 \pm 12.61$ MW** vs B1 = $255.73 \pm 5.96$ MW vs C3 = $254.28 \pm 4.18$ MW.
+   - **GEFCom Test MAE:** Canonical V1 achieved **$12.81 \pm 0.34$ kW** vs B1 = **$12.77 \pm 0.48$ kW** vs C3 = $12.86 \pm 0.28$ kW.
+   - **UCI Test MAE:** Canonical V1 achieved **$8.08 \pm 0.39$ MW** vs B1 = $8.18 \pm 0.20$ MW vs C3 = $8.34 \pm 0.62$ MW.
+   *(Note on test partitions: These partitions were held out during the Phase 10 candidate training and selection procedures; they are not pristine first-ever test data because earlier research phases evaluated them.)*
+3. **Dataset-Dependent Routing Advantage:** The empirical advantage of adaptive gating is domain-dependent rather than universal. On Modern PJM, CAEG-Net V1 achieved a 9.4% lower aggregate test MAE than the Static Equal Ensemble ($251.17$ vs $277.13$ MW), though daily-block paired comparisons did not reach statistical significance ($p=0.1413$). On GEFCom and UCI, daily-block paired analyses favored the Static Equal Ensemble ($p < 0.01$).
+4. **Definitive Architectural Decision:** Canonical CAEG-Net V1 demonstrated the strongest overall empirical generalization across the three benchmark datasets among all tested candidates. Neither B1 nor C3 produced a consistent cross-dataset improvement on the held-out test partitions. Consequently, **Canonical CAEG-Net V1 is retained as the frozen research architecture.**
 
 ---
 
 ## 1. Tri-Benchmark Dataset Profiles
 
-Phase 10 evaluated models across three distinct operational regimes of the electric grid:
+Phase 10 evaluated models across three distinct operational regimes of the electric power grid:
 
 | Dimension | Modern PJM (Phase 6) | GEFCom2014 (Phase 8) | UCI Cohort 320 (Phase 9) |
 | :--- | :--- | :--- | :--- |
@@ -67,86 +69,86 @@ Positive values indicate an improvement (lower error); negative values indicate 
 | **E1_CNN_H2_TemporalPool8** | CNN 2-head, pool=8 | $-9.23\%$ | $+1.11\%$ | $+3.74\%$ | 2 | $-9.23\%$ | NO |
 
 ### Screening Observations
-1. **Context Transformations (Group A):** Dimensionless normalization (A1, A2, A3) consistently impaired PJM validation performance ($-3.1\%$ to $-4.8\%$). In bulk power grids with absolute physical constraints, raw scale features provide useful operational context to the gating mechanism.
-2. **Error Feedback (Group B):** Eliminating recent forecast error (B1) improved validation metrics across all three datasets during single-seed validation, suggesting that past residual feedback may introduce noisy coupling during training.
-3. **Temperature Dynamics (Group C):** Sharper gating ($\tau=0.7$) severely harmed PJM ($-8.10\%$), confirming that hard expert switching causes forecast volatility. Conversely, softer temperature ($\tau=1.5$) smoothed routing weights and provided modest validation gains.
-4. **Decoupled Training & Architecture (Groups D & E):** Decoupled expert training (D1) severely degraded UCI ($-11.49\%$), proving that joint end-to-end training is essential for expert specialization. Altering the CNN expert (E1) degraded PJM by $-9.23\%$.
+1. **Context Transformations (Group A):** Within the tested formulations, dimensionless normalization (A1, A2, A3) consistently impaired PJM validation performance ($-3.1\%$ to $-4.8\%$). Retaining raw-scale context features provided better validation performance, particularly on PJM.
+2. **Error Feedback (Group B):** Eliminating recent forecast error (B1) improved validation metrics across all three datasets during single-seed validation screening.
+3. **Temperature Dynamics (Group C):** Sharper gating ($\tau=0.7$) degraded PJM validation performance ($-8.10\%$). Softer temperature ($\tau=1.5$) provided modest validation gains on GEFCom and UCI with minimal degradation on PJM ($-0.56\%$).
+4. **Decoupled Training & Architecture (Groups D & E):** Decoupled expert training (D1) degraded UCI validation performance by $-11.49\%$. Altering the CNN expert (E1) degraded PJM by $-9.23\%$.
 
 ---
 
-## 3. Five-Seed Finalist Benchmark (Untouched Test Sets)
+## 3. Five-Seed Finalist Evaluation (Held-Out Test Partitions)
 
-The two qualified candidates (B1, C3) and the control baseline (A0 Canonical V1) were evaluated across 5 canonical seeds on the untouched test sets.
+The two qualified candidates (B1, C3) and the control baseline (A0 Canonical V1) were evaluated across 5 canonical seeds (`[42, 123, 999, 2024, 3407]`) on the held-out test partitions.
 
 ### 3.1 Primary Metric: Test MAE (Mean $\pm$ Std)
 
-| Candidate ID | PJM (MW) | GEFCom (kW) | UCI (MW) |
+| Candidate ID | Modern PJM (MW) | GEFCom2014 (kW) | UCI Cohort 320 (MW) |
 | :--- | :---: | :---: | :---: |
-| **A0_Canonical_V1** | $\mathbf{248.63 \pm 4.82}$ | $\mathbf{12.75 \pm 0.14}$ | $8.11 \pm 0.39$ |
-| **B1_Zero_Recent_Error_3D** | $257.36 \pm 13.15$ | $12.77 \pm 0.43$ | $8.14 \pm 0.12$ |
-| **C3_Softer_Temperature** | $258.44 \pm 9.80$ | $12.76 \pm 0.15$ | $\mathbf{7.98 \pm 0.15}$ |
+| **A0_Canonical_V1** | $\mathbf{251.17 \pm 12.61}$ | $12.81 \pm 0.34$ | $\mathbf{8.08 \pm 0.39}$ |
+| **B1_Zero_Recent_Error_3D** | $255.73 \pm 5.96$ | $\mathbf{12.77 \pm 0.48}$ | $8.18 \pm 0.20$ |
+| **C3_Softer_Temperature** | $254.28 \pm 4.18$ | $12.86 \pm 0.28$ | $8.34 \pm 0.62$ |
 
 ### 3.2 Secondary Metrics Summary
 
-#### Modern PJM Benchmark
+#### Modern PJM Benchmark (Transmission Grid)
 | Finalist | MAE (MW) | RMSE (MW) | MSE ($\text{MW}^2$) | $R^2$ | MAPE (%) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **A0_Canonical_V1** | $\mathbf{248.63 \pm 4.82}$ | $\mathbf{322.25 \pm 6.94}$ | $\mathbf{103,892 \pm 4,498}$ | $\mathbf{0.7816 \pm 0.0094}$ | $\mathbf{7.98 \pm 0.20}$ |
-| **B1_Zero_Recent_Error_3D** | $257.36 \pm 13.15$ | $332.96 \pm 17.58$ | $111,170 \pm 12,058$ | $0.7663 \pm 0.0253$ | $8.29 \pm 0.47$ |
-| **C3_Softer_Temperature** | $258.44 \pm 9.80$ | $334.33 \pm 13.50$ | $111,957 \pm 9,076$ | $0.7646 \pm 0.0191$ | $8.31 \pm 0.35$ |
+| **A0_Canonical_V1** | $\mathbf{251.17 \pm 12.61}$ | $\mathbf{334.51 \pm 14.32}$ | $\mathbf{112,103 \pm 9,626}$ | $\mathbf{0.8393 \pm 0.0182}$ | $\mathbf{4.63 \pm 0.21}$ |
+| **B1_Zero_Recent_Error_3D** | $255.73 \pm 5.96$ | $342.42 \pm 9.70$ | $117,343 \pm 6,717$ | $0.8220 \pm 0.0172$ | $4.72 \pm 0.14$ |
+| **C3_Softer_Temperature** | $254.28 \pm 4.18$ | $339.09 \pm 7.90$ | $115,047 \pm 5,355$ | $0.8328 \pm 0.0169$ | $4.69 \pm 0.08$ |
 
-#### GEFCom2014 Benchmark
+#### GEFCom2014 Benchmark (Zonal Sub-station Grid)
 | Finalist | MAE (kW) | RMSE (kW) | MSE ($\text{kW}^2$) | $R^2$ | MAPE (%) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **A0_Canonical_V1** | $\mathbf{12.75 \pm 0.14}$ | $\mathbf{17.15 \pm 0.23}$ | $\mathbf{294.2 \pm 7.9}$ | $\mathbf{0.6724 \pm 0.0087}$ | $\mathbf{9.48 \pm 0.13}$ |
-| **B1_Zero_Recent_Error_3D** | $12.77 \pm 0.43$ | $17.17 \pm 0.65$ | $295.2 \pm 22.8$ | $0.6713 \pm 0.0253$ | $9.51 \pm 0.38$ |
-| **C3_Softer_Temperature** | $12.76 \pm 0.15$ | $17.16 \pm 0.23$ | $294.5 \pm 7.8$ | $0.6721 \pm 0.0087$ | $9.49 \pm 0.14$ |
+| **A0_Canonical_V1** | $12.81 \pm 0.34$ | $\mathbf{18.43 \pm 0.41}$ | $\mathbf{339.9 \pm 15.3}$ | $0.8217 \pm 0.0170$ | $\mathbf{8.73 \pm 0.27}$ |
+| **B1_Zero_Recent_Error_3D** | $\mathbf{12.77 \pm 0.48}$ | $18.47 \pm 0.46$ | $341.3 \pm 17.3$ | $\mathbf{0.8275 \pm 0.0107}$ | $8.77 \pm 0.30$ |
+| **C3_Softer_Temperature** | $12.86 \pm 0.28$ | $18.51 \pm 0.34$ | $342.7 \pm 12.8$ | $0.8184 \pm 0.0116$ | $8.76 \pm 0.22$ |
 
-#### UCI Cohort 320 Aggregate Benchmark
+#### UCI Cohort 320 Aggregate Benchmark (Consumer Cohort)
 | Finalist | MAE (MW) | RMSE (MW) | MSE ($\text{MW}^2$) | $R^2$ | MAPE (%) |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| **A0_Canonical_V1** | $8.11 \pm 0.39$ | $11.05 \pm 0.48$ | $122.3 \pm 10.9$ | $0.4687 \pm 0.0475$ | $17.75 \pm 0.81$ |
-| **B1_Zero_Recent_Error_3D** | $8.14 \pm 0.12$ | $11.10 \pm 0.20$ | $123.2 \pm 4.4$ | $0.4647 \pm 0.0191$ | $17.81 \pm 0.28$ |
-| **C3_Softer_Temperature** | $\mathbf{7.98 \pm 0.15}$ | $\mathbf{10.90 \pm 0.23}$ | $\mathbf{118.8 \pm 5.1}$ | $\mathbf{0.4839 \pm 0.0223}$ | $\mathbf{17.47 \pm 0.34}$ |
+| **A0_Canonical_V1** | $\mathbf{8.08 \pm 0.39}$ | $\mathbf{11.38 \pm 0.49}$ | $\mathbf{129.7 \pm 11.2}$ | $\mathbf{0.9813 \pm 0.0016}$ | $4.16 \pm 0.30$ |
+| **B1_Zero_Recent_Error_3D** | $8.18 \pm 0.20$ | $11.66 \pm 0.37$ | $136.0 \pm 8.7$ | $0.9802 \pm 0.0011$ | $\mathbf{4.13 \pm 0.11}$ |
+| **C3_Softer_Temperature** | $8.34 \pm 0.62$ | $11.86 \pm 0.88$ | $141.4 \pm 22.0$ | $0.9795 \pm 0.0029$ | $4.21 \pm 0.28$ |
 
 ---
 
 ## 4. Expert Complementarity & Standalone Baselines
 
-To understand why routing performance varies across grid domains, we trained standalone experts (LSTM, TCN, CNN) without gating and evaluated their test MAE and residual error correlations.
+Standalone temporal experts (LSTM, TCN, CNN) were trained without gating and evaluated alongside the Static Equal Ensemble and CAEG-Net V1.
 
 ### 4.1 Standalone Models vs Ensembles (Test MAE)
 
-| Dataset | LSTM | TCN | CNN | Static Equal Ensemble | CAEG-Net V1 (Seed 42) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **PJM (MW)** | $302.63$ | $247.98$ | $422.07$ | $277.13$ | $\mathbf{245.98}$ |
-| **GEFCom (kW)** | $13.13$ | $13.02$ | $14.01$ | $\mathbf{12.66}$ | $12.87$ |
-| **UCI (MW)** | $\mathbf{7.96}$ | $8.45$ | $11.90$ | $8.19$ | $8.57$ |
+| Dataset | LSTM | TCN | CNN | Static Equal Ensemble | CAEG-Net V1 (Seed 42) | CAEG-Net V1 (5-Seed Mean) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **PJM (MW)** | $302.63$ | $247.98$ | $422.07$ | $277.13$ | $\mathbf{245.98}$ | $\mathbf{251.17}$ |
+| **GEFCom (kW)** | $13.13$ | $13.02$ | $14.01$ | $\mathbf{12.66}$ | $12.87$ | $12.81$ |
+| **UCI (MW)** | $\mathbf{7.96}$ | $8.45$ | $11.90$ | $8.19$ | $8.57$ | $\mathbf{8.08}$ |
 
 ### 4.2 Expert Residual Error Correlations (Pearson $r$)
 
-| Dataset | $\text{Corr}(e_{\text{LSTM}}, e_{\text{TCN}})$ | $\text{Corr}(e_{\text{LSTM}}, e_{\text{CNN}})$ | $\text{Corr}(e_{\text{TCN}}, e_{\text{CNN}})$ | Complementarity Regime |
+| Dataset | $\text{Corr}(e_{\text{LSTM}}, e_{\text{TCN}})$ | $\text{Corr}(e_{\text{LSTM}}, e_{\text{CNN}})$ | $\text{Corr}(e_{\text{TCN}}, e_{\text{CNN}})$ | Complementarity Context |
 | :--- | :---: | :---: | :---: | :--- |
-| **PJM** | $0.791$ | $0.596$ | $0.636$ | **High Diversity (CNN orthogonal)** |
-| **GEFCom** | $0.908$ | $0.848$ | $0.866$ | **Low Diversity (High Collinearity)** |
-| **UCI** | $0.843$ | $0.627$ | $0.701$ | **Moderate Diversity (LSTM dominant)** |
+| **PJM** | $0.791$ | $0.596$ | $0.636$ | Higher diversity (CNN error less correlated) |
+| **GEFCom** | $0.908$ | $0.848$ | $0.866$ | Strongly correlated expert residuals |
+| **UCI** | $0.843$ | $0.627$ | $0.701$ | Moderate correlation (LSTM expert strongest) |
 
-### Scientific Interpretation:
-1. **PJM:** CNN errors are relatively uncorrelated with LSTM ($r=0.596$) and TCN ($r=0.636$). Although CNN standalone error is high (422.07 MW), its distinct temporal representations allow adaptive gating to synthesize a forecast (248.63 MW) that significantly outperforms the Static Equal Ensemble (277.13 MW) by dynamically de-weighting CNN when its variance spikes.
-2. **GEFCom:** All three experts produce highly collinear error vectors ($r \in [0.848, 0.908]$). Because expert errors are nearly identical, the routing network cannot exploit complementary strengths. In this collinear regime, uniform averaging minimizes variance effectively ($12.66$ kW vs $12.75$ kW for CAEG).
-3. **UCI:** LSTM exhibits clear superiority ($7.96$ MW) over TCN ($8.45$ MW) and CNN ($11.90$ MW). The adaptive gate successfully learns this hierarchy, assigning ~47% average weight to LSTM and outperforming static weighting in individual client cohorts.
+### Scientific Discussion:
+1. **Modern PJM:** CNN errors exhibit lower correlation with LSTM ($r=0.596$) and TCN ($r=0.636$). Although standalone CNN error is higher ($422.07$ MW), the gating network allocates weight adaptively, yielding an aggregate test MAE ($251.17$ MW 5-seed mean; $245.98$ MW on seed 42) that is lower than the Static Equal Ensemble ($277.13$ MW).
+2. **GEFCom2014:** All three temporal experts produce strongly correlated error vectors ($r \in [0.848, 0.908]$). These high residual correlations are consistent with reduced opportunity for adaptive routing to exploit complementary expert errors, in which setting uniform averaging achieves strong performance ($12.66$ kW vs $12.81$ kW for CAEG V1).
+3. **UCI Cohort 320:** Standalone LSTM achieved the lowest test MAE ($7.96$ MW) compared to TCN ($8.45$ MW) and CNN ($11.90$ MW). The UCI results are consistent with a setting in which the LSTM expert is particularly effective and adaptive routing assigns greater average weight to it ($46.9\%$).
 
 ---
 
 ## 5. Gating Diagnostics & Routing Entropy
 
-Across all 5 seeds, the gating weights and routing entropy were tracked on the test sets:
+Across all 5 seeds on the held-out test partitions, gating weights and routing entropy were tracked:
 
 | Finalist | Dataset | Mean $w_{\text{LSTM}}$ | Mean $w_{\text{TCN}}$ | Mean $w_{\text{CNN}}$ | Mean Entropy | Effective Experts ($N_{\text{eff}}$) |
 | :--- | :--- | :---: | :---: | :---: | :---: | :---: |
 | **A0_Canonical_V1** | **PJM** | $0.389$ | $0.289$ | $0.322$ | $1.089$ | $\mathbf{2.97}$ |
-| **A0_Canonical_V1** | **GEFCom** | $0.410$ | $0.260$ | $0.330$ | $1.077$ | $\mathbf{2.94}$ |
-| **A0_Canonical_V1** | **UCI** | $0.469$ | $0.189$ | $0.342$ | $1.032$ | $\mathbf{2.83}$ |
+| **A0_Canonical_V1** | **GEFCom** | $0.409$ | $0.260$ | $0.330$ | $1.077$ | $\mathbf{2.94}$ |
+| **A0_Canonical_V1** | **UCI** | $0.469$ | $0.189$ | $0.342$ | $1.032$ | $\mathbf{2.81}$ |
 | **B1_Zero_Recent_Error** | **PJM** | $0.387$ | $0.288$ | $0.325$ | $1.088$ | $2.97$ |
 | **B1_Zero_Recent_Error** | **GEFCom** | $0.404$ | $0.262$ | $0.334$ | $1.080$ | $2.95$ |
 | **B1_Zero_Recent_Error** | **UCI** | $0.443$ | $0.212$ | $0.345$ | $1.054$ | $2.87$ |
@@ -154,79 +156,90 @@ Across all 5 seeds, the gating weights and routing entropy were tracked on the t
 | **C3_Softer_Temperature** | **GEFCom** | $0.404$ | $0.270$ | $0.325$ | $1.082$ | $2.95$ |
 | **C3_Softer_Temperature** | **UCI** | $0.464$ | $0.194$ | $0.342$ | $1.038$ | $2.82$ |
 
-### Gating Dynamics Takeaways:
-- **No Expert Collapse:** Across all seeds and datasets, routing does not collapse to a single expert. The effective number of experts ($N_{\text{eff}} = e^H$) remains consistently above $2.80$ (out of a maximum theoretical of $3.0$).
-- **Context-Adaptive Specialization:** On UCI, the network dynamically shifts weight toward LSTM ($46.9\%$), reflecting its superior autoregressive tracking of volatile client load, while maintaining balanced usage on PJM and GEFCom.
+### Gating Observations:
+- **Expert Utilization:** Routing did not collapse to a single expert. Across all seeds and datasets, the effective number of experts ($N_{\text{eff}} = e^H$) averaged between $2.81$ and $2.97$ (theoretical maximum = $3.0$).
+- **Weight Allocation:** On UCI, the router placed higher average weight on the LSTM expert ($46.9\%$), reflecting its standalone empirical accuracy, while maintaining balanced usage on PJM and GEFCom.
 
 ---
 
-## 6. Daily-Block Paired Statistical Tests (CAEG V1 vs Static Equal Ensemble)
+## 6. Daily-Block Paired Statistical Analysis (CAEG V1 vs Static Equal Ensemble)
 
-To rigorously evaluate daily-scale forecast differences between adaptive gating and static equal weighting, paired block tests were conducted across independent 24-hour test horizons:
+### Distinction Between Evaluation Protocols
+- **Sliding-Window Evaluation:** Full test set evaluated hourly across all overlapping 24-hour windows.
+- **Daily-Block Paired Analysis:** Non-overlapping 24-hour forecast blocks evaluated sequentially to provide independent samples for paired hypothesis testing.
 
-| Dataset | $K$ Daily Blocks | Mean Daily Diff ($\text{MAE}_{\text{CAEG}} - \text{MAE}_{\text{Ens}}$) | Std Diff | $t$-statistic | $p$-value ($t$-test) | $p$-value (Wilcoxon) | Conclusion |
+### Paired Hypothesis Testing Results
+
+| Dataset | $K$ Blocks | Mean Daily Diff ($\text{MAE}_{\text{CAEG}} - \text{MAE}_{\text{Ens}}$) | Std Diff | $t$-statistic | $p$-value ($t$-test) | $p$-value (Wilcoxon) | Statistical Verdict |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **PJM** | 53 blocks | $-11.15$ MW | $53.85$ MW | $-1.494$ | $0.1413$ | $0.5861$ | CAEG numerically superior (-11.15 MW/day) |
-| **GEFCom** | 456 blocks | $+0.48$ kW | $1.79$ kW | $+5.730$ | $1.82 \times 10^{-8}$ | $9.66 \times 10^{-10}$ | Equal ensemble marginally superior (+0.48 kW/day) |
-| **UCI** | 163 blocks | $+0.38$ MW | $1.47$ MW | $+3.300$ | $0.0012$ | $0.0036$ | Comparable daily block dispersion |
+| **PJM** | 53 | $-11.15$ MW | $53.85$ MW | $-1.494$ | $0.1413$ | $0.5861$ | No statistically significant difference ($p > 0.05$) |
+| **GEFCom** | 456 | $+0.48$ kW | $1.79$ kW | $+5.730$ | $1.82 \times 10^{-8}$ | $9.66 \times 10^{-10}$ | Statistically favors Equal Ensemble ($p < 0.001$) |
+| **UCI** | 163 | $+0.38$ MW | $1.47$ MW | $+3.300$ | $0.0012$ | $0.0036$ | Statistically favors Equal Ensemble ($p < 0.01$) |
 
-*Note on GEFCom and UCI:* In high-sample regimes with collinear errors, minute numerical differences achieve statistical significance ($p < 0.01$), even though the absolute magnitude ($+0.48$ kW on a $130$ kW baseline, or $0.37\%$) is practically negligible.
+### Statistical Synthesis:
+1. **Modern PJM:** CAEG-Net V1 achieved a numerically lower aggregate test MAE than the Static Equal Ensemble ($251.17$ vs $277.13$ MW; $245.98$ vs $277.13$ MW on seed 42); however, the daily-block paired comparison did not reach statistical significance (paired $t$-test $p=0.1413$; Wilcoxon $p=0.5861$).
+2. **GEFCom2014:** The daily-block paired analysis statistically favored the Static Equal Ensemble ($p < 10^{-7}$). The mean difference of $+0.48$ kW on a $130$ kW average load is modest ($0.37\%$), reflecting high expert error collinearity.
+3. **UCI Cohort 320:** Aggregate 5-seed test MAE for CAEG-Net V1 was slightly lower than the Static Equal Ensemble ($8.08$ vs $8.19$ MW), while the daily-block paired analysis favored the equal ensemble ($p=0.0012$; Wilcoxon $p=0.0036$). These two analyses represent different aggregation views (hourly sliding-window average vs non-overlapping daily block differences).
 
 ---
 
-## 7. Answers to the 11 Scientific Questions (Phase 10 Core Specification)
+## 7. Answers to the 11 Core Scientific Questions
 
 ### 1. Core Finding: Can CAEG-Net be improved across datasets without redesigning the architecture?
-**No.** Targeted modifications within the canonical expert family—including context feature scaling, error-feature ablations, gating regularizers, temperature scaling, and decoupled pre-training—fail to produce a consistent, cross-dataset Pareto improvement over Canonical CAEG-Net V1 on untouched test data.
+**No.** Controlled modifications within the canonical expert family—including context feature scaling, error-feature ablations, gating regularizers, temperature scaling, and decoupled pre-training—did not produce a consistent cross-dataset improvement over Canonical CAEG-Net V1 on held-out test data.
 
 ### 2. Cross-Dataset Performance: Did any candidate improve performance on $\ge 2$ datasets without degrading the 3rd?
-In the validation screening phase, **B1** and **C3** met the qualification threshold. However, during the rigorous 5-seed untouched test evaluation, **Canonical V1 proved superior to both B1 and C3 on PJM (248.63 vs 257.36 and 258.44 MW) and GEFCom (12.75 vs 12.77 and 12.76 kW)**, while remaining within $0.13$ MW of C3 on UCI.
+In the validation screening phase, **B1** and **C3** satisfied the qualification criterion. However, in the subsequent 5-seed evaluation on held-out test partitions, **Canonical V1 remained the strongest overall cross-dataset formulation among the tested candidates** (lowest MAE on PJM at $251.17$ MW and UCI at $8.08$ MW, with competitive performance on GEFCom at $12.81$ kW vs $12.77$ kW for B1).
 
-### 3. Dataset Sensitivity: Why did UCI benefit strongly while PJM and GEFCom showed limited gain?
-UCI represents aggregated individual client load profiles characterized by sharp consumer-driven discontinuities, non-linear diurnal cycles, and dynamic variance. In this regime, the context encoder effectively identifies shifting load regimes and heavily leverages the LSTM expert (~47% weight). In contrast, PJM is a bulk transmission grid dominated by aggregate inertia and smooth diurnal seasonality, while GEFCom consists of highly aggregated sub-station demand where expert residuals are overwhelmingly collinear.
+### 3. Dataset Sensitivity: Why did UCI benefit while PJM and GEFCom showed different patterns?
+The UCI results are consistent with a setting in which the LSTM expert is particularly effective ($7.96$ MW standalone MAE) and adaptive routing assigns greater average weight to it ($46.9\%$). Modern PJM operates at bulk transmission scale with higher inertia, where CAEG-Net V1 showed numerical aggregate improvement over the static equal ensemble ($251.17$ vs $277.13$ MW). GEFCom consists of zonal load where expert residuals are strongly correlated, reducing opportunities for adaptive routing.
 
 ### 4. Expert Complementarity: What are the pairwise residual correlations between LSTM, TCN, and CNN?
 - **PJM:** $r(\text{LSTM}, \text{TCN})=0.791$, $r(\text{LSTM}, \text{CNN})=0.596$, $r(\text{TCN}, \text{CNN})=0.636$.
 - **GEFCom:** $r(\text{LSTM}, \text{TCN})=0.908$, $r(\text{LSTM}, \text{CNN})=0.848$, $r(\text{TCN}, \text{CNN})=0.866$.
 - **UCI:** $r(\text{LSTM}, \text{TCN})=0.843$, $r(\text{LSTM}, \text{CNN})=0.627$, $r(\text{TCN}, \text{CNN})=0.701$.  
-Adaptive gating thrives when pairwise correlation is moderate ($r \approx 0.60$), allowing the router to exploit orthogonal error distributions.
+The observed results are consistent with the hypothesis that greater expert error diversity provides more opportunity for adaptive routing to improve over uniform averaging.
 
 ### 5. Gating Behavior: How did gating weights distribute across experts on each dataset?
-Gating remained dynamic and diversified across all datasets:
+Routing remained diversified across all datasets:
 - PJM: LSTM $38.9\%$, TCN $28.9\%$, CNN $32.2\%$ ($N_{\text{eff}} = 2.97$).
-- GEFCom: LSTM $41.0\%$, TCN $26.0\%$, CNN $33.0\%$ ($N_{\text{eff}} = 2.94$).
-- UCI: LSTM $46.9\%$, TCN $18.9\%$, CNN $34.2\%$ ($N_{\text{eff}} = 2.83$).  
-No collapse to a single expert occurred.
+- GEFCom: LSTM $40.9\%$, TCN $26.0\%$, CNN $33.0\%$ ($N_{\text{eff}} = 2.94$).
+- UCI: LSTM $46.9\%$, TCN $18.9\%$, CNN $34.2\%$ ($N_{\text{eff}} = 2.81$).  
+No collapse to a single expert was observed.
 
 ### 6. Equal Ensemble Comparison: How does adaptive gating compare against static equal weighting?
-- On PJM, CAEG-Net V1 ($248.63$ MW) outperforms the Static Equal Ensemble ($277.13$ MW) by **$28.50$ MW ($10.3\%$ error reduction)**.
-- On GEFCom, Static Equal Ensemble ($12.66$ kW) slightly edges out CAEG-Net V1 ($12.75$ kW) by $0.09$ kW ($0.7\%$), because collinear expert errors render adaptive routing redundant.
-- On UCI, CAEG-Net V1 ($8.11$ MW) and C3 ($7.98$ MW) closely match or exceed Static Equal Ensemble ($8.19$ MW).
+- On Modern PJM, CAEG-Net V1 achieved a $9.4\%$ lower aggregate test MAE than the Static Equal Ensemble ($251.17$ vs $277.13$ MW); however, the daily-block paired comparison did not reach statistical significance ($p=0.1413$).
+- On GEFCom, the Static Equal Ensemble achieved slightly lower error ($12.66$ vs $12.81$ kW), with the daily-block paired test favoring the equal ensemble ($p < 0.001$).
+- On UCI, aggregate test MAE was close between CAEG-Net V1 and the equal ensemble ($8.08$ vs $8.19$ MW), while the daily-block paired test favored the equal ensemble ($p=0.0012$).
 
 ### 7. Parameter Efficiency: How does CAEG-Net scale relative to single experts and Ridge?
-- **Ridge:** 4,056 parameters. Highly parameter-efficient on linear regimes (PJM), but lacks expressive non-linear representation for complex client dynamics.
+- **Ridge:** 4,056 parameters. Parameter-efficient in linear transmission regimes, but limited in non-linear consumer dynamics.
 - **Single Experts:** LSTM (56,152), TCN (36,952), CNN (27,400).
-- **CAEG-Net V1:** 121,531 parameters. The routing overhead is only 1,027 parameters ($0.8\%$ of total model capacity), making adaptive gating exceptionally lightweight relative to the underlying expert ensemble.
+- **CAEG-Net V1:** 121,531 parameters. The routing mechanism adds 1,027 parameters ($0.8\%$ of total capacity), making adaptive gating lightweight relative to the expert ensemble.
 
 ### 8. Context Representation: Did normalized trend, volatility, or dimensionless context improve routing?
-**No.** Normalizing trend by mean load (A1), expressing volatility as coefficient of variation (A2), and converting context into dimensionless units (A4) degraded PJM validation MAE by $1.5\%$ to $4.8\%$. Retaining raw physical units provides the gate with critical information regarding absolute grid load level.
+**No.** Within the tested formulations, retaining raw-scale context features provided better validation performance, particularly on PJM. Normalizing trend (A1), volatility as CoV (A2), and dimensionless context (A4) degraded PJM validation MAE by $1.5\%$ to $4.8\%$.
 
 ### 9. Error Feedback: Did zero-recent-error (3D) or normalized recent error help or hurt?
-While B1 (3D context, zeroing recent error) appeared promising on validation screening, 5-seed test evaluation revealed increased variance and worse test MAE on all three datasets ($257.36$ vs $248.63$ MW on PJM; $12.77$ vs $12.75$ kW on GEFCom; $8.14$ vs $8.11$ MW on UCI). Recent error feedback helps anchor the gating network during inference.
+The results suggest that recent forecast-error feedback provides useful information to the routing mechanism. Removing recent error (B1) improved validation screening but resulted in higher test MAE on PJM ($255.73$ vs $251.17$ MW) and UCI ($8.18$ vs $8.08$ MW).
 
 ### 10. Gating Regularizers & Temperature: Did regularizers or temperature scaling improve generalization?
-- **Regularizers:** Entropy maximization (C1) and gating KL stability (C2) degraded PJM performance without improving generalization.
-- **Temperature:** Sharper temperature ($\tau=0.7$) severely degraded PJM ($-8.10\%$). Softer temperature ($\tau=1.5$, C3) produced a modest gain on UCI ($7.98$ vs $8.11$ MW) but degraded PJM test performance ($258.44$ vs $248.63$ MW).
+- **Regularizers:** Entropy bonuses (C1) and gating KL stability (C2) degraded PJM validation performance.
+- **Temperature:** Sharper temperature ($\tau=0.7$) degraded PJM validation performance by $-8.10\%$. Softer temperature ($\tau=1.5$, C3) passed screening but did not improve test MAE on PJM ($254.28$ vs $251.17$ MW) or UCI ($8.34$ vs $8.08$ MW).
 
 ### 11. Definitive Recommendation: What is the frozen architecture going forward?
 **Retain Canonical CAEG-Net V1 without modification.**  
-Canonical CAEG-Net V1 represents the optimal empirical balance across diverse power grid tiers. Any candidate modification that improves one dataset degrades another. The canonical architecture is locked and frozen for future benchmark comparisons.
+Canonical CAEG-Net V1 demonstrated the strongest overall empirical generalization across the three benchmark datasets among the tested formulations.
 
 ---
 
-## 8. Artifact & Verification Index
+## 8. Final Scientific Conclusion
 
-The following result artifacts and figures have been generated and committed to the repository:
+Phase 10 did not identify a modification that robustly improves Canonical CAEG-Net V1 across all three benchmark regimes. Although B1 and C3 satisfied the predefined validation screening criterion, neither produced consistent gains in the subsequent 5-seed evaluation on held-out test partitions. Canonical CAEG-Net V1 therefore remains the preferred frozen formulation among the tested models. The cross-dataset results suggest that the benefit of adaptive fusion depends on the degree of exploitable diversity among expert forecasts, while simpler fusion can remain highly competitive in regimes with strongly correlated expert errors.
+
+---
+
+## 9. Artifact & Verification Index
 
 | Artifact Type | File Path | Description |
 | :--- | :--- | :--- |
@@ -237,6 +250,7 @@ The following result artifacts and figures have been generated and committed to 
 | **Baselines & Ensembles**| `research/results/phase10_baselines.csv` | Standalone LSTM, TCN, CNN, and Static Equal Ensemble |
 | **Complementarity Matrix**| `research/results/phase10_expert_complementarity.csv`| Pairwise residual error correlations across datasets |
 | **Statistical Tests** | `research/results/phase10_statistical_tests.csv` | Daily-block paired t-tests and Wilcoxon tests |
+| **Scientific Audit Log** | `research/results/PHASE_10_SCIENTIFIC_AUDIT.md` | Audit log of statistical reconciliation & corrections |
 | **Fig 1: Cross Improvement**| `research/results/phase10_plots/phase10_01_cross_dataset_improvement.png` | Group A–E relative validation improvements |
 | **Fig 2: Normalized MAE** | `research/results/phase10_plots/phase10_02_val_mae_comparison.png` | Candidate validation MAE normalized to Canonical V1 |
 | **Fig 3: Standalone MAE** | `research/results/phase10_plots/phase10_03_standalone_expert_mae.png` | Relative standalone expert performance |
@@ -247,4 +261,4 @@ The following result artifacts and figures have been generated and committed to 
 | **Fig 8: Forecast Profile**| `research/results/phase10_plots/phase10_08_sample_forecasts.png` | Representative 24-hour forecast profile |
 
 ---
-**End of Phase 10 Report**
+**End of Audited Phase 10 Report**
