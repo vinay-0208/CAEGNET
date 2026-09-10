@@ -1,0 +1,6 @@
+model_id,context_dim,total_params,param_increase,pct_increase
+B0_Canonical_V1,4,121531,0,0.0
+P1_Recent_Expert_MAE,7,121579,48,0.0395
+P2_Relative_Performance,7,121579,48,0.0395
+P3_Performance_Trend,10,121627,96,0.079
+C1_Confidence_Fallback,7,121724,193,0.1588
