@@ -1,0 +1,5 @@
+candidate_id,pjm_val_mae,gefcom_val_mae,uci_val_mae,rel_change_pjm_pct,rel_change_gefcom_pct,rel_change_uci_pct,val_datasets_improved,val_worst_degradation_pct,stage_b_qualified,pjm_5seed_test_mae,gefcom_5seed_test_mae,uci_5seed_test_mae,beats_v1_datasets,beats_equal_ensemble_datasets,beats_best_expert_baseline_7_55,beats_best_expert_test_7_79
+A0_Canonical_V1,438.1035,13.2596,6.7497,0.0,0.0,0.0,0,0.0,Control,253.4085,12.8797,7.9374,0 / 3,2 / 3,1 / 3,1 / 3
+A1_P2_OOF,443.2452,13.2414,6.7001,1.1736,-0.1374,-0.7337,2,1.1736,YES,250.6309,12.6404,7.9833,"2 / 3 (PJM, GEFCom)","2 / 3 (PJM, UCI)",1 / 3 (PJM),1 / 3 (PJM)
+A2_C1_OOF,399.4998,13.0372,6.3634,-8.8116,-1.6776,-5.723,3,-1.6776,YES,255.4894,12.4611,7.593,"2 / 3 (GEFCom, UCI)",3 / 3 (All),"2 / 3 (PJM, GEFCom)",3 / 3 (All)
+A3_Confidence_Only,407.9844,13.0018,6.3918,-6.8749,-1.9445,-5.3013,3,-1.9445,YES,255.6633,12.4395,7.7115,"2 / 3 (GEFCom, UCI)",3 / 3 (All),"2 / 3 (PJM, GEFCom)",3 / 3 (All)
