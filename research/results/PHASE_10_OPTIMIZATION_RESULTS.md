@@ -88,6 +88,8 @@ The two qualified candidates (B1, C3) and the control baseline (A0 Canonical V1)
 | **B1_Zero_Recent_Error_3D** | $255.73 \pm 5.96$ | $\mathbf{12.77 \pm 0.48}$ | $8.18 \pm 0.20$ |
 | **C3_Softer_Temperature** | $254.28 \pm 4.18$ | $12.86 \pm 0.28$ | $8.34 \pm 0.62$ |
 
+*(Note: The $\pm$ values are standard deviations across the five seed results.)*
+
 ### 3.2 Secondary Metrics Summary
 
 #### Modern PJM Benchmark (Transmission Grid)
@@ -234,6 +236,8 @@ Canonical CAEG-Net V1 demonstrated the strongest overall empirical generalizatio
 ---
 
 ## 8. Final Scientific Conclusion
+
+Among the Phase 10 formulations evaluated, Canonical CAEG-Net V1 provided the strongest overall cross-dataset performance, achieving the lowest mean test MAE on two of the three datasets. Neither validation-qualified modification produced a consistent improvement over V1 across datasets.
 
 Phase 10 did not identify a modification that robustly improves Canonical CAEG-Net V1 across all three benchmark regimes. Although B1 and C3 satisfied the predefined validation screening criterion, neither produced consistent gains in the subsequent 5-seed evaluation on held-out test partitions. Canonical CAEG-Net V1 therefore remains the preferred frozen formulation among the tested models. The cross-dataset results suggest that the benefit of adaptive fusion depends on the degree of exploitable diversity among expert forecasts, while simpler fusion can remain highly competitive in regimes with strongly correlated expert errors.
 

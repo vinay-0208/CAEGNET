@@ -113,6 +113,30 @@ The following primary Phase 10 artifacts were audited:
 - Candidate `C3_Softer_Temperature` was verified in `run_phase10_optimization.py` (line 525) and `PHASE_10_OPTIMIZATION_DESIGN.md` (line 110) as having temperature **$\tau = 1.25$** (and `C3_Sharper_Temperature` having **$\tau = 0.8$**).
 - Earlier draft text loosely noted "$\tau=1.5$" and "$\tau=0.7$"; this was reconciled across all documentation to match the true execution code ($\tau = 1.25$ and $\tau = 0.8$).
 
+### 3.9 Standard Deviation & Standard Error Terminology
+- **Standard Deviation (`np.std`):** Code inspection of `run_phase10_optimization.py` (line 794) confirms the standard deviation is computed as `float(np.std(seed_maes))`. Because NumPy's default is `ddof=0` (population standard deviation over the $N=5$ seeds), these values are strictly defined as **standard deviations across the five seed results** rather than sample standard deviations ($\text{ddof}=1$).
+- **Standard Error Claims Removed:** Standard errors ($\text{SE} = \sigma / \sqrt{N}$) were not computed for the 5-seed finalist comparisons. The descriptive statement regarding GEFCom is strictly formulated as:
+  > *"and remains numerically close to the best-performing formulation on GEFCom ($12.81 \pm 0.34$ kW vs $12.77 \pm 0.48$ kW for B1)."*
+  No unsupported standard-error claims are made.
+
+### 3.10 Code-Level Reproducibility Audit & Seed Reset Mechanism
+- **Seed Reset Inspection:** In `run_phase10_optimization.py` (lines 735–740), random seeds are reset inside the canonical seeds loop before each seed run via:
+  ```python
+  torch.manual_seed(seed)
+  np.random.seed(seed)
+  if device.type == "cuda":
+      torch.cuda.manual_seed_all(seed)
+  ```
+- **Identified Reproducibility Gaps:**
+  1. `random.seed(seed)` from Python's standard library is not called.
+  2. `DataLoader(..., shuffle=True)` is instantiated prior to the seed loop without an explicit seeded `torch.Generator`.
+  3. `torch.backends.cudnn.deterministic = True` and `torch.backends.cudnn.benchmark = False` are NOT set.
+  4. Non-deterministic CUDA atomic reductions in cuDNN convolution/RNN kernels introduce floating-point drift across varying GPU workspace states.
+- **Reproducibility Classification:**
+  **B. Unexpected because each seed should have been independently reset, indicating a reproducibility weakness.**
+  The divergence between task-5137 (which ran 42 screening experiments immediately before the finalist loop) and task-5167 (which loaded screening results from disk cache and executed finalists directly) stemmed from cuDNN workspace state and unseeded DataLoader generator state.
+- **Resolution:** No experiments are rerun. The finalized values in `phase10_candidate_comparison.csv` remain strictly locked as the permanent source of truth.
+
 ---
 
 ## 4. Verification of the Central Scientific Decision
@@ -123,6 +147,8 @@ The core research question investigated whether controlled modifications could i
    - **B1** showed higher error than Canonical V1 on PJM ($255.73$ vs $251.17$ MW) and UCI ($8.18$ vs $8.08$ MW), with near-identical error on GEFCom ($12.77$ vs $12.81$ kW).
    - **C3** showed higher error than Canonical V1 on all three datasets ($254.28$ vs $251.17$ MW on PJM; $12.86$ vs $12.81$ kW on GEFCom; $8.34$ vs $8.08$ MW on UCI).
 3. **Canonical CAEG-Net V1** achieved the lowest test MAE on PJM and UCI, and competitive test MAE on GEFCom, demonstrating the strongest overall cross-dataset empirical generalization among tested formulations.
+
+> *"Among the Phase 10 formulations evaluated, Canonical CAEG-Net V1 provided the strongest overall cross-dataset performance, achieving the lowest mean test MAE on two of the three datasets. Neither validation-qualified modification produced a consistent improvement over V1 across datasets."*
 
 **Final Decision:** **Canonical CAEG-Net V1 is retained as the frozen research architecture.**
 
