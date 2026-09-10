@@ -17,7 +17,7 @@ Prior phases established that while Canonical CAEG-Net V1 demonstrated strong ad
 ### Key Audited Conclusions
 1. **Validation Screening Qualification:** Out of 14 candidate formulations across 5 hypothesis groups (A–E), only two candidates satisfied the predefined cross-dataset validation criterion ($\ge 2$ datasets improved, no dataset degraded by $>2.0\%$ relative to Canonical V1):
    - **B1 (Zero-Recent-Error 3D Context):** PJM $+0.04\%$, GEFCom $+6.42\%$, UCI $+4.46\%$.
-   - **C3 (Softer Temperature $\tau=1.5$):** PJM $-0.56\%$, GEFCom $+2.16\%$, UCI $+2.19\%$.
+   - **C3 (Softer Temperature $\tau=1.25$):** PJM $-0.56\%$, GEFCom $+2.16\%$, UCI $+2.19\%$.
 2. **Evaluation on Held-Out Test Partitions:** When evaluated across 5 canonical seeds (`[42, 123, 999, 2024, 3407]`) on held-out test partitions under the locked Phase 10 protocol:
    - **PJM Test MAE:** Canonical V1 achieved **$251.17 \pm 12.61$ MW** vs B1 = $255.73 \pm 5.96$ MW vs C3 = $254.28 \pm 4.18$ MW.
    - **GEFCom Test MAE:** Canonical V1 achieved **$12.81 \pm 0.34$ kW** vs B1 = **$12.77 \pm 0.48$ kW** vs C3 = $12.86 \pm 0.28$ kW.
@@ -62,8 +62,8 @@ Positive values indicate an improvement (lower error); negative values indicate 
 | **B2_Normalized_Recent_Error**| Normalized recent forecast error | $-3.26\%$ | $-0.52\%$ | $+6.43\%$ | 1 | $-3.26\%$ | NO |
 | **C1_Entropy_Regularized** | Entropy bonus ($\beta=0.01$) | $-2.63\%$ | $-1.02\%$ | $+3.08\%$ | 1 | $-2.63\%$ | NO |
 | **C2_Stability_Regularized** | Gating KL stability regularizer | $-2.03\%$ | $-0.67\%$ | $+2.28\%$ | 1 | $-2.03\%$ | NO |
-| **C3_Sharper_Temperature** | Softmax temperature $\tau=0.7$ | $-8.10\%$ | $+0.18\%$ | $+1.71\%$ | 2 | $-8.10\%$ | NO |
-| **C3_Softer_Temperature** | Softmax temperature $\tau=1.5$ | $\mathbf{-0.56\%}$ | $\mathbf{+2.16\%}$ | $\mathbf{+2.19\%}$ | **2** | $\mathbf{-0.56\%}$ | **YES** |
+| **C3_Sharper_Temperature** | Softmax temperature $\tau=0.8$ | $-8.10\%$ | $+0.18\%$ | $+1.71\%$ | 2 | $-8.10\%$ | NO |
+| **C3_Softer_Temperature** | Softmax temperature $\tau=1.25$ | $\mathbf{-0.56\%}$ | $\mathbf{+2.16\%}$ | $\mathbf{+2.19\%}$ | **2** | $\mathbf{-0.56\%}$ | **YES** |
 | **D1_Decoupled_Pretraining** | Experts frozen, gate trained | $-0.67\%$ | $+4.66\%$ | $-11.49\%$ | 1 | $-11.49\%$ | NO |
 | **D2_Pretrain_FineTune** | Pre-trained experts fine-tuned | $-3.76\%$ | $+4.28\%$ | $+3.17\%$ | 2 | $-3.76\%$ | NO |
 | **E1_CNN_H2_TemporalPool8** | CNN 2-head, pool=8 | $-9.23\%$ | $+1.11\%$ | $+3.74\%$ | 2 | $-9.23\%$ | NO |
@@ -71,7 +71,7 @@ Positive values indicate an improvement (lower error); negative values indicate 
 ### Screening Observations
 1. **Context Transformations (Group A):** Within the tested formulations, dimensionless normalization (A1, A2, A3) consistently impaired PJM validation performance ($-3.1\%$ to $-4.8\%$). Retaining raw-scale context features provided better validation performance, particularly on PJM.
 2. **Error Feedback (Group B):** Eliminating recent forecast error (B1) improved validation metrics across all three datasets during single-seed validation screening.
-3. **Temperature Dynamics (Group C):** Sharper gating ($\tau=0.7$) degraded PJM validation performance ($-8.10\%$). Softer temperature ($\tau=1.5$) provided modest validation gains on GEFCom and UCI with minimal degradation on PJM ($-0.56\%$).
+3. **Temperature Dynamics (Group C):** Sharper gating ($\tau=0.8$) degraded PJM validation performance ($-8.10\%$). Softer temperature ($\tau=1.25$) provided modest validation gains on GEFCom and UCI with minimal degradation on PJM ($-0.56\%$).
 4. **Decoupled Training & Architecture (Groups D & E):** Decoupled expert training (D1) degraded UCI validation performance by $-11.49\%$. Altering the CNN expert (E1) degraded PJM by $-9.23\%$.
 
 ---
@@ -225,7 +225,7 @@ The results suggest that recent forecast-error feedback provides useful informat
 
 ### 10. Gating Regularizers & Temperature: Did regularizers or temperature scaling improve generalization?
 - **Regularizers:** Entropy bonuses (C1) and gating KL stability (C2) degraded PJM validation performance.
-- **Temperature:** Sharper temperature ($\tau=0.7$) degraded PJM validation performance by $-8.10\%$. Softer temperature ($\tau=1.5$, C3) passed screening but did not improve test MAE on PJM ($254.28$ vs $251.17$ MW) or UCI ($8.34$ vs $8.08$ MW).
+- **Temperature:** Sharper temperature ($\tau=0.8$) degraded PJM validation performance by $-8.10\%$. Softer temperature ($\tau=1.25$, C3) passed screening but did not improve test MAE on PJM ($254.28$ vs $251.17$ MW) or UCI ($8.34$ vs $8.08$ MW).
 
 ### 11. Definitive Recommendation: What is the frozen architecture going forward?
 **Retain Canonical CAEG-Net V1 without modification.**  

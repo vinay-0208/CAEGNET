@@ -109,6 +109,10 @@ The following primary Phase 10 artifacts were audited:
   - **UCI:** $N_{\text{test}} = 3,922$ windows $\implies 3,922 // 24 = 163$ non-overlapping blocks.
 - All $K$ values reported in the prose report match the actual computation.
 
+### 3.8 Temperature Parameter Verification
+- Candidate `C3_Softer_Temperature` was verified in `run_phase10_optimization.py` (line 525) and `PHASE_10_OPTIMIZATION_DESIGN.md` (line 110) as having temperature **$\tau = 1.25$** (and `C3_Sharper_Temperature` having **$\tau = 0.8$**).
+- Earlier draft text loosely noted "$\tau=1.5$" and "$\tau=0.7$"; this was reconciled across all documentation to match the true execution code ($\tau = 1.25$ and $\tau = 0.8$).
+
 ---
 
 ## 4. Verification of the Central Scientific Decision
