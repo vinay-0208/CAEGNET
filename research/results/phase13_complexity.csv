@@ -1,0 +1,5 @@
+candidate_id,context_dim,total_params,param_increase,pct_increase
+A0_Canonical_V1,4,121531,0,0.0
+A1_P2_OOF,7,121579,48,0.0395
+A2_C1_OOF,7,121724,193,0.1588
+A3_Confidence_Only,4,121628,97,0.0798
