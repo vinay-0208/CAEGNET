@@ -41,6 +41,11 @@ This audit reviews:
 - Validation and test partitions were transformed using frozen training statistics without updating running means or variances.
 
 ### 3.3 Two-Stage Screening Firewall
+### 3.4 Out-of-Sample (OOF) vs In-Sample Router Error Status
+- **Test & Validation Partitions:** Fully out-of-sample. Standalone experts trained on train were evaluated on unseen test and validation sets.
+- **Train Partition (Methodological Caveat):** The expert error features for the train partition were computed by evaluating the trained experts in-sample on the training partition rather than through chronological cross-validation.
+- **Audit Assessment:** Rated as **PARTIAL**. This did not affect held-out test evaluation validity, but the router observed optimistic in-sample training errors during training.
+
 - Stage A qualification used exclusively validation partitions under seeds $\{42, 123\}$. Zero test data was loaded or evaluated during screening.
 - Candidate $P2$ ($+1.57\%$ PJM validation degradation) and Candidate $P3$ ($+0.33\%$ GEFCom, $+0.27\%$ UCI validation degradation) failed the qualification rule and were strictly barred from Stage B test evaluation.
 
