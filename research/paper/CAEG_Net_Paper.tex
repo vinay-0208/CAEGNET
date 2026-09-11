@@ -18,55 +18,55 @@
 
 \title{Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting with Causal Out-of-Fold Performance Feedback and Confidence Fallback}
 
-\author{CAEG-Net Research Consortium\\
-Department of Computer Science and Operations Research\\
-Advanced Predictive Analytics Laboratory}
+\author{[Author Name(s)]\\
+[Department / Institution]\\
+[Corresponding Author Email]}
 
 \maketitle
 
 \begin{abstract}
-Accurate short-term electricity load forecasting (STLF) over a 24-hour horizon is foundational to unit commitment, reserve margin allocation, and wholesale power market settlements. While diverse temporal deep architectures (LSTM, TCN, CNN) offer complementary inductive biases, standard mixture-of-experts (MoE) gating networks suffer from overfitting, training-side target leakage, and unconstrained over-allocation under distribution shift. We present CAEG-Net, a context-adaptive expert gating framework integrating LSTM, TCN, and CNN temporal experts (120,504 frozen core parameters). CAEG-Net incorporates a 7-dimensional context representation coupling 4 domain state features with 3 genuine out-of-fold (OOF) causal expert-performance metrics generated via expanding-window chronological cross-validation. A dedicated confidence head estimates an empirical interpolation parameter $\lambda_t \in (0, 1)$ blending dynamic routing with an uninformative equal-weight prior. Evaluated across Modern PJM (MW), GEFCom2014 (kW), and UCI Electricity (MW) benchmarks over 5 random seeds, CAEG-Net (Candidate \texttt{F2\_A2\_OOF}) achieves statistically significant reductions in MAE over canonical context-only gating across all three datasets under Holm-Bonferroni correction (Modern PJM: $\bar{\Delta} = -9.66$ MW, $p_{\mathrm{adj}} = 0.0406$; GEFCom: $\bar{\Delta} = -0.688$ kW, $p_{\mathrm{adj}} = 1.02 \times 10^{-27}$; UCI: $\bar{\Delta} = -0.202$ MW, $p_{\mathrm{adj}} = 0.0017$). Furthermore, CAEG-Net achieves lower MAE than static equal ensembling on all three benchmarks (PJM: $-10.31\%$, GEFCom: $-1.66\%$, UCI: $-5.26\%$) with only 193 additional parameters (+0.1588\%). We demonstrate that the confidence parameter converges to a stationary operating band ($\lambda \approx 0.51 \pm 0.005, CV < 1.1\%$), acting as Bayesian variance shrinkage toward the uninformative prior rather than a volatile dynamic switch.
+Accurate short-term electricity load forecasting (STLF) over a 24-hour horizon is critical for power grid unit commitment, reserve margin scheduling, and market operations. While diverse deep sequence architectures (LSTM, TCN, CNN) offer complementary inductive biases, standard mixture-of-experts (MoE) gating networks suffer from overfitting, training-side target leakage, and unconstrained over-allocation under distribution shift. We present CAEG-Net, a context-adaptive expert gating framework integrating three canonical temporal experts: a 2-layer LSTM (56,152 parameters), a 6-stage dilated causal TCN with a 253-hour receptive field (36,952 parameters), and a 3-stage multi-scale CNN (27,400 parameters), totaling 120,504 frozen core parameters. CAEG-Net incorporates a 7-dimensional context representation coupling 4 operational state features (trend, volatility, lag-24 autocorrelation, recent error) with 3 chronological out-of-fold (OOF) relative expert-performance metrics generated via expanding-window cross-validation over 4 training blocks. A dedicated confidence head estimates an empirical balance parameter $\lambda_t \in (0, 1)$ blending dynamic routing with an uninformative equal-weight prior ($[1/3, 1/3, 1/3]$). Evaluated across Modern PJM (MW), GEFCom2014 (kW), and UCI Electricity (Cohort 320, MW) benchmarks over 5 evaluation seeds ($\{42, 123, 999, 2024, 3407\}$), CAEG-Net (Candidate \texttt{F2\_A2\_OOF}) achieves statistically significant reductions in MAE over canonical context-only gating across all three datasets under Holm-Bonferroni correction (Modern PJM: $\bar{\Delta} = -9.66$ MW, $p_{\mathrm{adj}} = 0.0406$; GEFCom: $\bar{\Delta} = -0.688$ kW, $p_{\mathrm{adj}} = 1.02 \times 10^{-27}$; UCI: $\bar{\Delta} = -0.202$ MW, $p_{\mathrm{adj}} = 0.0017$). Furthermore, CAEG-Net achieves lower MAE than static equal ensembling on all three benchmarks (PJM: $-10.31\%$, GEFCom: $-1.66\%$, UCI: $-5.26\%$) with only 193 additional parameters (+0.1588\%). The learned confidence coefficient exhibits low temporal variability ($\lambda \approx 0.51 \pm 0.005, CV < 1.1\%$) and behaves approximately as a near-constant shrinkage toward equal fusion rather than a rapid dynamic switching circuit.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Electricity load forecasting, Mixture of Experts, Adaptive gating, Causal machine learning, Out-of-fold cross-validation, Shrinkage priors.
+Electricity load forecasting, Mixture of Experts, Adaptive gating, Out-of-fold performance feedback, Forecast combinations, Shrinkage methods.
 \end{IEEEkeywords}
 
 \section{Introduction}
-Short-term electricity load forecasting (STLF) is an essential operational requirement for electrical power system security and day-ahead market efficiency. Grid dispatchers rely on 24-hour forward load curves to solve mixed-integer linear programming (MILP) unit commitment problems and maintain spinning reserve requirements. Modern power grids exhibit pronounced non-stationarity due to behind-the-meter photovoltaics, EV charging, and electrification.
+Short-term electricity load forecasting (STLF) is an essential operational requirement for electrical power system security and day-ahead market efficiency. Grid dispatchers rely on 24-hour forward load curves to solve mixed-integer linear programming (MILP) unit commitment problems and maintain spinning reserve requirements. Modern power grids exhibit pronounced non-stationarity due to behind-the-meter photovoltaics, EV charging, and demand electrification.
 
 While deep sequence models such as Long Short-Term Memory (LSTM)~\cite{hochreiter1997long}, Temporal Convolutional Networks (TCN)~\cite{bai2018empirical}, and multi-scale Convolutional Neural Networks (CNN) capture distinctive temporal dynamics, no single architecture uniformly dominates across all operational regimes. Static equal ensembling offers strong empirical variance reduction~\cite{clemen1989combining,timmermann2006forecast} but remains non-adaptive. Mixture-of-Experts (MoE)~\cite{jacobs1991adaptive} introduces dynamic gating, but often suffers from gating overfitting, in-sample training performance leakage, and routing instability.
 
-This paper establishes CAEG-Net, combining heterogeneous temporal experts with causal out-of-fold performance feedback and a confidence-guided shrinkage fallback, validated under strict chronological evaluation across three heterogeneous benchmarks.
+This paper establishes CAEG-Net, combining heterogeneous temporal experts with causally constructed out-of-fold performance feedback and a confidence-guided shrinkage fallback, validated under strict chronological evaluation across three heterogeneous benchmarks.
 
 \section{Methodology and Architecture}
 \subsection{Problem Formulation}
-Given historical sequence $X_{t-L+1:t} \in \mathbb{R}^L$ ($L=168$), the model predicts $Y_{t+1:t+H} \in \mathbb{R}^H$ ($H=24$) to minimize Mean Absolute Error (MAE):
+Given historical sequence $X_{t-L+1:t} \in \mathbb{R}^L$ ($L=168$), the model predicts $Y_{t+1:t+H} \in \mathbb{R}^H$ ($H=24$). Optimization minimizes Mean Squared Error (MSE), while Mean Absolute Error (MAE) serves as the primary evaluation metric:
 \begin{equation}
 \text{MAE} = \frac{1}{NH} \sum_{i=1}^N \sum_{h=1}^H |y_{t_i+h} - \hat{y}_{t_i+h}|
 \end{equation}
 
 \subsection{CAEG-Net Architecture}
-CAEG-Net incorporates three temporal experts:
+CAEG-Net incorporates three canonical temporal experts:
 \begin{itemize}
-    \item \textbf{LSTM Expert:} 2-layer LSTM ($h=64$) with linear projection (50,264 params).
-    \item \textbf{TCN Expert:} 3 residual blocks ($k=3, d \in \{1, 2, 4\}$) with linear projection (35,800 params).
-    \item \textbf{CNN Expert:} 3 parallel 1D conv branches ($k \in \{3, 5, 7\}$) with linear projection (34,440 params).
+    \item \textbf{LSTM Expert:} 2-layer LSTM ($h=64$, dropout $0.1$) with forecasting head Linear(64, 64) $\to$ ReLU $\to$ Linear(64, 24) (56,152 params).
+    \item \textbf{TCN Expert:} 6 causal residual stages ($k=3$, dilations $\{1, 2, 4, 8, 16, 32\}$, 32 ch, RF=253h) with forecasting head Linear(32, 32) $\to$ ReLU $\to$ Linear(32, 24) (36,952 params).
+    \item \textbf{CNN Expert:} 3-stage Conv1D ($1 \to 32 \to 64 \to 64$ with MaxPool and AdaptiveAvgPool) with forecasting head Linear(64, 48) $\to$ ReLU $\to$ Linear(48, 24) (27,400 params).
 \end{itemize}
 The expert core comprises 120,504 parameters.
 
-\subsection{Causal OOF Performance Feedback}
-To avoid training-side target leakage, 5-fold expanding-window cross-validation is performed strictly within the 70\% chronological training split. Normalized relative error signals $\tilde{e}_{m, t} = e_{m, t} / \sum_{j=1}^3 e_{j, t}$ are concatenated with 4 domain state features into a 7-dimensional context vector $c_t \in \mathbb{R}^7$.
+\subsection{Chronological OOF Performance Feedback}
+To avoid training-side target leakage, expanding-window cross-validation is performed across 4 chronological training blocks. For expert $i$, historical error is $e_i(t) = \frac{1}{24} \sum_{h=1}^{24} |y_{t-h} - \hat{y}_{i, t-h}|$, yielding relative error $r_i(t) = e_i(t) / \sum_j e_j(t)$. The 3 relative error signals are concatenated with 4 operational state features (trend, volatility, lag-24 autocorrelation, recent error) into a 7-dimensional context vector $c_t \in \mathbb{R}^7$.
 
 \subsection{Confidence Fallback Head}
-A softmax router predicts expert weights $w_t \in \Delta^2$, while a confidence head predicts balance parameter $\lambda_t \in (0, 1)$:
+A softmax router predicts expert weights $w_t \in \Delta^2$ (1,075 params), while a confidence head predicts balance parameter $\lambda_t \in (0, 1)$ (145 params):
 \begin{equation}
 \hat{y}_{t}^{\mathrm{final}} = \lambda_t \sum_{m=1}^3 w_{t, m} \hat{y}_{t}^{(m)} + (1 - \lambda_t) \frac{1}{3} \sum_{m=1}^3 \hat{y}_{t}^{(m)}
 \end{equation}
 The gating and confidence heads add 1,220 parameters (net overhead +193 parameters, +0.1588\% over Canonical V1).
 
 \section{Experimental Results}
-Table~\ref{tab:results} reports five-seed held-out test performance across benchmarks.
+Table~\ref{tab:results} reports five-seed held-out test performance (Mean $\pm$ Population SD, \texttt{ddof=0}) across benchmarks.
 
 \begin{table}[htbp]
 \caption{Held-Out Test MAE Across Five Random Seeds}
@@ -94,7 +94,7 @@ Hypothesis testing on non-overlapping 24-hour daily blocks ($K=53, 456, 163$) sh
 \end{itemize}
 
 \section{Conclusion}
-CAEG-Net demonstrates that context-adaptive expert gating achieves robust forecasting improvements when combined with causal out-of-fold performance feedback and conservative shrinkage priors. The confidence fallback functions as stationary Bayesian variance shrinkage ($\lambda \approx 0.51, CV < 1.1\%$), establishing a principled, reviewer-defensible architecture for STLF.
+This paper presented CAEG-Net, a context-adaptive expert gating framework for short-term electricity load forecasting. The final \texttt{F2\_A2\_OOF} formulation combines heterogeneous LSTM, TCN, and CNN experts with chronologically constructed out-of-fold expert-performance features and a confidence-guided fallback toward equal fusion. Across Modern PJM, GEFCom2014, and the UCI Cohort 320 benchmark, F2 improved upon canonical V1 in the locked five-seed evaluation and achieved lower MAE than static equal fusion on all three datasets. Under the predefined non-overlapping daily-block paired analysis with Holm correction, F2 showed statistically significant improvement over V1 across all three datasets. F2 was not the lowest-error formulation on every individual dataset and did not outperform the strongest standalone expert on UCI under the locked reference. Its selection therefore reflects cross-dataset robustness and consistency rather than universal per-dataset optimality. The confidence coefficient exhibited low temporal variability, suggesting that the fallback mechanism behaved approximately as a conservative shrinkage toward equal fusion rather than as a strongly time-varying expert switch. Overall, the results provide empirical evidence that causally constructed performance-aware adaptive fusion can improve the robustness of heterogeneous deep forecasting ensembles under strict chronological evaluation.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references/references}

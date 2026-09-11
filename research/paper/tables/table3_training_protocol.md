@@ -2,14 +2,14 @@
 
 | Parameter | Configuration / Value | Scientific Rationale |
 | :--- | :--- | :--- |
-| **Optimizer** | AdamW | Robust adaptive weight decay decoupled from $ gradient updates |
-| **Learning Rate** | .0 \times 10^{-3}$ | Verified stable convergence across recurrent, convolutional, and gating heads |
-| **Weight Decay** | .0 \times 10^{-4}$ | Light regularization on dense projection weights |
+| **Optimizer** | AdamW | Decoupled weight decay regularization |
+| **Learning Rate** | $1.0 \times 10^{-3}$ | Stable convergence across recurrent, convolutional, and gating heads |
+| **Weight Decay** | $1.0 \times 10^{-4}$ | Regularization on linear projection layers |
 | **Batch Size** | 64 | Efficient GPU memory utilization with stable batch-level gradient estimates |
-| **Learning Rate Scheduler**| StepLR (step size = 10 epochs, $\gamma = 0.5$) | Gradual decay ensuring fine parameter convergence in later epochs |
-| **Maximum Epochs** | 50 | Bound on optimization budget |
-| **Early Stopping** | Patience = 10 epochs | Halts optimization upon validation MAE degradation; restores best checkpoint |
-| **Loss Function** | Mean Squared Error (MSE) | Standard quadratic empirical risk objective for regression |
-| **Primary Evaluation Metric**| Mean Absolute Error (MAE) | Direct linear penalty reflecting grid dispatch and tariff economics |
-| **Random Seeds** | 5 seeds: {42, 123, 456, 789, 1000} | Rigorous multi-seed variance and population standard deviation assessment |
-| **OOF Cross-Validation** | 5-fold expanding chronological window | Leakage-free historical expert-performance feature extraction |
+| **Learning Rate Scheduler**| StepLR (step size = 15 epochs, $\gamma = 0.5$) | Gradual decay refining terminal convergence |
+| **Maximum Epochs** | 25 | Upper bound on training optimization budget |
+| **Early Stopping** | Patience = 6 epochs | Halts optimization upon validation loss plateau; restores best checkpoint |
+| **Optimization Loss** | Mean Squared Error (MSE) | Quadratic empirical risk objective during backpropagation |
+| **Primary Evaluation Metric**| Mean Absolute Error (MAE) | Direct physical interpretation in load units without quadratic distortion |
+| **Random Seeds** | 5 seeds: {42, 123, 999, 2024, 3407} | Rigorous multi-seed variance and population standard deviation assessment |
+| **OOF Construction** | 4-block chronological expanding window | Leakage-free historical expert-performance feature generation |
