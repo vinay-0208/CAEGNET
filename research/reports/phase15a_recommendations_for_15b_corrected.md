@@ -51,7 +51,7 @@ To rigorously disentangle routing alpha, horizon specialization, dynamic confide
 Supported by the reconciled diagnostic evidence, the following hypothesis-driven candidates are recommended for evaluation in Phase 15B:
 
 ### Candidate 1: Horizon-Grouped Routing (HGR)
-- **Hypothesis:** Partitioning the 24-hour horizon into 3 distinct temporal heads—Short ($h \in \{1, \dots, 8\}$), Medium ($h \in \{9, \dots, 16\}$), and Long ($h \in \{17, \dots, 24\}$)—will allow the network to exploit empirical expert crossover (TCN for short, LSTM for long) without exploding parameter counts.
+- **Hypothesis:** Partitioning the 24-hour horizon into 3 distinct temporal heads—Short ($h \in \{1, \dots, 8\}$), Medium ($h \in \{9, \dots, 16\}$), and Long ($h \in \{17, \dots, 24\}$)—is motivated by the observed empirical lead-time crossover (TCN on short horizons, LSTM on long horizons) and will be tested under strict controls in Phase 15B.
 - **Budget Constraint:** Router head increases from $9 \times 3 = 27$ parameters to $9 \times 9 = 81$ parameters (+54 parameters total, well within the 120k–125k parameter budget).
 
 ### Candidate 2: Disagreement-Gated Shrinkage (DGS)
@@ -69,3 +69,11 @@ Supported by the reconciled diagnostic evidence, the following hypothesis-driven
 2. **Deterministic Reproducibility:** Deterministic data loaders, CUDNN seeding, and identical chronological train/val/test splits.
 3. **Non-Overlapping Daily-Block Statistical Testing:** Paired $t$-tests, Wilcoxon signed-rank tests, and Holm-Bonferroni correction over non-overlapping 24h blocks ($K=53, 456, 163$).
 4. **No Test-Driven Model Tuning:** Screening must occur strictly on validation data using cached causal OOF features.
+
+---
+
+## 5. Phase 15A-D Final Methodological Safeguards
+
+1. **C14 Feature Resolution Quarantine:** Exploratory descriptive findings on lookback window lengths must not be treated as established performance improvements. Longer lookback smoothing remains a secondary hypothesis for Phase 15B.
+2. **Mandatory 4-Control Isolation:** Phase 15B must execute Controls A, B, C, and D alongside any proposed candidate to isolate routing, horizon specialization, dynamic confidence, and fixed centroid shrinkage.
+3. **Predefined Validation Firewall:** No hyperparameter tuning or candidate selection may be informed by test-set evaluations.

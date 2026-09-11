@@ -1,7 +1,7 @@
 """
 Unit and Regression Tests for Phase 15A Reconciled Diagnostics
 =============================================================
-Verifies all 16 mandated diagnostic calculations:
+Verifies all 18 mandated diagnostic calculations:
 1. UCI baseline provenance distinction (val baseline vs test benchmark)
 2. Residual correlation definition distinction (standalone vs co-adapted)
 3. Routing dynamicity statistics (continuous variance & rank switching)
@@ -9,7 +9,7 @@ Verifies all 16 mandated diagnostic calculations:
 5. Effective number of experts (N_eff)
 6. Oracle weight simplex constraints (w >= 0, sum w = 1)
 7. Oracle MAE hierarchy and non-deployability property
-8. Regret formula properties (selection vs fusion regret)
+8. Regret formula properties (Selection Regret >= 0 and Fusion Gain G_fusion)
 9. Shrinkage linear interpolation & descriptive decomposition
 10. Daily-block alignment & non-overlapping index independence
 11. Zero future-target leakage in lookback context slicing
@@ -18,9 +18,12 @@ Verifies all 16 mandated diagnostic calculations:
 14. Confidence statistics & calibration binning properties
 15. Disagreement calculation properties (symmetry, spread, advantage)
 16. Horizon aggregation & empirical crossover properties
+17. C14 feature-resolution audit classification (DESCRIPTIVE_ONLY)
+18. Oracle non-deployability certification & exclusion from model features
 """
 
 import unittest
+import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import torch
@@ -40,7 +43,7 @@ class TestPhase15ADiagnostics(unittest.TestCase):
         test_benchmark = 7.794470
         f2_test_mae = 7.737148
 
-        # F2 outperforms the test benchmark
+        # F2 achieves numerically lower MAE than test benchmark
         self.assertLess(f2_test_mae, test_benchmark)
         # F2 does NOT outperform the validation baseline
         self.assertGreater(f2_test_mae, val_baseline)
@@ -143,18 +146,22 @@ class TestPhase15ADiagnostics(unittest.TestCase):
         self.assertLessEqual(mean_oracle_exp, best_standalone_mae + 1e-6)
         self.assertLessEqual(mean_oracle_cvx, mean_oracle_exp + 1e-6)
 
-    def test_08_regret_formulas_and_properties(self):
-        """Test 8: Verify regret definitions (Selection Regret vs Fusion Regret)."""
+    def test_08_regret_and_fusion_gain_properties(self):
+        """Test 8: Verify Selection Regret (R_select >= 0) and Fusion Gain (G_fusion)."""
         mae_best_bm = 259.33
         mae_top1 = 287.84
         mae_fused = 250.97
 
         selection_regret = mae_top1 - mae_best_bm
-        fusion_regret = mae_fused - mae_best_bm
+        fusion_gain = mae_fused - mae_best_bm
 
-        self.assertGreater(selection_regret, 0.0)
-        self.assertLess(fusion_regret, 0.0)
-        self.assertAlmostEqual(fusion_regret, -8.36, places=1)
+        # Selection regret is strictly non-negative (R_select >= 0)
+        self.assertGreaterEqual(selection_regret, 0.0)
+        self.assertAlmostEqual(selection_regret, 28.51, places=2)
+
+        # Fusion gain is negative (G_fusion < 0 means fused model has lower error than standalone)
+        self.assertLess(fusion_gain, 0.0)
+        self.assertAlmostEqual(fusion_gain, -8.36, places=2)
 
     def test_09_shrinkage_decomposition_properties(self):
         """Test 9: Verify linear shrinkage interpolation y_final = lambda*y_adaptive + (1-lambda)*y_equal."""
@@ -216,11 +223,8 @@ class TestPhase15ADiagnostics(unittest.TestCase):
         pop_sd = float(np.std(seeds_maes, ddof=0))
         sample_sd = float(np.std(seeds_maes, ddof=1))
 
-        # Check Seed 42 value
         self.assertAlmostEqual(seeds_maes[0], 249.9014, places=4)
-        # Check 5-seed mean matches Phase 14 record (250.97 MW)
         self.assertAlmostEqual(mean_mae, 250.9747, places=3)
-        # Check pop SD matches Phase 14 record (10.69 MW)
         self.assertAlmostEqual(pop_sd, 10.6938, places=3)
         self.assertAlmostEqual(sample_sd, 11.9561, places=3)
 
@@ -232,7 +236,7 @@ class TestPhase15ADiagnostics(unittest.TestCase):
         cv_l = pop_sd_l / mean_l
 
         self.assertAlmostEqual(mean_l, 0.5092, delta=0.002)
-        self.assertLess(cv_l, 0.02)  # Narrow temporal dispersion
+        self.assertLess(cv_l, 0.02)
         self.assertTrue(np.all(lams > 0.45))
         self.assertTrue(np.all(lams < 0.55))
 
@@ -263,6 +267,33 @@ class TestPhase15ADiagnostics(unittest.TestCase):
         self.assertEqual(short, [1, 2, 3, 4, 5, 6, 7, 8])
         self.assertEqual(med, [9, 10, 11, 12, 13, 14, 15, 16])
         self.assertEqual(long, [17, 18, 19, 20, 21, 22, 23, 24])
+
+    def test_17_c14_feature_resolution_audit_classification(self):
+        """Test 17: Verify C14 audit artifact classifies 24/48/72h as DESCRIPTIVE_ONLY without test-driven selection."""
+        df_audit = pd.read_csv("research/analysis/phase15a_c14_feature_resolution_audit.csv")
+        self.assertEqual(len(df_audit), 4)
+
+        # 24h, 48h, 72h must be DESCRIPTIVE_ONLY
+        descriptive = df_audit[df_audit["feature_window"].str.contains("Lag")]
+        self.assertEqual(len(descriptive), 3)
+        self.assertTrue(np.all(descriptive["status"] == "DESCRIPTIVE_ONLY"))
+        self.assertTrue(np.all(descriptive["training_performed"] == False))
+        self.assertTrue(np.all(descriptive["selection_used"] == False))
+
+        # Canonical 168h must be VALIDATION_ONLY
+        canonical = df_audit[df_audit["feature_window"].str.contains("168h")]
+        self.assertEqual(len(canonical), 1)
+        self.assertEqual(canonical.iloc[0]["status"], "VALIDATION_ONLY")
+        self.assertEqual(canonical.iloc[0]["selection_split"], "validation")
+
+    def test_18_oracle_non_deployability_certification(self):
+        """Test 18: Verify oracle audit certifies non-deployability and bounds validity."""
+        df_oracle = pd.read_csv("research/analysis/phase15a_oracle_audit.csv")
+        self.assertEqual(len(df_oracle), 3)
+        for _, r in df_oracle.iterrows():
+            self.assertEqual(r["deployability_status"], "NON_DEPLOYABLE_UPPER_BOUND")
+            # Oracle convex MAE must be strictly less than best standalone
+            self.assertLess(r["mae_oracle_convex_fusion"], r["mae_best_standalone_test_bm"])
 
 
 if __name__ == "__main__":
