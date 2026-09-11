@@ -70,6 +70,7 @@ desktop.ini
 
 # Phase checkpoints
 research/checkpoints/phase7/
+research/results/*.pkl
 
 # Dataset files
 data/Load/

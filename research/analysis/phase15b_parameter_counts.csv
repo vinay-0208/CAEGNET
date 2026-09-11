@@ -1,0 +1,7 @@
+candidate_id,expert_parameters,router_parameters,confidence_parameters,total_parameters,delta_vs_f2,pct_overhead_vs_f2
+Control_A_F2,120504,1075,145,121724,0,0.0
+Control_B_FixedShrinkage,120504,1075,0,121579,-145,-0.11912194801353884
+Control_C_HorizonRouting,120504,2348,0,122852,1128,0.9266866024777365
+Control_D_DynamicConfidence,120504,1075,161,121740,16,0.013144490815287043
+Candidate_E1_HGR_FS,120504,2348,0,122852,1128,0.9266866024777365
+Candidate_E2_HGR_DGS,120504,2348,227,123079,1355,1.1131740659196214
