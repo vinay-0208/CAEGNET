@@ -77,3 +77,14 @@ Supported by the reconciled diagnostic evidence, the following hypothesis-driven
 1. **C14 Feature Resolution Quarantine:** Exploratory descriptive findings on lookback window lengths must not be treated as established performance improvements. Longer lookback smoothing remains a secondary hypothesis for Phase 15B.
 2. **Mandatory 4-Control Isolation:** Phase 15B must execute Controls A, B, C, and D alongside any proposed candidate to isolate routing, horizon specialization, dynamic confidence, and fixed centroid shrinkage.
 3. **Predefined Validation Firewall:** No hyperparameter tuning or candidate selection may be informed by test-set evaluations.
+
+---
+
+## 6. Phase 15A-E Numerical Provenance Safeguards
+
+1. **Authoritative Benchmark Binding:** All Phase 15B evaluations must anchor comparisons strictly against the locked Level 4 benchmark records:
+   - PJM Best Standalone: TCN ($259.33$ MW)
+   - GEFCom Best Standalone: TCN ($12.57$ kW)
+   - UCI Best Standalone: LSTM ($7.79$ MW test benchmark / $7.55$ MW validation baseline)
+2. **Estimand Integrity:** Single-seed realizations (e.g. Seed 42), five-seed aggregates, daily-block analyses, and validation baselines must never be interchangeably substituted.
+3. **No Unmatched Superiority Claims:** Claims of superiority must be supported by matched 5-seed paired statistics with Holm-Bonferroni correction over non-overlapping daily blocks.

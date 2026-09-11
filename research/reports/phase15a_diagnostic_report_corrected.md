@@ -147,20 +147,20 @@ Weights remain close to the uniform centroid ($N_{\mathrm{eff}} \approx 2.95 - 2
 
 ---
 
-## 11. Routing Regret (Issue C7)
+## 11. Routing Regret & Baseline Provenance (Issue C7)
 
-Formal regret metrics evaluated on held-out test splits:
+Formal regret and fusion gain metrics evaluated on held-out test splits against authoritative standalone benchmarks:
 
-| Dataset | Unit | Metric Definition | Realized Regret | % of Best Standalone |
-| :--- | :---: | :--- | :---: | :---: |
-| **PJM** | MW | Selection Regret: $\mathrm{MAE}(\mathrm{Top1}) - \mathrm{MAE}(\mathrm{BestBM})$ | +28.51 MW | +10.99% |
-| **PJM** | MW | Fusion Gain: $G_{\mathrm{fusion}} = \mathrm{MAE}(\mathrm{F2}) - \mathrm{MAE}(\mathrm{BestBM})$ | **-8.35 MW** | **-3.22%** |
-| **GEFCom** | kW | Selection Regret: $\mathrm{MAE}(\mathrm{Top1}) - \mathrm{MAE}(\mathrm{BestBM})$ | +0.76 kW | +6.03% |
-| **GEFCom** | kW | Fusion Gain: $G_{\mathrm{fusion}} = \mathrm{MAE}(\mathrm{F2}) - \mathrm{MAE}(\mathrm{BestBM})$ | **-0.165 kW** | **-1.31%** |
-| **UCI** | MW | Selection Regret: $\mathrm{MAE}(\mathrm{Top1}) - \mathrm{MAE}(\mathrm{BestBM})$ | +3.86 MW | +49.57% |
-| **UCI** | MW | Fusion Gain: $G_{\mathrm{fusion}} = \mathrm{MAE}(\mathrm{F2}) - \mathrm{MAE}(\mathrm{BestBM})$ | **-0.057 MW** | **-0.74%** |
+| Dataset | Unit | Best Standalone Expert (Test BM) | Best Standalone Test MAE | Realized F2 (5-Seed Mean) | Realized Top-1 Router Selection | Selection Regret $R_{\mathrm{select}}$ | Fusion Gain $G_{\mathrm{fusion}}$ |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **PJM** | MW | **TCN** | 259.33 MW | 250.97 MW | LSTM (287.84 MW) | **+28.51 MW** (+10.99%) | **-8.35 MW** (-3.22%) |
+| **GEFCom** | kW | **TCN** | 12.57 kW | 12.41 kW | LSTM (13.33 kW) | **+0.76 kW** (+6.03%) | **-0.165 kW** (-1.31%) |
+| **UCI** | MW | **LSTM** | 7.79 MW | 7.74 MW | CNN (11.66 MW) | **+3.86 MW** (+49.57%) | **-0.057 MW** (-0.74%) |
 
-Hard selection produces substantial positive regret ($+6\% - 50\%$), whereas continuous convex fusion in F2 achieves a negative fusion gain (G_fusion < 0) relative to the best retrospective standalone expert.
+*Mathematical Definitions:*
+- **Selection Regret ($R_{\mathrm{select}} \ge 0$):** $R_{\mathrm{select}} = \mathrm{MAE}(\mathrm{Top1}) - \mathrm{MAE}(\mathrm{BestBM})$. Hard top-1 expert selection produces strictly positive regret ($+6.0\% \sim +49.6\%$), penalizing discrete switching.
+- **Fusion Gain ($G_{\mathrm{fusion}}$):** $G_{\mathrm{fusion}} = \mathrm{MAE}(\mathrm{F2}) - \mathrm{MAE}(\mathrm{BestBM})$. Continuous convex fusion in F2 achieves negative fusion gain ($G_{\mathrm{fusion}} < 0$) relative to the best retrospective standalone expert on all three test benchmarks.
+- **Benchmark Provenance:** All baseline values are traced and certified in [phase15a_c7_baseline_provenance_reconciliation.csv](file:///c:/Fall%20Semister/2026/Advanced%20Predictive%20Analytics/research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv). On UCI, F2 ($7.737$ MW) is numerically lower than the held-out test benchmark ($7.794$ MW, $-0.74\%$), but does not beat the historical validation baseline ($7.554$ MW). Under the matched protocol against the validation baseline, F2 outperforms the best standalone on **two of three datasets** (PJM, GEFCom).
 
 ---
 
@@ -323,7 +323,7 @@ Following peer and statistical audit, the final diagnostic conclusions are recon
 | Issue | Status | Evidence | Impact |
 | :--- | :---: | :--- | :--- |
 | **249.901 vs Phase 14** | **RESOLVED** | Verified Seed 42 realization (249.901 MW) vs 5-seed mean (250.97 MW) | Resolves baseline provenance confusion |
-| **UCI 7.55 vs 7.79** | **RESOLVED** | Separated 7.55 Val BL from 7.79 Test BM; F2 (7.74) beats Test BM | Corrects comparative benchmark reporting |
+| **UCI 7.55 vs 7.79** | **RESOLVED** | Separated 7.55 Val BL from 7.79 Test BM; F2 (7.74) numerically lower than Test BM (-0.057 MW) | Corrects comparative benchmark reporting |
 | **Residual Correlation** | **RESOLVED** | Proved positive standalone error corr. vs negative co-adapted branch corr. | Eliminates apparent scientific contradiction |
 | **Routing Dynamicity** | **RESOLVED** | Quantified continuous variance ($s_w=0.0036-0.0383$) & top-1 switching | Retires unsupported "stationary" terminology |
 | **$\lambda$ Characterization** | **RESOLVED** | Demonstrated narrow dispersion ($CV < 1.5\%$, mean $\approx 0.51$) | Confirms learned fixed shrinkage behavior |
@@ -336,3 +336,15 @@ Following peer and statistical audit, the final diagnostic conclusions are recon
 | **Horizon Specialization** | **RESOLVED** | Verified empirical step 1-24 crossover (TCN short, LSTM long) | Motivates controlled Phase 15B evaluation |
 
 **GO/NO-GO CERTIFICATION:** ALL CRITICAL ISSUES RESOLVED. REPOSITORY IS CERTIFIED **READY FOR PHASE 15B**.
+
+---
+
+## 29. Phase 15A-E Numerical Provenance Resolution
+
+- **Discrepancy Discovered:** The previous Phase 15A-D chat summary contained an informal table reporting PJM Best Standalone = 258.25 MW (LSTM), GEFCom Best Standalone = 2.145 kW (TCN), and UCI Best Standalone = 12.00 MW (TCN).
+- **Forensic Root Cause Analysis:**
+  1. *PJM 258.25 MW (LSTM):* A conversational calculation error obtained by subtracting Fusion Gain (-8.35 MW) from Seed 42 F2 ($249.9014 - (-8.3517) \approx 258.25$ MW) and mislabeling it as LSTM. Authoritative standalone benchmark is **TCN at 259.3264 MW** (`phase11_dataset_summary.csv`). Standalone LSTM test MAE is $287.8394$ MW.
+  2. *GEFCom 2.145 kW (TCN):* Conversational misattribution of window-level error spread / ramp metrics from `phase11_window_metrics.csv` (which contains window differences of ~2.145 kW). Authoritative standalone benchmark is **TCN at 12.5729 kW** (`phase11_dataset_summary.csv`). Standalone LSTM test MAE is $13.3305$ kW.
+  3. *UCI 12.00 MW (TCN):* Conversational conflation of the worst expert (CNN test MAE = 11.6581 MW ~ 12 MW) with TCN, mislabeled as "Best Standalone". Authoritative standalone benchmark is **LSTM at 7.7945 MW** (`phase11_dataset_summary.csv`). Standalone TCN test MAE is $8.5750$ MW.
+- **Resolution & Reconciliation:** All three erroneous values were completely rejected and documented in `research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv`. No erroneous values ever entered experimental CSVs or primary result tables.
+- **Model Training / Experimentation Status:** Zero model training, zero retraining, zero hyperparameter tuning, and zero evaluation reruns were performed. Historical commits and frozen Phase 14 primary benchmark numbers remain untouched.

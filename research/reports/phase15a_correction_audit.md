@@ -73,3 +73,15 @@ Phase 15A executed a comprehensive 14-point diagnostic audit of the frozen CAEG-
 7. **Complementarity Wording Correction:** Noted that standalone models exhibit complementary behavior across horizons and regimes despite positive residual error correlation.
 8. **Horizon Interpretation:** Empirical horizon crossover motivates, but does not guarantee, the benefits of horizon-aware routing in Phase 15B.
 9. **Final Status:** All 16 diagnostic and provenance issues are resolved. Repository is certified **READY FOR PHASE 15B**.
+
+---
+
+## 5. Phase 15A-E Numerical Provenance Resolution
+
+- **Discrepancy Traced:** Audit of the C7 baseline table identified erroneous conversational calculation errors and misattributions of standalone baselines (258.25 MW on PJM, 2.145 kW on GEFCom, 12.00 MW on UCI, which are formally rejected).
+- **Provenance Resolution:**
+  - Authoritative PJM Test Benchmark: TCN ($259.3264$ MW) from `phase11_dataset_summary.csv`. F2 ($250.9747$ MW) achieves $G_{\mathrm{fusion}} = -8.3517$ MW ($-3.22\%$).
+  - Authoritative GEFCom Test Benchmark: TCN ($12.5729$ kW) from `phase11_dataset_summary.csv`. F2 ($12.4077$ kW) achieves $G_{\mathrm{fusion}} = -0.1652$ kW ($-1.31\%$).
+  - Authoritative UCI Test Benchmark: LSTM ($7.7945$ MW) from `phase11_dataset_summary.csv`. F2 ($7.7371$ MW) achieves $G_{\mathrm{fusion}} = -0.0574$ MW ($-0.74\%$).
+- **Artifact:** Created `research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv` with 15 granular rows tracing every expert, split, seed, protocol, and status.
+- **Zero Retraining Declaration:** No model training or evaluation rerun was performed as part of this correction pass.

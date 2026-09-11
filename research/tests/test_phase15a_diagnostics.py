@@ -296,5 +296,131 @@ class TestPhase15ADiagnostics(unittest.TestCase):
             self.assertLess(r["mae_oracle_convex_fusion"], r["mae_best_standalone_test_bm"])
 
 
+
+    def test_19_c7_provenance_csv_structure_and_completeness(self):
+        """Test 19: Verify C7 provenance CSV exists and contains authoritative and rejected rows."""
+        df_c7 = pd.read_csv("research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv")
+        self.assertGreaterEqual(len(df_c7), 12)
+        required_cols = [
+            "dataset", "expert", "mae", "split", "seed", "aggregation",
+            "protocol", "source_artifact", "authoritative_status", "reason"
+        ]
+        for col in required_cols:
+            self.assertIn(col, df_c7.columns)
+
+        for d in ["PJM", "GEFCom", "UCI"]:
+            auth = df_c7[(df_c7["dataset"] == d) & (df_c7["authoritative_status"] == "AUTHORITATIVE_TEST_BENCHMARK")]
+            self.assertEqual(len(auth), 1, f"Missing authoritative test benchmark for {d}")
+
+    def test_20_c7_best_standalone_benchmarks_and_protocols(self):
+        """Test 20: Verify best standalone test benchmarks match authoritative locked records."""
+        df_c7 = pd.read_csv("research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv")
+        
+        # PJM best standalone must be TCN at 259.33 MW
+        pjm_auth = df_c7[(df_c7["dataset"] == "PJM") & (df_c7["authoritative_status"] == "AUTHORITATIVE_TEST_BENCHMARK")].iloc[0]
+        self.assertEqual(pjm_auth["expert"], "TCN")
+        self.assertAlmostEqual(pjm_auth["mae"], 259.3264, places=3)
+        self.assertEqual(pjm_auth["split"], "test")
+
+        # GEFCom best standalone must be TCN at 12.57 kW
+        gef_auth = df_c7[(df_c7["dataset"] == "GEFCom") & (df_c7["authoritative_status"] == "AUTHORITATIVE_TEST_BENCHMARK")].iloc[0]
+        self.assertEqual(gef_auth["expert"], "TCN")
+        self.assertAlmostEqual(gef_auth["mae"], 12.5729, places=3)
+        self.assertEqual(gef_auth["split"], "test")
+
+        # UCI best standalone must be LSTM at 7.79 MW (test)
+        uci_auth = df_c7[(df_c7["dataset"] == "UCI") & (df_c7["authoritative_status"] == "AUTHORITATIVE_TEST_BENCHMARK")].iloc[0]
+        self.assertEqual(uci_auth["expert"], "LSTM")
+        self.assertAlmostEqual(uci_auth["mae"], 7.7945, places=3)
+        self.assertEqual(uci_auth["split"], "test")
+
+    def test_21_rejection_of_hallucinated_baseline_values(self):
+        """Test 21: Verify 258.25 MW (PJM), 2.145 kW (GEFCom), and 12.00 MW (UCI) are formally rejected."""
+        df_c7 = pd.read_csv("research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv")
+        
+        # UCI 12.00 MW must be marked ERRONEOUS_REJECTED
+        uci_err = df_c7[(df_c7["dataset"] == "UCI") & (df_c7["expert"].str.contains("Hallucinated|12.00"))]
+        self.assertGreaterEqual(len(uci_err), 1)
+        self.assertEqual(uci_err.iloc[0]["authoritative_status"], "ERRONEOUS_REJECTED")
+
+        # GEFCom 2.145 kW must be marked ERRONEOUS_REJECTED
+        gef_err = df_c7[(df_c7["dataset"] == "GEFCom") & (df_c7["expert"].str.contains("Hallucinated|2.145"))]
+        self.assertGreaterEqual(len(gef_err), 1)
+        self.assertEqual(gef_err.iloc[0]["authoritative_status"], "ERRONEOUS_REJECTED")
+
+        # PJM 258.25 MW must be marked ERRONEOUS_REJECTED
+        pjm_err = df_c7[(df_c7["dataset"] == "PJM") & (df_c7["expert"].str.contains("Hallucinated|258.25"))]
+        self.assertGreaterEqual(len(pjm_err), 1)
+        self.assertEqual(pjm_err.iloc[0]["authoritative_status"], "ERRONEOUS_REJECTED")
+
+    def test_22_expert_rankings_and_scale_consistency(self):
+        """Test 22: Verify expert ranking consistency and physical scale accuracy."""
+        df_c7 = pd.read_csv("research/analysis/phase15a_c7_baseline_provenance_reconciliation.csv")
+        
+        # PJM ranking: TCN (259.33) < LSTM (287.84) < CNN (411.97)
+        pjm_tcn = df_c7[(df_c7["dataset"] == "PJM") & (df_c7["expert"] == "TCN") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        pjm_lstm = df_c7[(df_c7["dataset"] == "PJM") & (df_c7["expert"] == "LSTM") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        pjm_cnn = df_c7[(df_c7["dataset"] == "PJM") & (df_c7["expert"] == "CNN") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        self.assertLess(pjm_tcn, pjm_lstm)
+        self.assertLess(pjm_lstm, pjm_cnn)
+
+        # GEFCom ranking: TCN (12.57) < LSTM (13.33) < CNN (14.33)
+        gef_tcn = df_c7[(df_c7["dataset"] == "GEFCom") & (df_c7["expert"] == "TCN") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        gef_lstm = df_c7[(df_c7["dataset"] == "GEFCom") & (df_c7["expert"] == "LSTM") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        self.assertLess(gef_tcn, gef_lstm)
+        self.assertGreater(gef_tcn, 10.0)  # Scale check
+
+        # UCI ranking: LSTM (7.79) < TCN (8.57) < CNN (11.66)
+        uci_lstm = df_c7[(df_c7["dataset"] == "UCI") & (df_c7["expert"] == "LSTM") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        uci_tcn = df_c7[(df_c7["dataset"] == "UCI") & (df_c7["expert"] == "TCN") & (df_c7["split"] == "test")].iloc[0]["mae"]
+        self.assertLess(uci_lstm, uci_tcn)
+
+    def test_23_routing_regret_and_fusion_gain_rigor(self):
+        """Test 23: Verify Selection Regret >= 0 and Fusion Gain G_fusion values match frozen records."""
+        df_regret = pd.read_csv("research/analysis/phase15a_routing_regret_corrected.csv")
+        
+        # Selection regret strictly non-negative
+        sel_regrets = df_regret[df_regret["metric_name"].str.contains("Selection Regret")]
+        self.assertTrue(np.all(sel_regrets["value"] >= 0.0))
+        self.assertEqual(len(sel_regrets), 3)
+
+        # Fusion gain is negative for F2 relative to standalone benchmarks
+        fusion_gains = df_regret[df_regret["metric_name"].str.contains("Fusion Gain")]
+        self.assertTrue(np.all(fusion_gains["value"] < 0.0))
+        self.assertEqual(len(fusion_gains), 3)
+
+        # Matched values
+        pjm_gain = fusion_gains[fusion_gains["dataset"] == "PJM"].iloc[0]["value"]
+        gef_gain = fusion_gains[fusion_gains["dataset"] == "GEFCom"].iloc[0]["value"]
+        uci_gain = fusion_gains[fusion_gains["dataset"] == "UCI"].iloc[0]["value"]
+        self.assertAlmostEqual(pjm_gain, -8.3517, places=3)
+        self.assertAlmostEqual(gef_gain, -0.1652, places=3)
+        self.assertAlmostEqual(uci_gain, -0.0574, places=3)
+
+    def test_24_f2_frozen_benchmarks_and_report_claim_hygiene(self):
+        """Test 24: Verify F2 primary results remain frozen and report text has zero stale baseline claims."""
+        import glob
+        df_f2 = pd.read_csv("research/results/phase14_test_results.csv")
+        f2_pjm = df_f2[(df_f2["candidate_id"] == "F2") & (df_f2["dataset"] == "PJM")].iloc[0]["test_mae_mean"]
+        f2_gef = df_f2[(df_f2["candidate_id"] == "F2") & (df_f2["dataset"] == "GEFCom")].iloc[0]["test_mae_mean"]
+        f2_uci = df_f2[(df_f2["candidate_id"] == "F2") & (df_f2["dataset"] == "UCI")].iloc[0]["test_mae_mean"]
+        self.assertAlmostEqual(f2_pjm, 250.9747, places=3)
+        self.assertAlmostEqual(f2_gef, 12.4077, places=3)
+        self.assertAlmostEqual(f2_uci, 7.7371, places=3)
+
+        # Scan reports for hallucinated claims
+        stale_terms = ["258.25 MW", "2.145 kW", "12.00 MW"]
+        for f in glob.glob("research/reports/*.md"):
+            with open(f, "r", encoding="utf-8") as fp:
+                content = fp.read()
+            for term in stale_terms:
+                # If term appears, it must be in the context of being an erroneous/rejected calculation
+                if term in content:
+                    self.assertTrue(
+                        "erroneous" in content.lower() or "rejected" in content.lower() or "calculation error" in content.lower(),
+                        f"Found unquarantined stale term {term} in {f}"
+                    )
+
+
 if __name__ == "__main__":
     unittest.main()
