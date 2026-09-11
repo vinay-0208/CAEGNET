@@ -421,3 +421,33 @@ CAEGNET/
 
 
 
+---
+
+## 13. Phase 15 Final Publication Package & Locked Research Model
+
+The experimental development cycle of CAEG-Net is complete. The locked final formulation is **`F2_A2_OOF`** (CAEG-Net V2), combining:
+1. **Expert Core:** 120,504 frozen parameters across 3 heterogeneous temporal architectures (LSTM, TCN, CNN).
+2. **Causal Out-of-Fold (OOF) Feedback:** 7D context encoding combining 4 statistical state features with 3 genuine out-of-fold historical expert-performance metrics generated via expanding-window cross-validation, strictly preventing training-time target leakage.
+3. **Confidence Fallback Mechanism:** An empirical confidence head predicting balance parameter $\lambda_t \in (0, 1)$ that regularizes dynamic routing toward an uninformative equal-weight prior ($[1/3, 1/3, 1/3]$).
+
+### Final Multi-Benchmark 5-Seed Performance (Mean $\pm$ Population SD)
+| Model Formulation | Parameters | Modern PJM (MW) | GEFCom2014 (kW) | UCI Cohort 320 (MW) | vs. V1 | vs. Equal Ens. |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Static Equal Ensemble** | 120,504 | 279.83 | 12.62 | 8.17 | 1 / 3 | — |
+| **Best Standalone Expert** | 35k–56k | 259.33 (TCN) | 12.57 (TCN) | 7.55 (LSTM Val BL) / 7.79 (Test BM) | 0 / 3 | 3 / 3 |
+| **Canonical V1 (F0)** | 121,531 | $253.41 \pm 9.12$ | $12.88 \pm 0.25$ | $7.94 \pm 0.17$ | Control | 2 / 3 |
+| **Final CAEG-Net (F2_A2_OOF)** | **121,724** | $\mathbf{250.97 \pm 10.69}$ | $\mathbf{12.41 \pm 0.15}$ | $\mathbf{7.74 \pm 0.30}$ | **3 / 3** | **3 / 3** |
+
+### Statistical Significance (Non-Overlapping 24-Hour Daily Blocks)
+- **Modern PJM ($K=53$):** Mean daily diff $\bar{\Delta} = -9.66$ MW (95% CI: $[-17.07, -2.26]$, $t = -2.557$, $p_{\mathrm{adj}} = 0.0406$, Cohen's $d_z = -0.351$).
+- **GEFCom2014 ($K=456$):** Mean daily diff $\bar{\Delta} = -0.688$ kW (95% CI: $[-0.802, -0.575]$, $t = -11.850$, $p_{\mathrm{adj}} = 1.02 \times 10^{-27}$, Cohen's $d_z = -0.555$).
+- **UCI Electricity ($K=163$):** Mean daily diff $\bar{\Delta} = -0.202$ MW (95% CI: $[-0.310, -0.094]$, $t = -3.658$, $p_{\mathrm{adj}} = 0.0017$, Cohen's $d_z = -0.287$).
+
+### Publication Package Assets
+- **Full Research Paper:** [`research/paper/CAEG_Net_Paper.md`](research/paper/CAEG_Net_Paper.md)
+- **Compiled PDF:** [`research/paper/CAEG_Net_Paper.pdf`](research/paper/CAEG_Net_Paper.pdf)
+- **LaTeX Source:** [`research/paper/CAEG_Net_Paper.tex`](research/paper/CAEG_Net_Paper.tex)
+- **Standalone Publication Tables:** [`research/paper/tables/`](research/paper/tables/) (Tables 1 through 8)
+- **Publication Figures:** [`research/paper/figures/`](research/paper/figures/) (Figures 1 through 8)
+- **BibTeX Bibliography:** [`research/paper/references/references.bib`](research/paper/references/references.bib)
+- **Reproducibility Appendix:** [`research/paper/appendix/reproducibility.md`](research/paper/appendix/reproducibility.md)
