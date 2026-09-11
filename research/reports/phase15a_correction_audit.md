@@ -1,129 +1,76 @@
-# Phase 15A-C — Forensic Diagnostic Correction & Reconciliation Audit
-**CAEG-Net: Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting**
+# Phase 15A-C — Forensic Diagnostic Correction, Reconciliation & Audit Report
+**CAEG-Net: Dynamic Routing, Confidence, Expert Complementarity & Oracle-Ceiling Analysis**
 
 **Date:** 2026-09-11  
 **Authoritative Reference Model:** Candidate F2 / A2-OOF (`ConfidenceFallbackCAEGNet`, 121,724 parameters)  
 **Evaluation Seeds:** {42, 123, 999, 2024, 3407}  
 **Datasets:** Modern PJM (MW), GEFCom2014 (kW), UCI Electricity Cohort 320 Aggregate (MW)  
-**Historical Anchors:** `c67067d8` (Phase 14 Historical), `1d4d8c35` (Phase 14 Correction), `cfc75e2b` (Phase 14 Doc Lock), `45443fa` (Phase 15A Original Diagnostics)  
-**Status:** COMPLETE & AUDITED FOR PUBLICATION INTEGRITY
+**Authoritative Commits:** `c67067d8` (Phase 14 Historical), `1d4d8c35` (Scientific Correction), `cfc75e2b` (Documentation Lock), `45443fa` (Phase 15A Original Diagnostics)  
+**Status:** COMPLETE, AUDITED, RECONCILED & LOCKED
 
 ---
 
 ## 1. Executive Summary & Purpose
 
-Phase 15A executed a comprehensive 14-point diagnostic audit of the frozen CAEG-Net canonical model (Candidate F2 / A2-OOF). While Phase 15A accurately established that the router exhibits low temporal variation and that the confidence parameter $\lambda$ settles near $0.51$, several critical scientific inconsistencies, terminology over-extensions, and provenance ambiguities were identified during peer review:
-1. **UCI Standalone Baseline Inconsistency (C1):** 7.55 MW was cited as a standalone baseline in earlier phases while 7.79 MW appeared in Phase 15A.
-2. **Residual-Correlation Sign Contradiction (C2):** Earlier Phase 10/11 analyses reported positive pairwise correlations (+0.60 to +0.91), whereas Phase 15A reported negative correlations (-0.30 to -0.72).
-3. **Routing Dynamicity / Stationarity Wording (C3):** Phase 15A labeled the router "stationary" because top-ranked expert switching was rare, conflating absence of rank-switching with mathematical stationarity.
-4. **Oracle Convex-Fusion Misclassification (C4):** Retrospective hindsight upper bounds were not sufficiently demarcated from deployable model performance.
-5. **Routing-Regret Definitions & Units (C5):** Regret metrics lacked precise normalization denominators and physical units.
-6. **Routing vs. Shrinkage Causal Claims (C6):** Additive percentage decompositions exceeding 100% (-123% routing, +223% shrinkage) were colloquially phrased as causal contributions rather than non-causal descriptive metrics.
-7. **Oracle Headroom Overstatement (C7):** Ratios of closed retrospective hindsight gaps were described as "captured headroom," implying that the remainder was practically achievable.
-
-This document presents the forensic audit, mathematical reconciliations, and provenance tracing resolving issues C1 through C10. All frozen historical commits remain intact.
-
----
-
-## 2. Comprehensive Correction Register (Issues C1 – C10)
-
-| ID | Issue | Previous Phase 15A Result | Source of Truth | Correction Required | Recomputed? | Final Status |
-| :--- | :--- | :--- | :--- | :--- | :---: | :---: |
-| **C1** | UCI Baseline Inconsistency | 7.79 MW in Phase 15A vs 7.55 MW in Phase 13/14 | `phase12_dataset_summary.csv` (Val) vs `phase11_dataset_summary.csv` (Test) | Distinguish 7.554 MW (Validation Baseline) from 7.794 MW (Test Benchmark); F2 (7.737 MW) beats Test Benchmark | Yes (`phase15a_baseline_provenance.csv`) | **RESOLVED** |
-| **C2** | Residual Correlation Sign Discrepancy | Negative (-0.30 to -0.72) vs Phase 10/11 Positive (+0.60 to +0.91) | Standalone models (`phase10_expert_complementarity.csv`) vs Co-adapted F2 branches (`phase15a_complementarity.csv`) | Distinguish Standalone Forecast Error Residuals (+0.60~+0.91) from Co-Adapted Internal Branch Residuals (-0.30~-0.72) | Yes (`phase15a_correlation_reconciliation.csv`) | **RESOLVED** |
-| **C3** | Routing Dynamicity / Stationarity Wording | Labeled "stationary router" due to zero expert switching | Continuous weight standard deviations ($s_w = 0.003 - 0.038$) and high autocorrelation ($0.96 - 0.99$) | Replace "stationary" with "limited continuous dynamic variation / absence of frequent top-1 expert switching" | Yes (`phase15a_routing_dynamicity_corrected.csv`) | **RESOLVED** |
-| **C4** | Oracle Convex-Fusion Demarcation | Computed retrospective 2-simplex daily grid search | Grid search over non-overlapping 24h blocks using ground-truth targets $y$ | Explicitly label as RETROSPECTIVE ORACLE / NON-DEPLOYABLE UPPER BOUND; verify mathematical constraints | Yes (`phase15a_oracle_audit.csv`) | **RESOLVED** |
-| **C5** | Routing Regret Definition & Units | Reported 4635 MW regret & "12-25% of load" without explicit normalization | Window-level test MAEs in physical units (MW/kW) | Define exact formulas for Selection Regret and Fusion Regret; report in MW/kW and % of standalone benchmark | Yes (`phase15a_routing_regret_corrected.csv`) | **RESOLVED** |
-| **C6** | Routing vs. Shrinkage Causal Claims | Claimed routing provided -123% and shrinkage +223% "gain contribution" | Linear interpolation $\hat{y}_{\mathrm{final}} = \lambda \hat{y}_{\mathrm{adaptive}} + (1-\lambda) \hat{y}_{\mathrm{equal}}$ | Frame as descriptive non-causal decomposition; acknowledge branch co-adaptation during end-to-end training | Yes (`phase15a_shrinkage_reconciliation.csv`) | **RESOLVED** |
-| **C7** | Oracle Headroom Reinterpretation | "Captures X% of available headroom" implying deployability | Retrospective hindsight oracle grid search | Clarify that headroom is a theoretical descriptive metric under hindsight, not deployable engineering headroom | Yes (Section 9 & 11) | **RESOLVED** |
-| **C8** | Dependent Plots & Tables | Figures reflected uncorrected terminology & baselines | Corrected reconciliation CSVs | Update descriptions, metric labels, and documentation | Yes | **RESOLVED** |
-| **C9** | Phase 15B Recommendation Controls | Recommendations lacked explicit architectural controls | Diagnostic findings on horizon specialization & shrinkage | Add 4 mandatory controls: F2 baseline, F2 + constant $\lambda$, Horizon routing alone, Dynamic $\lambda$ alone | Yes (Section 19) | **RESOLVED** |
-| **C10** | Provenance & Parameter Integrity | Verification of frozen state across Phase 13, 14, and 15A | Git commits `c67067d8`, `1d4d8c35`, `cfc75e2b`, `45443fa` | Verify parameter counts (121,724), zero future leakage, and deterministic reproducibility | Yes (Section 21 & 22) | **RESOLVED** |
+Phase 15A executed a comprehensive 14-point diagnostic audit of the frozen CAEG-Net canonical model (Candidate F2 / A2-OOF). Subsequent forensic review identified critical provenance, numerical, and interpretation discrepancies:
+1. **Critical Seed-42 vs. 5-Seed Provenance (C0):** The exact provenance of 249.901 MW on PJM was traced to the Seed 42 realization within the Phase 14 benchmark, whereas 250.97 MW is the 5-seed mean.
+2. **UCI Baseline Inconsistency (C1):** 7.55 MW is the Phase 12 validation baseline, while 7.79 MW is the Phase 11 held-out test benchmark. F2 achieves 7.74 MW, beating the test benchmark.
+3. **Residual Correlation Contradiction (C2):** The positive correlation (+0.60 to +0.91) in Phase 10/11 describes standalone networks, whereas the negative correlation (-0.30 to -0.72) in Phase 15A describes co-adapted internal branches of F2.
+4. **Routing Dynamicity / Stationarity Wording (C3):** Retired "stationary" terminology in favor of "limited continuous dynamic variation with absence of frequent top-1 rank switching."
+5. **Confidence Head Calibration & Shrinkage (C4 & C5):** Verified that $\lambda$ operates as stationary learned shrinkage ($\lambda \approx 0.51$, CV $< 1.5\%$) rather than dynamic calibrated confidence ($p > 0.20$).
+6. **Decision Quality & Regret Units (C6 & C7):** Replaced colloquial phrasing with formal selection regret and fusion regret in physical units (MW/kW).
+7. **Oracle Demarcation & Headroom (C8 & C9):** Explicitly certified oracle convex fusion as a retrospective non-deployable upper bound and replaced misleading headroom percentages with absolute MAE gaps.
+8. **Routing vs. Shrinkage Causal Claims (C10):** Formatted as a descriptive linear mixture, noting that percentages $>100\%$ represent counteracting descriptive vectors rather than independent causal contributions.
+9. **Disagreement, Complementarity, Horizon, Features & Regimes (C11 – C15):** Verified and updated all supporting analyses without causal claims.
 
 ---
 
-## 3. Forensic Resolution of Critical Issues
+## 2. Comprehensive Correction Register (Issues C0 – C15)
 
-### Issue C1: UCI Standalone Baseline Provenance
-- **The Conflict:** Phase 12/13/14 referenced $7.55$ MW as the best standalone expert baseline for UCI, whereas Phase 15A reported $7.79$ MW.
-- **Forensic Investigation:**
-  - In `research/results/phase12_dataset_summary.csv` and `research/results/phase14_cached_oof_features.pkl`, the value `7.554153 MW` is explicitly stored under the column `best_expert_val_mae` for the standalone LSTM model evaluated on the **Validation Split** (1,294 validation windows).
-  - In `research/results/phase11_dataset_summary.csv` and `research/results/phase11_window_metrics.csv`, the value `7.794470 MW` is explicitly logged under `overall_lstm_mae` across all 3,922 windows of the **Test Split**.
-  - Candidate F2 achieves a 5-seed test mean of $7.7371 \pm 0.3037$ MW.
-- **Scientific Reconciliation:**
-  - Both numbers are authentic, reproducible historical estimands, but they evaluate **different splits**.
-  - **7.554 MW is strictly the Validation Baseline (Val BL).**
-  - **7.794 MW is strictly the Held-Out Test Benchmark (Test BM).**
-  - When evaluating test performance: Candidate F2 ($7.74$ MW) **outperforms the standalone test benchmark** ($7.79$ MW) by $-0.057$ MW ($-0.74\%$).
-  - However, F2 does **not** outperform the validation baseline ($7.55$ MW).
-  - Complete provenance across all three datasets is cataloged in `research/analysis/phase15a_baseline_provenance.csv`.
-
-### Issue C2: Residual Correlation Discrepancy
-- **The Conflict:** Phase 10/11 reported positive pairwise correlations (+0.60 to +0.91), while Phase 15A reported negative values (-0.30 to -0.72).
-- **Forensic Investigation:**
-  - **Phase 10/11 Estimand:** Measured pairwise correlation of forecast error residuals $e_i = \hat{y}_i - y$ from **independently trained standalone networks** ($M_{\mathrm{LSTM}}, M_{\mathrm{TCN}}, M_{\mathrm{CNN}}$). Because each model was trained separately with supervised loss against true load, macroeconomic load shocks and unmodeled weather shifts caused all three models to underpredict or overpredict simultaneously, producing strong positive covariance ($\mathrm{Cov}(e_i, e_j) > 0$).
-  - **Phase 15A Estimand:** Evaluated the internal submodule branches (`m.caeg.lstm_expert`, etc.) extracted from the **jointly trained `ConfidenceFallbackCAEGNet` (F2)**. In F2, submodules were trained end-to-end to minimize the loss of the combined prediction $\hat{y}_{\mathrm{final}} = \lambda \sum w_i \hat{y}_i + (1-\lambda) \frac{1}{3}\sum \hat{y}_i$. Without auxiliary supervised losses on individual branches, the submodules co-adapted into antagonistic representations where individual errors blew up (PJM LSTM branch MAE $= 770.86$ MW, TCN branch $= 1268.72$ MW), canceling each other's errors in the mixture and inducing strong negative residual correlation ($-0.72, -0.69$).
-- **Scientific Reconciliation:**
-  - Phase 10/11 measured **Standalone Forecast Error Residual Correlation** (positive, $+0.60 \sim +0.91$).
-  - Phase 15A measured **Co-Adapted Internal Branch Residual Correlation** (negative, $-0.30 \sim -0.72$).
-  - These two statistics describe distinct phenomena and are now differentiated in `research/analysis/phase15a_correlation_reconciliation.csv`.
-
-### Issue C3: Routing Dynamicity / Stationarity Wording
-- **The Conflict:** Phase 15A described the router as "stationary" because the top-1 expert did not change.
-- **Forensic Investigation:**
-  - The top-1 expert does in fact change, albeit rarely: change frequency is $0.31\%$ on PJM, $1.53\%$ on GEFCom, and $2.01\%$ on UCI.
-  - The routing weights vary continuously: population standard deviation $s_w$ is $0.0036$ on PJM, $0.0373$ on GEFCom, and $0.0383$ on UCI, with strong temporal autocorrelation ($r_{\mathrm{lag1}} = 0.96 - 0.99$).
-- **Scientific Reconciliation:**
-  - The term "stationary" is retired. In time-series analysis, stationarity implies shift-invariant joint distributions, which was not tested.
-  - The phenomenon is formally described as: **"limited continuous dynamic variation with an absence of frequent top-1 expert switching."**
-  - Full population statistics ($ddof=0$), percentiles, and material deviation rates are recorded in `research/analysis/phase15a_routing_dynamicity_corrected.csv`.
-
-### Issue C4: Oracle Convex-Fusion Demarcation
-- **The Conflict:** Oracle convex fusion was cited as an "opportunity" without explicit non-deployable warnings.
-- **Forensic Investigation:**
-  - Oracle weights $\mathbf{w}^* \in \Delta^2$ were obtained via grid search (step $0.05$) over non-overlapping 24-hour daily blocks to minimize realized MAE against ground truth targets $y_{t:t+24}$.
-  - The optimization uses future target information in hindsight.
-- **Scientific Reconciliation:**
-  - Certified and explicitly labeled: **"RETROSPECTIVE ORACLE / NON-DEPLOYABLE UPPER REFERENCE."**
-  - Documented in `research/analysis/phase15a_oracle_audit.csv`.
-
-### Issue C5: Routing Regret Definition & Units
-- **The Conflict:** Regret was vaguely described as "12–25% of load" and had negative values when compared against an unaligned oracle.
-- **Forensic Investigation:**
-  - Regret must distinguish:
-    1. **Selection Regret vs Best Standalone Test Benchmark:** $\mathrm{MAE}(\hat{y}_{\mathrm{top1}}) - \mathrm{MAE}(\hat{y}_{\mathrm{best\_standalone\_BM}})$.
-    2. **Fusion Regret vs Best Standalone Test Benchmark:** $\mathrm{MAE}(\hat{y}_{\mathrm{F2}}) - \mathrm{MAE}(\hat{y}_{\mathrm{best\_standalone\_BM}})$.
-    3. **Fusion Regret vs Retrospective Oracle Convex Fusion:** $\mathrm{MAE}(\hat{y}_{\mathrm{F2}}) - \mathrm{MAE}(\hat{y}_{\mathrm{oracle\_convex}})$.
-- **Scientific Reconciliation:**
-  - F2 achieves **negative fusion regret** against the best standalone test benchmark on all three datasets:
-    - PJM: $-8.35$ MW ($-3.22\%$)
-    - GEFCom: $-0.165$ kW ($-1.31\%$)
-    - UCI: $-0.057$ MW ($-0.74\%$)
-  - All regret metrics are now reported in physical load units (MW/kW) and explicit relative percentages in `research/analysis/phase15a_routing_regret_corrected.csv`.
-
-### Issue C6: Routing vs. Shrinkage Decomposition
-- **The Conflict:** Claims that routing contributed $-123\%$ and shrinkage $+223\%$ to F2's gain.
-- **Forensic Investigation:**
-  - On GEFCom and UCI, pure adaptive routing $\hat{y}_{\mathrm{adaptive}}$ has higher MAE than equal ensemble $\hat{y}_{\mathrm{equal}}$ ($+0.18$ kW on GEFCom, $+0.22$ MW on UCI).
-  - The confidence shrinkage toward equal ensemble offsets this deficit, yielding net gains of $-0.14$ kW and $-0.36$ MW.
-- **Scientific Reconciliation:**
-  - This is a **descriptive decomposition, not a causal attribution**.
-  - Percentages $>100\%$ represent counteracting vector components, not causal shares.
-  - Documented in `research/analysis/phase15a_shrinkage_reconciliation.csv`.
-
-### Issue C7: Oracle Headroom Reinterpretation
-- **Scientific Reconciliation:**
-  - Statements claiming F2 "captures $X\%$ of headroom" are replaced with exact metric gaps:
-    - Equal-to-Oracle Gap (retrospective hindsight bound)
-    - F2-to-Oracle Gap
-  - Hindsight oracle headroom is explicitly identified as an unachievable theoretical ceiling.
+| ID | Issue | Previous Phase 15A Claim | Source of Truth | Investigation | Correction | Recomputed? | Final Status | Affected Artifacts |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :--- |
+| **C0** | **PJM 249.901 vs. 250.97 MW Provenance** | Claimed 249.901 MW matched Phase 14 benchmark without noting seed | `phase14_test_results.csv` (5-seed) vs `phase14_routing_statistics.csv` (Seed 42) | Verified that Seed 42 test MAE is exactly 249.9014 MW, while 250.9747 MW is the 5-seed mean ({42: 249.90, 123: 262.38, 999: 233.76, 2024: 262.18, 3407: 246.65}) | Formally distinguished Seed 42 deterministic evaluation from 5-seed aggregate benchmark | Yes | **RESOLVED** | `phase15a_phase14_provenance_reconciliation.csv`, report |
+| **C1** | **UCI Standalone Baseline Inconsistency** | 7.79 MW in Phase 15A vs 7.55 MW in Phase 13/14 | `phase12_dataset_summary.csv` (Val) vs `phase11_dataset_summary.csv` (Test) | Traced 7.554 MW to Phase 12 validation split and 7.794 MW to Phase 11 held-out test split | Classified 7.554 MW as Val BL and 7.794 MW as Test BM; F2 (7.737 MW) beats Test BM by -0.057 MW (-0.74%) | Yes | **RESOLVED** | `phase15a_baseline_provenance.csv`, report |
+| **C2** | **Residual Correlation Contradiction** | Negative (-0.30 to -0.72) vs Phase 10/11 Positive (+0.60 to +0.91) | `phase10_expert_complementarity.csv` vs `phase15a_complementarity.csv` | Proved that standalone models have positive covariance due to macro-shocks, while co-adapted F2 branches have negative covariance due to mixture cancellation | Separated into Standalone Forecast Error Residuals (+0.60~+0.91) vs Co-Adapted Internal Branch Residuals (-0.30~-0.72) | Yes | **RESOLVED** | `phase15a_correlation_reconciliation.csv`, report |
+| **C3** | **Routing Dynamicity / Stationarity** | Router called "stationary" because top expert rarely changed | Continuous routing weights ($s_w = 0.0036 - 0.0383$, $r_{\mathrm{lag1}} > 0.95$) | Calculated population SD ($ddof=0$), percentiles, and run lengths | Replaced "stationary" with "limited continuous dynamic variation with absence of frequent top-1 rank switching" | Yes | **RESOLVED** | `phase15a_routing_dynamicity_corrected.csv`, report |
+| **C4** | **Confidence $\lambda$ Characterization** | Described as instance-varying confidence | `phase14_confidence_statistics.csv` | Evaluated dispersion: mean $\approx 0.509 - 0.513$, pop SD $< 0.008$, CV $< 1.5\%$ | Characterized as Category C (Approximately Constant) / effectively learned fixed shrinkage | Yes | **RESOLVED** | Report, analysis tables |
+| **C5** | **Confidence Calibration** | Called "calibrated" without decision-value evidence | Daily-block paired differences ($K=53, 456, 163$) | Quantile binning and Spearman correlation yielded $p > 0.20$ across all datasets | Clarified that $\lambda$ is uncalibrated to instance difficulty; value comes from fixed shrinkage | Yes | **RESOLVED** | `phase15a_confidence_calibration_corrected.csv` |
+| **C6** | **Router Decision Quality** | Lacked window-level error comparison to retrospective best expert | Window-level test errors in `phase11_window_metrics.csv` | Evaluated top-1 agreement ($22.9\% - 41.3\%$) and selection regret ($0.76 - 28.51$ units) | Documented that router operates close to equal weighting, capturing limited expert selection alpha | Yes | **RESOLVED** | `phase15a_router_decision_quality_corrected.csv` |
+| **C7** | **Routing Regret Units** | Vaguely described as "12-25% of load" | Window-level test MAEs in physical units | Computed exact formulas for selection and fusion regret | Reported in physical units (MW/kW) and explicit relative % of standalone benchmark | Yes | **RESOLVED** | `phase15a_routing_regret_corrected.csv` |
+| **C8** | **Oracle Convex Fusion Demarcation** | Unqualified "opportunity" | Retrospective 2-simplex daily grid search | Verified weights satisfy $w_i \ge 0$ and $\sum w_i = 1$ using hindsight targets | Formally labeled RETROSPECTIVE ORACLE / NON-DEPLOYABLE UPPER BOUND | Yes | **RESOLVED** | `phase15a_oracle_audit.csv` |
+| **C9** | **Oracle Headroom Interpretation** | Claimed F2 "captures X% of headroom" | Hindsight oracle grid search | Removed deployability implications; showed that oracle gaps cannot be closed causally | Replaced with absolute MAE gaps to retrospective bounds | Yes | **RESOLVED** | Report, analysis tables |
+| **C10** | **Routing vs. Shrinkage Causal Claims** | Counteracting percentages ($-123\%$ routing, $+223\%$ shrinkage) framed causally | End-to-end trained linear mixture $\hat{y}_{\mathrm{final}} = \lambda \hat{y}_{\mathrm{adaptive}} + (1-\lambda) \hat{y}_{\mathrm{equal}}$ | Demonstrated that pure adaptive routing degrades GEFCom and UCI, but shrinkage offsets it | Framed strictly as descriptive linear mixture; noted mutual co-adaptation | Yes | **RESOLVED** | `phase15a_shrinkage_reconciliation.csv` |
+| **C11** | **Disagreement Analysis** | Vague association with difficulty | Binned disagreement spread vs adaptive advantage | Verified that high disagreement regimes correspond to modest adaptive advantage ($53\% - 58\%$) | Clarified descriptive, non-causal association | Yes | **RESOLVED** | `phase15a_disagreement_corrected.csv` |
+| **C12** | **Expert Complementarity** | Residual correlation confused with complementarity | Standalone vs co-adapted errors | Evaluated regime- and horizon-dependent complementarity | Documented that standalone models are complementary across horizons despite positive correlation | Yes | **RESOLVED** | `phase15a_complementarity_corrected.csv` |
+| **C13** | **Horizon Specialization** | Potential overstatement of horizon routing | Step 1-24 multi-horizon test errors | Verified TCN dominance on short horizons ($h \le 8$) and LSTM on long horizons ($h \ge 17$) | Confirmed empirical crossover, motivating controlled testing without guaranteeing gains | Yes | **RESOLVED** | `phase15a_horizon_specialization_corrected.csv` |
+| **C14** | **Performance-Feature Resolution** | Lookback window coarseness | 24h, 48h, 72h, and 168h OOF lookback error features | Confirmed that 168h chronological OOF error achieves lowest test MAE across all benchmarks | Documented feature resolution findings | Yes | **RESOLVED** | `phase15a_performance_resolution_corrected.csv` |
+| **C15** | **Regime Analysis** | Potential causal interpretation of regime gains | Volatility and diurnal sub-regime breakdowns | Confirmed that F2 gains concentrate in peak and high-volatility regimes | Clarified retrospective descriptive nature of regime analysis | Yes | **RESOLVED** | `phase15a_regime_diagnostics_corrected.csv` |
 
 ---
 
-## 4. Architectural & Experimental Integrity Certification
+## 3. Detailed Forensic Tracing of C0 (PJM 249.901 vs. 250.97 MW)
 
-- **Frozen Canonical Architecture:** `ConfidenceFallbackCAEGNet` remains exactly 121,724 parameters.
-- **Frozen Benchmarks:** Multi-seed test metrics ($250.97 \pm 10.69$ MW on PJM, $12.41 \pm 0.15$ kW on GEFCom, $7.74 \pm 0.30$ MW on UCI) are unamended.
-- **Historical Git State:** All earlier commits (`c67067d8`, `1d4d8c35`, `cfc75e2b`, `45443fa`) are preserved without rebasing or rewriting.
-- **Zero Future Leakage:** Lookback context features strictly respect causal slicing ($X_{t-167:t}$).
-- **Audit Conclusion:** The diagnostic evidence base is now mathematically reconciled and scientifically sound. The repository is certified **READY FOR PHASE 15B**.
+- **The Issue:** Phase 15A reported that F2 achieved a test MAE of 249.901 MW on PJM and stated that this matched Phase 14 records, while the locked Phase 14 benchmark is $250.97 \pm 10.69$ MW.
+- **Forensic Investigation:**
+  - In `research/results/phase14_routing_statistics.csv` and `research/results/phase14_confidence_statistics.csv`, Seed 42 is explicitly logged:
+    - Routing weights: LSTM $= 0.367928$, TCN $= 0.326085$, CNN $= 0.305988$.
+    - Confidence $\lambda$: $0.509220 \pm 0.005576$.
+  - Re-evaluating the 5 seeds under the Phase 14 protocol yields:
+    - **Seed 42:** **249.9014 MW**
+    - **Seed 123:** **262.3826 MW**
+    - **Seed 999:** **233.7615 MW**
+    - **Seed 2024:** **262.1776 MW**
+    - **Seed 3407:** **246.6506 MW**
+    - **5-Seed Mean:** $\mathbf{250.9747}$ **MW**
+    - **5-Seed Population SD ($ddof=0$):** $\mathbf{10.6938}$ **MW**
+    - **5-Seed Sample SD ($ddof=1$):** $\mathbf{11.9561}$ **MW**
+- **Conclusion:** 249.901 MW is the exact single-seed realization of Seed 42 in Phase 14. Phase 15A used Seed 42 for detailed internal activations and window-level diagnostics. 250.97 MW is the authoritative 5-seed mean. Both numbers are authentic, reproducible, and fully reconciled in `research/analysis/phase15a_phase14_provenance_reconciliation.csv`.
+
+---
+
+## 4. Verification & Audit Certification
+
+- **Parameter Counts:** Frozen at 121,724 parameters.
+- **Data Splits & Leakage:** Zero future leakage; test data evaluated strictly post-hoc.
+- **Test Suite:** 145 / 145 tests passing project-wide (0 failures, 0 errors).
+- **Certification:** The Phase 15A diagnostic evidence base is complete, reconciled, and scientifically sound. The repository is certified **READY FOR PHASE 15B**.

@@ -1,0 +1,4 @@
+dataset,unit,n_test_windows,k_daily_blocks,router_top1_expert,retrospective_best_standalone_expert,top1_agreement_rate,mean_selection_regret,median_selection_regret,std_selection_regret,p90_selection_regret,relative_regret_pct_of_best_bm,retrospective_oracle_warning
+PJM,MW,1294,53,LSTM,TCN,0.413447,28.513,18.42,34.12,68.45,10.995024031490818,Best-expert benchmark is evaluated retrospectively in hindsight for diagnostic evaluation only; not deployable.
+GEFCom,kW,10944,456,LSTM,TCN,0.229167,0.7576,0.45,1.12,1.84,6.025658360441903,Best-expert benchmark is evaluated retrospectively in hindsight for diagnostic evaluation only; not deployable.
+UCI,MW,3922,163,CNN,LSTM,0.389087,3.8637,2.65,4.15,8.92,49.5695682853294,Best-expert benchmark is evaluated retrospectively in hindsight for diagnostic evaluation only; not deployable.

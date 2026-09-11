@@ -1,0 +1,4 @@
+dataset,standalone_corr_lstm_tcn,standalone_corr_lstm_cnn,standalone_corr_tcn_cnn,standalone_mean_corr,coadapted_branch_corr_lstm_tcn,coadapted_branch_corr_lstm_cnn,coadapted_branch_corr_tcn_cnn,coadapted_mean_corr,mae_standalone_best_bm,mae_standalone_equal,mae_f2_test_mean,complementarity_type
+PJM,0.790956,0.596425,0.636047,0.674476,-0.718713,0.495643,-0.688645,-0.303905,259.3264,279.8282,250.9747,Positive standalone error covariance; Negative co-adapted branch co-adaptation
+GEFCom,0.907965,0.847826,0.866355,0.874049,-0.456565,0.263887,-0.4178,-0.203493,12.5729,12.6248,12.4077,Positive standalone error covariance; Negative co-adapted branch co-adaptation
+UCI,0.843164,0.626679,0.701009,0.723617,-0.66257,-0.916597,0.496498,-0.360889,7.7945,8.1675,7.7371,Positive standalone error covariance; Negative co-adapted branch co-adaptation
