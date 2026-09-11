@@ -1,7 +1,8 @@
 # PHASE 14 CORRECTED FINAL RESEARCH REPORT
 ## Corrected Final-Model Optimization, Scientific Reconciliation & Cross-Dataset Evaluation
 **Project:** CAEG-Net: Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting  
-**Historical Commit:** `c67067d8a70d247832ee1cea5be466c527ec3838`  
+**Historical Experiment Commit:** `c67067d8a70d247832ee1cea5be466c527ec3838`  
+**Scientific Correction Commit:** `1d4d8c354e720384f01f72ce8a3e071d7fa253a1`  
 **Evaluation Environment:** Python 3.10.13, PyTorch `2.13.0+cu130`, CUDA 13.0, NVIDIA GeForce RTX 4050 Laptop GPU  
 **Runtime:** 14,619.45s (~4.06 hours)  
 **Status:** Scientifically Reconciled, Publication-Ready & Defense-Locked  
@@ -12,26 +13,28 @@
 
 Phase 14 investigated whether the canonical CAEG-Net V1 forecasting architecture could be improved in a statistically defensible manner through causally valid, out-of-fold (OOF) relative performance feedback and confidence-based fallback toward equal ensembling.
 
-This corrected report presents a scientifically rigorous, defensible synthesis of the completed Phase 14 experimental record:
+This report presents the final, scientifically reconciled synthesis of the completed Phase 14 experimental record:
 1. **Strongest Cross-Dataset Balance:** Candidate **F2_A2_OOF** (7D Context with genuine OOF relative errors + learned confidence fallback head, 121,724 parameters) demonstrated the strongest overall cross-dataset balance among the six evaluated formulations.
 2. **Consistent Improvement over Canonical V1:** F2 improved upon Canonical V1 on all three benchmark datasets in the locked five-seed evaluation:
    - **Modern PJM:** $250.97 \pm 10.69\text{ MW}$ vs. $253.41 \pm 9.12\text{ MW}$ ($-2.44\text{ MW}$, $-0.96\%$)
    - **GEFCom2014:** $12.41 \pm 0.15\text{ kW}$ vs. $12.88 \pm 0.25\text{ kW}$ ($-0.47\text{ kW}$, $-3.65\%$)
    - **UCI Cohort 320 Aggregate:** $7.74 \pm 0.30\text{ MW}$ vs. $7.94 \pm 0.17\text{ MW}$ ($-0.20\text{ MW}$, $-2.52\%$)
-3. **Universal Superiority over Static Equal Ensemble ($3 / 3$ Datasets):** F2 outperformed the static equal ensemble on all three datasets:
+3. **3/3 Datasets — Lower MAE than the Static Equal Ensemble:** F2 achieved lower MAE than the static equal ensemble on all three benchmark datasets:
    - Modern PJM ($250.97\text{ MW}$ vs. $279.83\text{ MW}$)
    - GEFCom2014 ($12.41\text{ kW}$ vs. $12.62\text{ kW}$)
    - UCI Cohort 320 ($7.74\text{ MW}$ vs. $8.17\text{ MW}$)
-4. **Comparison with Best Standalone Experts ($2 / 3$ Datasets):** Subject to the verified locked standalone references, F2 outperformed the best standalone expert on two of the three datasets:
+4. **Comparison with Verified Best Standalone Experts (2/3 Datasets):** Subject to the verified locked standalone references, F2 outperformed the best standalone expert on two of the three datasets:
    - Modern PJM: **YES** (F2 $= 250.97\text{ MW}$ vs. standalone TCN $= 259.33\text{ MW}$)
    - GEFCom2014: **YES** (F2 $= 12.41\text{ kW}$ vs. standalone TCN $= 12.57\text{ kW}$)
    - UCI Cohort 320: **NO** (F2 $= 7.74\text{ MW}$ does not beat the locked standalone LSTM reference $= 7.55\text{ MW}$; it is comparable to the Phase 11 standalone LSTM test benchmark $= 7.79\text{ MW}$)
 5. **Daily-Block Statistical Significance vs. V1:** Under predefined non-overlapping 24-hour daily block paired analysis with Step-Down Holm-Bonferroni correction on the five-seed ensemble forecasts:
-   - Modern PJM ($K=53$ blocks): Mean daily diff $= -9.66\text{ MW}$ ($p_{\text{adj}} = 0.0406$, Cohen's $d_z = -0.351$)
-   - GEFCom2014 ($K=456$ blocks): Mean daily diff $= -0.688\text{ kW}$ ($p_{\text{adj}} = 1.02 \times 10^{-27}$, Cohen's $d_z = -0.555$)
-   - UCI Cohort 320 ($K=163$ blocks): Mean daily diff $= -0.202\text{ MW}$ ($p_{\text{adj}} = 0.0017$, Cohen's $d_z = -0.287$)
-6. **Shrinkage Dynamics & Resolution:** The learned confidence head $\lambda_t$ operated approximately as a near-constant shrinkage coefficient toward equal fusion ($\lambda_t \approx 0.51$, with sample standard deviations $< 0.006$ and $CV < 1.1\%$). However, a globally fixed scalar shrinkage coefficient (Candidate F5, $\lambda^* = 0.6233$) failed to maintain cross-dataset stability, severely degrading on UCI Cohort 320 ($8.14\text{ MW}$). A context-conditioned confidence head provided superior cross-dataset balance compared to a global static scalar.
-7. **Final Model Recommendation:** Candidate **F2_A2_OOF** is selected as the final CAEG-Net formulation for the paper based on its strongest overall cross-dataset balance, consistent improvement over Canonical V1, statistically significant daily-block improvements under the predefined protocol, superiority over static equal fusion across all three datasets, causal OOF performance features, and minimal additional parameter complexity (+193 parameters, +0.1588% overhead).
+   - Modern PJM ($K=53$ blocks): Mean daily diff $= -9.66\text{ MW}$ ($95\%\text{ CI}: [-17.07, -2.26]$, $p_{\text{adj}} = 0.0406$, Cohen's $d_z = -0.351$)
+   - GEFCom2014 ($K=456$ blocks): Mean daily diff $= -0.688\text{ kW}$ ($95\%\text{ CI}: [-0.802, -0.575]$, $p_{\text{adj}} = 1.02 \times 10^{-27}$, Cohen's $d_z = -0.555$)
+   - UCI Cohort 320 ($K=163$ blocks): Mean daily diff $= -0.202\text{ MW}$ ($95\%\text{ CI}: [-0.310, -0.094]$, $p_{\text{adj}} = 0.0017$, Cohen's $d_z = -0.287$)
+   Among the evaluated formulations, F2 was the only candidate showing statistically significant improvement over Canonical V1 across all three datasets under the predefined daily-block paired analysis with Holm correction.
+6. **Shrinkage Dynamics & Resolution:** Rather than exhibiting strong temporal regime switching, the learned confidence mechanism behaved approximately as a near-constant shrinkage coefficient toward equal fusion ($\lambda_t \approx 0.51$, with sample standard deviations $< 0.006$ and $CV < 1.1\%$). However, a globally fixed scalar shrinkage coefficient (Candidate F5, $\lambda^* = 0.6233$) failed to maintain cross-dataset stability, severely degrading on UCI Cohort 320 ($8.14\text{ MW}$). A context-conditioned confidence head provided superior cross-dataset balance compared to a global static scalar.
+7. **Final Model Recommendation:** F2_A2_OOF is selected as the final CAEG-Net formulation for the paper based on its strongest overall cross-dataset balance, consistent improvement over canonical V1 across all three benchmark datasets, statistically significant daily-block improvement over V1 under the predefined Holm-corrected analysis, lower MAE than the static equal ensemble on all three datasets, superiority over the verified best standalone expert on two of three datasets, causal OOF performance features, and minimal additional parameter complexity (+193 parameters, +0.1588% overhead).  
+   *Qualification:* F2 is not the lowest-MAE formulation on every individual dataset; F5 achieved the lowest PJM MAE and F3 achieved the lowest UCI MAE among the Phase 14 candidates.
 
 ---
 
@@ -58,7 +61,7 @@ To maintain publication-level scientific integrity:
    - GEFCom2014: Zonal electricity load ($N_{\text{train}}=41,425$, $N_{\text{val}}=8,736$, $N_{\text{test}}=10,944$).
    - UCI Cohort 320 Aggregate: Summed 320-client smart meter load ($N_{\text{train}}=18,221$, $N_{\text{val}}=3,922$, $N_{\text{test}}=3,922$).
 3. **Forecasting Horizon:** 168 hours history $\to$ 24 hours direct forecast.
-4. **Historical Preservation:** All results from Phase 10, 11, 12, and 13, and commit `c67067d` remain completely preserved.
+4. **Historical Preservation:** All results from Phase 10, 11, 12, and 13, and commits `c67067d` and `1d4d8c3` remain completely preserved.
 
 ---
 
@@ -113,14 +116,16 @@ Values are reported as **$\text{Mean} \pm \text{Population SD}$** ($S=5$, `ddof=
 
 *(Source: `research/results/phase14_test_results.csv`)*
 
-| Candidate ID | Model Description | Parameters | Modern PJM (MW) | GEFCom2014 (kW) | UCI Cohort 320 (MW) | Beats V1 (# / 3) | Beats Equal Ens. (# / 3) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **F0_Canonical_V1** | 4D Context, Softmax Router | 121,531 | $253.41 \pm 9.12$ | $12.88 \pm 0.25$ | $7.94 \pm 0.17$ | Baseline | 2 / 3 |
-| **F1_A1_OOF** | 7D Context (OOF Errors), Softmax | 121,579 | $250.63 \pm 5.55$ | $12.64 \pm 0.22$ | $7.98 \pm 0.20$ | 2 / 3 | 2 / 3 |
-| **F2_A2_OOF (Selected)** | 7D Context + MLP Conf Fallback | **121,724** | $\mathbf{250.97 \pm 10.69}$ | $\mathbf{12.41 \pm 0.15}$ | $\mathbf{7.74 \pm 0.30}$ | **3 / 3 (All)** | **3 / 3 (All)** |
-| **F3_Confidence_Only** | 4D Context + MLP Conf Fallback | 121,628 | $255.99 \pm 5.95$ | $12.44 \pm 0.21$ | $7.71 \pm 0.18$ | 2 / 3 | 3 / 3 |
-| **F4_Smoothed_OOF** | 7D Context (Smoothed $\alpha^*=0.25$) | 121,724 | $247.73 \pm 5.97$ | $12.55 \pm 0.17$ | $8.02 \pm 0.50$ | 2 / 3 | 2 / 3 |
-| **F5_Scalar_Shrinkage** | 7D Context + Static $\lambda^*=0.6233$ | 121,579 | $\mathbf{246.71 \pm 6.36}$ | $12.66 \pm 0.23$ | $8.14 \pm 0.10$ | 2 / 3 | 2 / 3 |
+### Publication-Ready Final Results Table
+
+| Model | Params | PJM | GEFCom | UCI |
+|---|---:|---:|---:|---:|
+| F0 V1 | 121,531 | 253.41 ± 9.12 | 12.88 ± 0.25 | 7.94 ± 0.17 |
+| F1 A1-OOF | 121,579 | 250.63 ± 5.55 | 12.64 ± 0.22 | 7.98 ± 0.20 |
+| F2 A2-OOF | 121,724 | 250.97 ± 10.69 | 12.41 ± 0.15 | 7.74 ± 0.30 |
+| F3 Confidence-Only | 121,628 | 255.99 ± 5.95 | 12.44 ± 0.21 | 7.71 ± 0.18 |
+| F4 Smoothed OOF | 121,724 | 247.73 ± 5.97 | 12.55 ± 0.17 | 8.02 ± 0.50 |
+| F5 Scalar Shrinkage | 121,579 | 246.71 ± 6.36 | 12.66 ± 0.23 | 8.14 ± 0.10 |
 
 ### Secondary Metrics (Five-Seed Mean $\pm$ Population SD)
 - **Modern PJM:**
@@ -139,21 +144,21 @@ Values are reported as **$\text{Mean} \pm \text{Population SD}$** ($S=5$, `ddof=
 
 *(Sources: `research/results/phase14_test_results.csv`, `research/results/phase12_dataset_summary.csv`, `research/results/phase11_dataset_summary.csv`)*
 
-| Model / Baseline | Parameters | Modern PJM (MW) | GEFCom2014 (kW) | UCI Cohort 320 (MW) | Beats V1 (# / 3) | Beats Equal Ens. (# / 3) | Beats Best Standalone (# / 3) |
+| Model / Baseline | Parameters | Modern PJM (MW) | GEFCom2014 (kW) | UCI Cohort 320 (MW) | vs. Canonical V1 | vs. Equal Ensemble | vs. Best Standalone (Locked Ref) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Static Equal Ensemble** | 120,504 | 279.83 | 12.62 | 8.17 | 1 / 3 (GEFCom) | — | 0 / 3 |
 | **Best Standalone Expert (Locked Ref)** | 36k–56k | 259.33 (TCN) | 12.57 (TCN) | 7.55 (LSTM Val BL) / 7.79 (Test BM) | 0 / 3 | 3 / 3 | — |
-| **CAEG-Net Canonical V1 (F0)** | 121,531 | $253.41 \pm 9.12$ | $12.88 \pm 0.25$ | $7.94 \pm 0.17$ | Control | 2 / 3 | 1 / 3 (PJM) |
+| **F0_Canonical_V1** | 121,531 | $253.41 \pm 9.12$ | $12.88 \pm 0.25$ | $7.94 \pm 0.17$ | Control | 2 / 3 | 1 / 3 (PJM) |
 | **F1_A1_OOF** | 121,579 | $250.63 \pm 5.55$ | $12.64 \pm 0.22$ | $7.98 \pm 0.20$ | 2 / 3 | 2 / 3 | 1 / 3 (PJM) |
-| **F2_A2_OOF (Selected Model)** | **121,724** | $\mathbf{250.97 \pm 10.69}$ | $\mathbf{12.41 \pm 0.15}$ | $\mathbf{7.74 \pm 0.30}$ | **3 / 3 (All)** | **3 / 3 (All)** | **2 / 3 (PJM, GEFCom)** |
+| **F2_A2_OOF (Selected Model)** | **121,724** | $\mathbf{250.97 \pm 10.69}$ | $\mathbf{12.41 \pm 0.15}$ | $\mathbf{7.74 \pm 0.30}$ | **3 / 3** | **3 / 3** | **2 / 3 (PJM, GEFCom)** |
 | **F3_Confidence_Only** | 121,628 | $255.99 \pm 5.95$ | $12.44 \pm 0.21$ | $\mathbf{7.71 \pm 0.18}$ | 2 / 3 | 3 / 3 | 2 / 3 (PJM, GEFCom) |
 | **F4_Smoothed_OOF** | 121,724 | $247.73 \pm 5.97$ | $12.55 \pm 0.17$ | $8.02 \pm 0.50$ | 2 / 3 | 2 / 3 | 2 / 3 (PJM, GEFCom) |
 | **F5_Scalar_Shrinkage** | 121,579 | $\mathbf{246.71 \pm 6.36}$ | $12.66 \pm 0.23$ | $8.14 \pm 0.10$ | 2 / 3 | 2 / 3 | 1 / 3 (PJM) |
 
 ### Reconciled Baseline Findings
-1. **F2 vs. Static Equal Ensemble:** F2 outperformed the static equal ensemble on all three datasets: Modern PJM ($-10.31\%$), GEFCom2014 ($-1.66\%$), and UCI Cohort 320 ($-5.26\%$).
+1. **F2 vs. Static Equal Ensemble:** F2 achieved lower MAE than the static equal ensemble on all three benchmark datasets: Modern PJM ($-10.31\%$), GEFCom2014 ($-1.66\%$), and UCI Cohort 320 ($-5.26\%$).
 2. **F2 vs. Best Standalone Expert:** F2 outperformed the best standalone expert on **two of the three datasets** (PJM: YES, GEFCom: YES, UCI: NO). On UCI, F2 ($7.74\text{ MW}$) does not beat the locked standalone LSTM reference ($7.55\text{ MW}$), though it is comparable to the Phase 11 test benchmark ($7.79\text{ MW}$).
-3. **Single-Dataset Winners:** F2 is not the lowest-MAE model on every single dataset. Candidate F5 achieved lower MAE on Modern PJM ($246.71\text{ MW}$) and Candidate F3 achieved lower MAE on UCI Cohort 320 ($7.71\text{ MW}$). However, F2 provided the strongest overall cross-dataset balance among all evaluated candidates.
+3. **Single-Dataset Winners & Balance:** F2 is not the lowest-MAE model on every single dataset. Candidate F5 achieved lower MAE on Modern PJM ($246.71\text{ MW}$) and Candidate F3 achieved lower MAE on UCI Cohort 320 ($7.71\text{ MW}$). F2 was selected as the final formulation because it provided the strongest overall cross-dataset balance rather than the lowest individual-dataset error.
 
 ---
 
@@ -182,7 +187,7 @@ To prevent degrees-of-freedom inflation from overlapping sliding windows, statis
 | F5 vs. F0 | UCI | 163 | +0.024 MW | [-0.111, +0.159] | +0.345 | 0.7304 | 6467.0 | 0.7204 | +0.027 | Not Significant |
 
 ### Statistical Synthesis
-Under the predefined daily-block paired analysis with Holm correction, **F2 is the only candidate that achieved statistically significant improvement over Canonical V1 on all three datasets ($3 / 3$)**. This does not imply that F2 is statistically superior to every competing candidate; rather, it indicates that F2 was the most consistently improved formulation relative to Canonical V1 across the three benchmarks.
+Among the evaluated formulations, F2 was the only candidate showing statistically significant improvement over Canonical V1 across all three datasets under the predefined daily-block paired analysis with Holm correction.
 
 ---
 
@@ -201,11 +206,11 @@ Under the predefined daily-block paired analysis with Holm correction, **F2 is t
 | **F5_Scalar** | All | 0.6233 | 0.0000 | 0.6233 | 0.6233 | 0.0000 | 0.0000 | 0.00% |
 
 ### Resolution of Secondary Research Question
-1. **Near-Constant Shrinkage Behavior:** The learned confidence mechanism behaved approximately as a near-constant shrinkage coefficient over the evaluated test periods:
+1. **Near-Constant Shrinkage Behavior:** Rather than exhibiting strong temporal regime switching, the learned confidence mechanism behaved approximately as a near-constant shrinkage coefficient toward equal fusion:
    \[
    \hat{y}(t) \approx 0.51 \hat{y}_{\text{adaptive}}(t) + 0.49 \hat{y}_{\text{equal}}(t)
    \]
-   Temporal standard deviations remained below $0.006$ ($CV < 1.1\%$), indicating that the head does not execute sharp, discrete regime-switching between routing and ensembling.
+   Temporal standard deviations remained below $0.006$ ($CV < 1.1\%$).
 2. **Context-Conditioned vs. Global Scalar Shrinkage:** Candidate F5 applied a globally fixed scalar shrinkage ($\lambda^* = 0.6233$). While effective on Modern PJM ($246.71\text{ MW}$) and GEFCom ($12.66\text{ kW}$), it degraded on UCI Cohort 320 ($8.14\text{ MW}$, failing to beat V1 or the equal ensemble). A globally fixed shrinkage coefficient did not provide the same cross-dataset robustness as the context-conditioned confidence formulation.
 
 ---
@@ -216,7 +221,7 @@ Comparing F2 (7D Context + OOF Performance Features + Fallback) against F3 (4D C
 - On UCI Cohort 320, F3 slightly outperformed F2 ($7.71\text{ MW}$ vs. $7.74\text{ MW}$).
 - On Modern PJM, F2 outperformed F3 ($250.97\text{ MW}$ vs. $255.99\text{ MW}$).
 - On GEFCom2014, F2 slightly outperformed F3 ($12.41\text{ kW}$ vs. $12.44\text{ kW}$).
-- **Scientific Conclusion:** The confidence fallback mechanism was associated with improved cross-dataset robustness across all three datasets, while the addition of trailing OOF relative error features provided incremental gains in some environments (PJM, GEFCom) but was not uniformly necessary across all domains.
+- **Scientific Conclusion:** The results suggest that the confidence fallback contributes to robustness, while the additional OOF expert-performance features provide dataset-dependent incremental benefit.
 
 ---
 
@@ -241,35 +246,16 @@ The historical reporting variance on Modern PJM is reconciled by explicitly dist
 
 ---
 
-## 13. Final Model Recommendation
+## 13. Final Model Selection Statement
 
-### Model Selection
-**Candidate F2_A2_OOF is selected as the final CAEG-Net formulation for the paper.**
+**Candidate F2_A2_OOF is selected as the final CAEG-Net formulation for the paper based on its strongest overall cross-dataset balance, consistent improvement over canonical V1 across all three benchmark datasets, statistically significant daily-block improvement over V1 under the predefined Holm-corrected analysis, lower MAE than the static equal ensemble on all three datasets, superiority over the verified best standalone expert on two of three datasets, causal OOF performance features, and minimal additional parameter complexity.**
 
-### Exact Evidentiary Justification
-1. **Cross-Dataset Balance:** F2 achieved the strongest overall cross-dataset balance among the evaluated formulations.
-2. **Consistent V1 Improvement:** F2 improved upon Canonical V1 on all three benchmark datasets in the locked five-seed evaluation (PJM: $-0.96\%$, GEFCom: $-3.65\%$, UCI: $-2.52\%$).
-3. **Daily-Block Statistical Evidence:** F2 is the only candidate that demonstrated statistically significant improvement over Canonical V1 across all three benchmarks under Holm-corrected daily-block hypothesis testing ($p < 0.05$).
-4. **Equal Ensemble Superiority:** F2 outperformed the static equal ensemble on all three benchmarks ($3 / 3$).
-5. **Standalone Baseline Superiority:** F2 outperformed the best standalone expert on two of the three benchmarks ($2 / 3$).
-6. **Complexity:** Incurs only +193 additional parameters (+0.1588% overhead) over Canonical V1 while preserving the frozen 120,504-parameter expert core.
+*Explicit Qualification:* F2 is not the lowest-MAE formulation on every individual dataset; F5 achieved the lowest PJM MAE and F3 achieved the lowest UCI MAE among the Phase 14 candidates. F2 was selected as the final formulation because it provided the strongest overall cross-dataset balance rather than the lowest individual-dataset error.
 
 ---
 
-## 14. Publication-Ready Language Guidelines
+## 14. Final Paper-Facing Scientific Conclusion
 
-### Recommended Claims
-- *"F2 achieved the strongest overall cross-dataset balance among the evaluated CAEG formulations."*
-- *"F2 improved upon canonical V1 on all three datasets in the locked five-seed evaluation."*
-- *"Under the predefined daily-block paired analysis with Holm correction, F2 showed statistically significant improvement over V1 on all three datasets."*
-- *"F2 outperformed the static equal ensemble on all three datasets."*
-- *"F2 outperformed the best standalone expert on two of the three datasets, subject to the verified locked standalone references."*
-- *"The learned confidence mechanism behaved approximately as a near-constant shrinkage toward equal fusion."*
-- *"These results suggest that adaptive fusion combined with a fallback toward equal weighting can improve robustness across heterogeneous load-forecasting datasets."*
+Across Modern PJM, GEFCom2014, and the UCI Cohort 320 benchmark, F2_A2_OOF provided the strongest overall cross-dataset balance among the evaluated Phase 14 formulations. It improved upon canonical V1 in all three benchmarks and achieved lower MAE than the static equal ensemble on all three. Under the predefined non-overlapping daily-block paired analysis with Holm correction, F2 showed statistically significant improvement over V1 on all three datasets. F2 also outperformed the verified best standalone expert on two of the three datasets. Importantly, F2 was not the lowest-MAE formulation on every individual dataset, so its selection is based on cross-dataset robustness and consistency rather than universal per-dataset optimality.
 
-### Prohibited Claims
-- DO NOT claim that F2 is "universally superior", "optimal on all datasets", or "the lowest-MAE model on every dataset."
-- DO NOT claim that the confidence head is "proven essential" or that it performs "dynamic regime switching."
-- DO NOT claim that F2 beats the best standalone expert on 3 of 3 datasets.
-- DO NOT cite undocumented inference latency figures (e.g. "<2 ms").
-- DO NOT mix PJM Estimand 1 with Estimand 2 or Estimand 3 without explicit mathematical labeling.
+Phase 14 is scientifically reconciled and ready to serve as the final experimental basis for the research paper.
