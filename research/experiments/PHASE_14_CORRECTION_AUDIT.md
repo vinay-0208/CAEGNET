@@ -1,93 +1,75 @@
-# PHASE 14 POST-EXECUTION SCIENTIFIC CORRECTION & PROVENANCE AUDIT
+# PHASE 14 POST-EXECUTION SCIENTIFIC CORRECTION & PAPER-READINESS AUDIT
 **Project:** CAEG-Net: Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting  
-**Date:** September 11, 2026  
-**Auditor:** Research-Grade ML Experimentation & Statistical Reviewer  
-**Audit Target:** Phase 14 Experimental Execution, Data Integrity, Provenance & Codebase State  
-**Audit Status:** PASSED — 100% Mathematically and Empirically Verified
+**Audit Target:** Phase 14 Experimental Record, Reports, Codebase & Derived Claims  
+**Historical Commit:** `c67067d8a70d247832ee1cea5be466c527ec3838`  
+**Auditor:** Statistical Reviewer & Reproducibility Auditor  
+**Audit Status:** PASSED WITH CORRECTIONS — Publication-Ready  
 
 ---
 
-## 1. Audit Scope & Objectives
-
-This audit independently verifies the methodological, statistical, and numerical integrity of Phase 14 ("Corrected Final-Model Optimization & Robustness"). Specifically, this audit validates:
-1. **Causal Integrity:** Strict causal boundaries of out-of-fold (OOF) relative error features and historical context.
-2. **Validation/Test Firewall:** Strict two-stage protocol adherence; zero test-set exposure during Stage 14B qualification.
-3. **Parameter Counts:** Exact mathematical verification of parameter counts for all six candidates.
-4. **Statistical Testing Provenance:** Correct construction of non-overlapping 24-hour daily blocks and Holm-Bonferroni correction.
-5. **Numerical Provenance:** Exact concordance between raw CSV artifacts, summary tables, and reported values.
-6. **PJM Discrepancy Resolution:** Reconciliation of Estimand 1 (5-seed mean), Estimand 2 (Seed 42 paired blocks), and Estimand 3 (5-seed ensemble blocks).
+## 1. Historical Commit Preservation
+The raw experimental record generated during Phase 14 is preserved under Git commit:
+`c67067d8a70d247832ee1cea5be466c527ec3838`
+Zero numerical results, cached features, or CSV records were overwritten or recomputed. This audit establishes a separate, reconciled documentation layer without amending historical commits.
 
 ---
 
-## 2. Causal Integrity & Leakage Verification
+## 2. Itemized Classification of Audit Items
 
-### OOF Relative Error Construction
-- **Audit Finding:** Folds were created chronologically ($K=5$ expanding windows). Standalone experts were evaluated strictly on out-of-fold data.
-- **Evaluation Window:** For forecast horizon $t$ to $t+24$, the error feature vector $[r_{\text{LSTM}}, r_{\text{TCN}}, r_{\text{CNN}}]$ was evaluated strictly on actual observed load from $t-24$ to $t$.
-- **Verification:** Unit test `test_oof_features_no_lookahead` verified that modifying target values in $[t, t+24]$ leaves $[r_{\text{LSTM}}, r_{\text{TCN}}, r_{\text{CNN}}]$ completely invariant. Zero future target leakage exists.
+Every analyzed claim and finding is classified into one of four categories:
+- **Confirmed Correct:** Numerically verified and scientifically supported by artifacts.
+- **Corrected:** Reconciled from artifacts to replace imprecise, unsupported, or contradictory phrasing.
+- **Unsupported and Removed:** Unverified assertions without empirical experimental backing.
+- **Unresolved:** None. All audit items are fully resolved.
 
----
-
-## 3. Validation Screening & Test Firewall Audit
-
-### Stage 14B Protocol
-- Screening was executed strictly on validation splits using Seeds 42 and 123.
-- Final test sets were not loaded or accessed during Stage 14B execution.
-- All five active candidates met the qualification criteria:
-  - F1: 2/3 improved, max degradation +1.17% (<= 2.0%)
-  - F2: 3/3 improved, zero degradation
-  - F3: 3/3 improved, zero degradation
-  - F4: 3/3 improved, zero degradation
-  - F5: 3/3 improved, zero degradation
-- Hyperparameter $\alpha^* = 0.25$ (Candidate F4) and scalar shrinkage $\lambda^* = 0.6233$ (Candidate F5) were selected strictly on validation data prior to Stage 14C.
-
----
-
-## 4. Parameter Count Audit
-
-Parameter counts were computed analytically and verified via PyTorch `sum(p.numel() for p in model.parameters() if p.requires_grad)`:
-
-| Component | F0 (V1) | F1 (A1) | F2 (A2) | F3 (Conf) | F4 (Smooth) | F5 (Scalar) | Verification Status |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| LSTM Expert | 56,152 | 56,152 | 56,152 | 56,152 | 56,152 | 56,152 | VERIFIED |
-| TCN Expert | 36,952 | 36,952 | 36,952 | 36,952 | 36,952 | 36,952 | VERIFIED |
-| CNN Expert | 27,400 | 27,400 | 27,400 | 27,400 | 27,400 | 27,400 | VERIFIED |
-| **Total Expert Core** | **120,504** | **120,504** | **120,504** | **120,504** | **120,504** | **120,504** | **VERIFIED (FROZEN)** |
-| Router Layer 1 ($D_{\text{in}} \times 16 + 16$) | $4\times 16+16=80$ | $7\times 16+16=128$ | $7\times 16+16=128$ | $4\times 16+16=80$ | $7\times 16+16=128$ | $7\times 16+16=128$ | VERIFIED |
-| Router Layer 2 ($16 \times 3 + 3$) | 51 | 51 | 51 | 51 | 51 | 51 | VERIFIED |
-| Conf Layer 1 ($D_{\text{in}} \times 8 + 8$) | 0 | 0 | $7\times 8+8=64$ | $4\times 8+8=40$ | $7\times 8+8=64$ | 0 | VERIFIED |
-| Conf Layer 2 ($8 \times 1 + 1$) | 0 | 0 | 9 | 9 | 9 | 0 | VERIFIED |
-| Expert Fusion Head ($3 \times 24 \times 12 + 12$) | 876 | 876 | 876 | 876 | 876 | 876 | VERIFIED |
-| Residual Weight $\gamma$ | 20 | 20 | 20 | 20 | 20 | 20 | VERIFIED |
-| **Total Model Parameters** | **121,531** | **121,579** | **121,724** | **121,628** | **121,724** | **121,579** | **100% CONCORDANT** |
+| Audit Item | Original Claim | Corrected Finding | Classification |
+| :--- | :--- | :--- | :---: |
+| **1. UCI Standalone Baseline** | F2 beats standalone experts on 3/3 datasets ($7.74$ vs $7.79\text{ MW}$) | F2 beats best standalone expert on **2/3 datasets** (PJM, GEFCom). On UCI, F2 ($7.74\text{ MW}$) does not beat the locked standalone reference ($7.55\text{ MW}$). | **CORRECTED** |
+| **2. Cross-Dataset Optimality** | F2 is "optimal on all datasets" and "dominates alternatives" | F2 is not the lowest-MAE model on every dataset (F5 wins PJM, F3 wins UCI). F2 provided the **strongest overall cross-dataset balance**. | **CORRECTED** |
+| **3. Confidence Head Role** | Confidence head is proven "essential" for generalization | Confidence head was **associated with improved cross-dataset robustness**, while OOF error features provided incremental gains in some domains. | **CORRECTED** |
+| **4. Lambda Dynamics** | Confidence head performs dynamic regime-switching | Lambda behaved as a **near-constant shrinkage coefficient** ($\lambda_t \approx 0.51$, $CV < 1.1\%$) toward equal fusion. | **CORRECTED** |
+| **5. Global Scalar Shrinkage** | Neural confidence head is proven mathematically necessary | A globally fixed scalar (F5) **failed to maintain cross-dataset stability** (degraded on UCI), while context-conditioned confidence generalized better. | **CORRECTED** |
+| **6. Statistical Claims** | F2 is "statistically superior to every candidate" | F2 demonstrated **statistically significant improvement over Canonical V1** on all 3 datasets under daily-block paired testing with Holm correction. | **CORRECTED** |
+| **7. Statistical Unit** | Blocks of 24 hours | Confirmed: Non-overlapping 24-hour daily blocks ($K=53, 456, 163$). Overlapping windows were strictly not used for inference. | **CONFIRMED CORRECT** |
+| **8. PJM Discrepancy** | Unreconciled figures ($237$ vs $242$ vs $250\text{ MW}$) | Confirmed mathematically: Estimand 1 ($250.97\text{ MW}$, 5-seed mean), Estimand 2 ($237.28\text{ MW}$, Seed 42), Estimand 3 ($242.81\text{ MW}$, Ensemble). | **CONFIRMED CORRECT** |
+| **9. SD Convention** | "Sample standard deviation" | Confirmed in code: `np.std(seed_maes)` with `ddof=0`, representing **population standard deviation across the 5 recorded seeds**. | **CORRECTED** |
+| **10. Inference Latency** | "GPU Inference Latency (<2 ms / 1.84 vs 1.89 ms)" | No formal timed benchmark artifact exists in repository. Numerical latency claim is **unsupported and removed**. | **UNSUPPORTED & REMOVED** |
+| **11. Parameter Counts** | 120,504 expert core, 121,531 F0, 121,724 F2 (+193, +0.1588%) | Independently re-calculated and verified against model graph and CSV records. | **CONFIRMED CORRECT** |
+| **12. Unit Test Suite** | 133/133 tests passing | Full suite executed: 133/133 tests passed cleanly in 40.97s. | **CONFIRMED CORRECT** |
+| **13. Equal Ensemble Comparison** | F2 beats Static Equal Ensemble on 3/3 datasets | Confirmed: PJM ($250.97$ vs $279.83$), GEFCom ($12.41$ vs $12.62$), UCI ($7.74$ vs $8.17$). | **CONFIRMED CORRECT** |
 
 ---
 
-## 5. Statistical Inference & Daily-Block Construction Audit
+## 3. Detailed Verification of Key Audit Dimensions
 
-1. **Daily Block Partitioning:**
-   - Modern PJM test set ($N=1,294$ hourly steps) yields $K=53$ complete, non-overlapping 24-hour blocks (1,272 hours used; remainder 22 hours safely truncated per standard daily block protocol).
-   - GEFCom2014 test set ($N=10,944$ hourly steps) yields $K=456$ complete, non-overlapping 24-hour blocks.
-   - UCI Cohort 320 test set ($N=3,922$ hourly steps) yields $K=163$ complete, non-overlapping 24-hour blocks (3,912 hours used; remainder 10 hours truncated).
-2. **Hypothesis Testing:**
-   - Both parametric paired two-sided Student's t-tests and non-parametric Wilcoxon signed-rank tests were computed on daily mean absolute errors.
-   - Holm-Bonferroni step-down correction was applied across the candidate comparisons within each dataset to strictly control family-wise error rate (FWER).
-   - In Mode `5seed_mean`, F2 achieved $p_{\text{adj}} = 0.0406$ (PJM), $p_{\text{adj}} = 1.02 \times 10^{-27}$ (GEFCom), and $p_{\text{adj}} = 0.0017$ (UCI), verifying statistical significance at $\alpha = 0.05$ across all three datasets.
+### 3.1 UCI Baseline Provenance Reconciliation
+- **Artifact Trace:** `research/results/phase12_dataset_summary.csv` records the audited validation reference: `best_expert_val = LSTM`, `best_expert_val_mae = 7.55415 MW`.
+- `research/results/phase11_dataset_summary.csv` records the Phase 11 test benchmark: `overall_lstm_mae = 7.79447 MW`.
+- **Verdict:** Comparing F2 ($7.74\text{ MW}$) against the strict locked reference ($7.55\text{ MW}$) confirms that F2 does **not** beat the standalone expert on UCI.
+- **Reporting Standard:** The paper must report that F2 outperforms the best standalone expert on **2 of 3 datasets** (Modern PJM and GEFCom2014), and acknowledge that standalone LSTM remains competitive on UCI.
+
+### 3.2 Standard Deviation Convention
+- In `research/experiments/run_phase14_final_optimization.py` (line 867):
+  ```python
+  "test_mae_std": float(np.std(seed_maes)), # Population SD (ddof=0)
+  ```
+- All test summary tables report the **population standard deviation across the five seeds** (`ddof=0`). The terminology has been standardized across all documentation.
+
+### 3.3 Latency Assertion Removal
+- A repository-wide audit revealed no benchmark script with proper device synchronization, warmups, and timed iterations for Phase 14 candidates.
+- The claim of "1.84 vs 1.89 ms (<2 ms)" has been removed. The efficiency argument rests strictly on verified parameter counts (+193 parameters, +0.1588% overhead).
+
+### 3.4 Statistical Verification
+All daily-block statistical comparisons in `research/results/phase14_statistical_comparisons.csv` were verified directly:
+- **PJM ($K=53$):** Mean daily diff $= -9.6638\text{ MW}$, $t = -2.5566$, $p_{\text{raw}} = 0.0135$, $p_{\text{adj}} = 0.0406$, Wilcoxon $p_{\text{adj}} = 0.0893$, Cohen's $d_z = -0.3512$.
+- **GEFCom ($K=456$):** Mean daily diff $= -0.6884\text{ kW}$, $t = -11.8498$, $p_{\text{raw}} = 2.04 \times 10^{-28}$, $p_{\text{adj}} = 1.02 \times 10^{-27}$, Wilcoxon $p_{\text{adj}} = 1.27 \times 10^{-28}$, Cohen's $d_z = -0.5549$.
+- **UCI ($K=163$):** Mean daily diff $= -0.2021\text{ MW}$, $t = -3.6581$, $p_{\text{raw}} = 0.00034$, $p_{\text{adj}} = 0.0017$, Wilcoxon $p_{\text{adj}} = 0.00025$, Cohen's $d_z = -0.2865$.
+
+All $p$-values, effect sizes, and confidence intervals are mathematically verified.
 
 ---
 
-## 6. Numerical Provenance Cross-Check
+## 4. Final Scientific Verdict
 
-All figures in [`PHASE_14_REPORT.md`](file:///c:/Fall%20Semister/2026/Advanced%20Predictive%20Analytics/research/experiments/PHASE_14_REPORT.md) were verified against raw CSV files:
-- `research/results/phase14_validation_results.csv`: Row 6 (F2 PJM val MAE = 399.50, GEFCom = 13.04, UCI = 6.48) matches report Table 7.
-- `research/results/phase14_test_results.csv`: Rows 0–17 match report Table 9.
-- `research/results/phase14_statistical_comparisons.csv`: Rows 0–29 match report Table 11.
-- `research/results/phase14_confidence_statistics.csv`: Confirms $\mu_{\lambda} \approx 0.506 - 0.517$, $\sigma_{\lambda} < 0.006$.
-- Zero rounding discrepancies or fabricated figures detected.
-
----
-
-## 7. Audit Verdict
-
-**VERDICT: FULL PASS.**  
-Phase 14 adheres to the highest standards of empirical machine learning research. Results are reproducible, statistically sound, causal, and ready for publication.
+**AUDIT VERDICT: FULL PASS (WITH RECONCILED DOCUMENTATION).**  
+Phase 14 results are reproducible, mathematically sound, causal, and leakage-free. With the removal of unsupported claims and the correction of baseline counts, Candidate **F2_A2_OOF** is fully defensible for peer-reviewed publication as the final CAEG-Net model.
