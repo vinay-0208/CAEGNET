@@ -22,14 +22,14 @@ import pandas as pd
 # Add repo root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from data_utils import (
+from src.data import (
     load_and_clean_data,
     chronological_split,
     fit_and_transform_scaler,
     create_partition_windows_with_context,
     compute_causal_recent_forecast_errors,
-    extract_context_features
 )
+from src.features import extract_context_features
 
 
 class TestCAEGCausalityAndLeakage(unittest.TestCase):

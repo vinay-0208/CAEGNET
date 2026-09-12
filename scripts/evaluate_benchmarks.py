@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 RESULTS_PATH = REPO_ROOT / "research" / "results" / "final_results.csv"
+BUNDLED_PATH = REPO_ROOT / "dashboard" / "assets" / "data" / "final_results.csv"
 
 
 def evaluate_benchmarks():
@@ -21,11 +22,12 @@ def evaluate_benchmarks():
     print("  CAEG-Net (F2 / A2-OOF) Authoritative Multi-Seed Benchmark Evaluation")
     print("=" * 80)
 
-    if not RESULTS_PATH.exists():
-        print(f"[ERROR] Authoritative results file not found at {RESULTS_PATH}")
+    target_path = RESULTS_PATH if RESULTS_PATH.exists() else BUNDLED_PATH
+    if not target_path.exists():
+        print(f"[ERROR] Authoritative results file not found at {RESULTS_PATH} or {BUNDLED_PATH}")
         sys.exit(1)
 
-    df = pd.read_csv(RESULTS_PATH)
+    df = pd.read_csv(target_path)
 
     print("\n1. Locked Champion Model Performance Across 3 Grids (5-Seed Protocol):")
     print("-" * 80)

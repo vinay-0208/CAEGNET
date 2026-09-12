@@ -445,22 +445,40 @@ st.markdown("""
 @st.cache_resource(show_spinner=False)
 def load_pjm_prediction_cache():
     """Load verified multi-seed evaluation arrays for PJM."""
+    path_bundled = os.path.join(cur_dir, "assets", "data", "research_multiseed_cache.npz")
     path_primary = os.path.join(repo_root, "results", "phase5_multiseed_cache.npz")
     path_fallback = os.path.join(repo_root, "research", "results", "research_multiseed_cache.npz")
-    target_path = path_primary if os.path.exists(path_primary) else path_fallback
-    if os.path.exists(target_path):
-        data = np.load(target_path)
-        return {k: data[k] for k in data.files}
+    for p in [path_bundled, path_primary, path_fallback]:
+        if os.path.exists(p):
+            data = np.load(p)
+            return {k: data[k] for k in data.files}
     return None
 
 @st.cache_resource(show_spinner=False)
 def load_tri_benchmark_dataset():
-    """Load cached tri-benchmark dataset splits and scalers from pkl."""
+    """Load cached tri-benchmark dataset splits and scalers, or construct on-the-fly."""
     pkl_path = os.path.join(repo_root, "research", "results", "cached_tri_benchmark_datasets.pkl")
     if os.path.exists(pkl_path):
         try:
             with open(pkl_path, "rb") as f:
                 return pickle.load(f)
+        except Exception:
+            pass
+    # Dynamic fallback reconstruction from data/Modern_PJM/pjm_load.csv
+    pjm_csv = os.path.join(repo_root, "data", "Modern_PJM", "pjm_load.csv")
+    if os.path.exists(pjm_csv):
+        try:
+            from src.data import (
+                load_and_clean_data,
+                chronological_split,
+                fit_and_transform_scaler,
+                create_partition_windows_with_context,
+            )
+            df, _ = load_and_clean_data(pjm_csv)
+            train_df, val_df, test_df, _ = chronological_split(df, 0.70, 0.15, 0.15)
+            scaler, train_sc, val_sc, test_sc = fit_and_transform_scaler(train_df, val_df, test_df)
+            windows = create_partition_windows_with_context(train_sc, val_sc, test_sc, lookback=168, horizon=24)
+            return {"PJM": {"scaler": scaler, "windows": windows}}
         except Exception:
             return None
     return None
@@ -468,51 +486,62 @@ def load_tri_benchmark_dataset():
 @st.cache_data(show_spinner=False)
 def load_horizon_specialization():
     """Load step-by-step expert specialization results (h=1..24)."""
-    csv_path = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization.csv")
-    if not os.path.exists(csv_path):
-        csv_path = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization_corrected.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase15a_horizon_specialization.csv")
+    p_res1 = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization.csv")
+    p_res2 = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization_corrected.csv")
+    for p in [p_bundled, p_res1, p_res2]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)
 def load_horizon_candidates():
     """Load step-by-step routing candidate ablation results (h=1..24)."""
-    csv_path = os.path.join(repo_root, "research", "analysis", "phase15b_horizon_results.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase15b_horizon_results.csv")
+    p_res = os.path.join(repo_root, "research", "analysis", "phase15b_horizon_results.csv")
+    for p in [p_bundled, p_res]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)
 def load_gefcom_seed_results():
     """Load GEFCom2014 verified seed results."""
-    csv_path = os.path.join(repo_root, "research", "results", "phase8_seed_results.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase8_seed_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "phase8_seed_results.csv")
+    for p in [p_bundled, p_res]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)
 def load_gefcom_task_results():
     """Load GEFCom2014 verified task breakdown results."""
-    csv_path = os.path.join(repo_root, "research", "results", "phase8_task_results.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase8_task_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "phase8_task_results.csv")
+    for p in [p_bundled, p_res]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)
 def load_uci_seed_results():
     """Load UCI Electricity verified seed results."""
-    csv_path = os.path.join(repo_root, "research", "results", "phase9_seed_results.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase9_seed_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "phase9_seed_results.csv")
+    for p in [p_bundled, p_res]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)
 def load_uci_routing_diagnostics():
     """Load UCI Electricity verified routing diagnostics."""
-    csv_path = os.path.join(repo_root, "research", "results", "phase9_routing_diagnostics.csv")
-    if os.path.exists(csv_path):
-        return pd.read_csv(csv_path)
+    p_bundled = os.path.join(cur_dir, "assets", "data", "phase9_routing_diagnostics.csv")
+    p_res = os.path.join(repo_root, "research", "results", "phase9_routing_diagnostics.csv")
+    for p in [p_bundled, p_res]:
+        if os.path.exists(p):
+            return pd.read_csv(p)
     return None
 
 @st.cache_data(show_spinner=False)

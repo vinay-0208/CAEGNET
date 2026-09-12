@@ -1,15 +1,13 @@
 """
-Causal Domain-Informed Context Extraction
-=========================================
+Causal Domain-Informed Context Feature Extraction
+=================================================
 Extracts physical context features strictly at or before forecast origin t:
-1. Trend Slope (168h linear regression)
-2. Short-Term Volatility (std over 24h)
-3. Lag-24 Diurnal Autocorrelation (Pearson r between [t-47:t-24] and [t-23:t])
+1. Trend Slope (OLS regression slope over lookback)
+2. Short-Term Volatility (sample standard deviation of first differences)
+3. Lag-24 Diurnal Autocorrelation (diurnal rhythmicity)
 4. Causal Recent Forecast Error (MAE of completed historical forecast)
-5. Causal OOF Expert Residuals (LSTM, TCN, CNN relative performance)
 """
-
-from typing import Tuple
+from typing import Optional
 import numpy as np
 
 
@@ -46,20 +44,51 @@ def compute_lag24_autocorrelation(window: np.ndarray) -> float:
 
 
 def extract_context_features(
-    series: np.ndarray,
-    lookback: int = 168,
-    horizon: int = 24,
-    recent_errors: np.ndarray = None,
+    X_windows: np.ndarray,
+    recent_errors: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    num_samples = len(series) - lookback - horizon + 1
-    c = np.zeros((num_samples, 4), dtype=np.float32)
-    for i in range(num_samples):
-        window = series[i : i + lookback]
-        c[i, 0] = compute_trend_slope(window)
-        c[i, 1] = compute_short_term_volatility(window, last_k=24)
-        c[i, 2] = compute_lag24_autocorrelation(window)
-        if recent_errors is not None and i < len(recent_errors):
-            c[i, 3] = recent_errors[i]
-        else:
-            c[i, 3] = 0.0
-    return c
+    """
+    Extract causal 4-dimensional context vector for each lookback window:
+    C_t = [Trend, Volatility, Periodicity, Recent Error] in R^4
+    """
+    if X_windows.ndim == 3:
+        Z_lookback = X_windows[:, :, 0]
+    elif X_windows.ndim == 2:
+        Z_lookback = X_windows
+    else:
+        raise ValueError("X_windows must be 2D [N, L] or 3D [N, L, 1]")
+
+    N, L = Z_lookback.shape
+    assert L >= 48, f"Lookback length {L} must be at least 48 for lag-24 autocorrelation"
+
+    i_indices = np.arange(L, dtype=np.float64)
+    i_bar = (L - 1.0) / 2.0
+    w_i = i_indices - i_bar
+    sum_w_sq = np.sum(w_i ** 2)
+
+    # 1. Trend
+    z_bar = np.mean(Z_lookback, axis=1, keepdims=True)
+    z_centered = Z_lookback - z_bar
+    beta_1 = np.sum(z_centered * w_i, axis=1) / sum_w_sq
+    z_std = np.std(Z_lookback, axis=1, ddof=1)
+    trend = beta_1 / (z_std + 1e-6)
+
+    # 2. Volatility: Sample standard deviation of first differences (ddof=1)
+    diffs = Z_lookback[:, 1:] - Z_lookback[:, :-1]
+    volatility = np.std(diffs, axis=1, ddof=1)
+
+    # 3. Periodicity: Lag-24 sample autocorrelation
+    var_denom = np.sum(z_centered ** 2, axis=1)
+    autocorr_num = np.sum(z_centered[:, 24:] * z_centered[:, :-24], axis=1)
+    periodicity = autocorr_num / (var_denom + 1e-6)
+
+    # 4. Recent Error
+    if recent_errors is not None:
+        rec_err = np.asarray(recent_errors, dtype=np.float32).flatten()
+        if len(rec_err) != N:
+            raise ValueError(f"recent_errors length ({len(rec_err)}) must match number of windows ({N})")
+    else:
+        rec_err = np.full(N, 0.35, dtype=np.float32)
+
+    C = np.column_stack([trend, volatility, periodicity, rec_err]).astype(np.float32)
+    return C
