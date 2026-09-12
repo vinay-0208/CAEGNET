@@ -12,6 +12,7 @@ Zero fabricated prediction arrays or synthetic traces.
 import os
 import sys
 import pickle
+import base64
 import warnings
 import numpy as np
 import pandas as pd
@@ -310,6 +311,14 @@ def load_horizon_results():
         return pd.read_csv(csv_path)
     return None
 
+@st.cache_data(show_spinner=False)
+def get_hero_b64():
+    """Load local hero visual and return base64 data string."""
+    img_path = os.path.join(cur_dir, "assets", "hero_visual.jpg")
+    if os.path.exists(img_path):
+        with open(img_path, "rb") as f:
+            return base64.b64encode(f.read()).decode("utf-8")
+    return ""
 
 p5_cache = load_prediction_cache()
 pjm_test_info = load_pjm_test_dataset()
@@ -401,10 +410,48 @@ st.sidebar.markdown("""
 # 1. ⌂ OVERVIEW
 # =========================================================================
 if page == "⌂ Overview":
-    # Hero Section
-    st.markdown('<span class="status-badge">FINAL MODEL — LOCKED</span>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-title">CAEG-Net</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-sub">Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting with Heterogeneous Temporal Experts</div>', unsafe_allow_html=True)
+    # Premium Hero Section with Local Visual & Gradient Overlay
+    hero_b64 = get_hero_b64()
+    if hero_b64:
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(90deg, rgba(7, 10, 19, 0.97) 0%, rgba(7, 10, 19, 0.90) 42%, rgba(7, 10, 19, 0.45) 75%, rgba(7, 10, 19, 0.18) 100%), 
+                        url('data:image/jpeg;base64,{hero_b64}');
+            background-size: cover;
+            background-position: center right;
+            border: 1px solid #1E293B;
+            border-radius: 12px;
+            padding: 38px 36px 32px 36px;
+            margin-bottom: 1.4rem;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        ">
+            <div style="max-width: 650px;">
+                <span class="status-badge" style="margin-bottom: 12px;">FINAL MODEL — LOCKED</span>
+                <div class="hero-title" style="font-size: 2.8rem; margin-bottom: 6px; line-height: 1.1;">CAEG-Net</div>
+                <div style="font-size: 1.15rem; font-weight: 700; color: #38BDF8; margin-bottom: 8px; letter-spacing: -0.01em;">
+                    Context-Adaptive Expert Gating Network
+                </div>
+                <div class="hero-sub" style="font-size: 0.95rem; line-height: 1.45; color: #CBD5E1; margin-bottom: 18px;">
+                    Short-Term Electricity Load Forecasting with Heterogeneous Temporal Experts (LSTM · TCN · CNN)
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <span style="background: rgba(15, 23, 42, 0.90); border: 1px solid #334155; border-radius: 6px; padding: 4px 11px; font-size: 0.78rem; color: #E2E8F0; font-weight: 500;">
+                        ⚡ <strong>168h</strong> Lookback → <strong>24h</strong> Horizon
+                    </span>
+                    <span style="background: rgba(15, 23, 42, 0.90); border: 1px solid #334155; border-radius: 6px; padding: 4px 11px; font-size: 0.78rem; color: #E2E8F0; font-weight: 500;">
+                        🧠 <strong>121,724</strong> Parameters
+                    </span>
+                    <span style="background: rgba(15, 23, 42, 0.90); border: 1px solid #334155; border-radius: 6px; padding: 4px 11px; font-size: 0.78rem; color: #38BDF8; font-weight: 500;">
+                        🛡️ Centroid Fallback (λ ≈ 0.51)
+                    </span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown('<span class="status-badge">FINAL MODEL — LOCKED</span>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-title">CAEG-Net</div>', unsafe_allow_html=True)
+        st.markdown('<div class="hero-sub">Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting with Heterogeneous Temporal Experts</div>', unsafe_allow_html=True)
 
     # Process Line Bar
     st.markdown("""
@@ -420,6 +467,11 @@ if page == "⌂ Overview":
         <span class="pipeline-step">24h Day-Ahead Forecast</span>
     </div>
     """, unsafe_allow_html=True)
+
+    with st.expander("🔍 Inspect Conceptual Architecture & Stream Convergence Visual", expanded=False):
+        img_file = os.path.join(cur_dir, "assets", "hero_visual.jpg")
+        if os.path.exists(img_file):
+            st.image(img_file, caption="Conceptual Visual: Three heterogeneous temporal streams (LSTM recurrent persistence, TCN dilated causal history, CNN localized ramp patterns) converging into the central Context-Adaptive Fusion node, projecting the 24-hour day-ahead load forecast trajectory across the grid mesh.", use_container_width=True)
 
     # Top 5 Metric Cards
     c1, c2, c3, c4, c5 = st.columns(5)
