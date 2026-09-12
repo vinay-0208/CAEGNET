@@ -1,0 +1,13 @@
+dataset,baseline,split,aggregation,seed,metric,value,source,comparability_status
+PJM,TCN,test,mean across 1294 test windows,42,MAE,259.326416,research/results/phase11_dataset_summary.csv,AUTHORITATIVE_TEST_BENCHMARK
+PJM,TCN,val,mean across 1294 val windows,42,MAE,461.5191,research/results/phase12_dataset_summary.csv,AUTHORITATIVE_VALIDATION_BASELINE
+PJM,Control_A_F2,test,mean across 5 seeds (ddof=0),5-seed aggregate,MAE,250.974737,research/analysis/phase15b_test_results.csv,AUTHORITATIVE_FINAL_MODEL_BENCHMARK
+GEFCom,TCN,test,mean across 10944 test windows,42,MAE,12.572886,research/results/phase11_dataset_summary.csv,AUTHORITATIVE_TEST_BENCHMARK
+GEFCom,TCN,val,mean across 10944 val windows,42,MAE,13.370123,research/results/phase12_dataset_summary.csv,AUTHORITATIVE_VALIDATION_BASELINE
+GEFCom,Control_A_F2,test,mean across 5 seeds (ddof=0),5-seed aggregate,MAE,12.407666,research/analysis/phase15b_test_results.csv,AUTHORITATIVE_FINAL_MODEL_BENCHMARK
+GEFCom,Control_B_FixedShrinkage,test,mean across 5 seeds (ddof=0),5-seed aggregate,MAE,12.360713,research/analysis/phase15b_test_results.csv,EXPLORATORY_TEST_DIAGNOSTIC_NUMERICAL_MINIMUM
+UCI,LSTM,test,mean across 3922 test windows,42,MAE,7.79447,research/results/phase11_dataset_summary.csv,AUTHORITATIVE_TEST_BENCHMARK
+UCI,LSTM,val,mean across 1294 val windows,42,MAE,7.554153,research/results/phase12_dataset_summary.csv,AUTHORITATIVE_VALIDATION_BASELINE
+UCI,Control_A_F2,test,mean across 5 seeds (ddof=0),5-seed aggregate,MAE,7.737112,research/analysis/phase15b_test_results.csv,AUTHORITATIVE_FINAL_MODEL_BENCHMARK
+UCI,Control_A_F2,test,single seed evaluation,42,MAE,8.206475,research/analysis/phase15b_test_results.csv,SINGLE_SEED_TEST_REALIZATION
+UCI,LSTM_or_TCN (Chat Hallucinated),test,N/A,N/A,MAE,12.0,None (Chat artifact),REJECTED_HALLUCINATED_BASELINE

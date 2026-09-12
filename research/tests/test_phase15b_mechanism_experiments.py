@@ -291,11 +291,12 @@ class TestPhase15BMechanismExperiments(unittest.TestCase):
         # Check key phrases in selection report
         with open(sel_path, "r", encoding="utf-8") as f:
             sel_text = f.read()
-        self.assertIn("OUTCOME D: F2 REMAINS THE FINAL LOCKED MODEL", sel_text)
+        self.assertIn("OUTCOME B", sel_text)
         self.assertIn("ConfidenceFallbackCAEGNet", sel_text)
+        self.assertIn("Scientific Limitations and Interpretation Boundaries", sel_text)
 
-    def test_12_certified_outcome_d_lock(self):
-        """Test 12: Ensure final decision is unambiguously Outcome D."""
+    def test_12_certified_outcome_b_lock(self):
+        """Test 12: Ensure final decision is Outcome B with qualified justification."""
         df_screen = pd.read_csv("research/analysis/phase15b_screening_decision.csv")
         # Ensure zero non-anchor candidates qualified
         non_anchor = df_screen[df_screen["candidate_id"] != "Control_A_F2"]
@@ -308,6 +309,57 @@ class TestPhase15BMechanismExperiments(unittest.TestCase):
             significant_wins = sub[sub["statistically_significant"] & (sub["mean_paired_diff"] < 0)]
             self.assertLess(len(significant_wins), 3, f"{cid} cannot have beaten F2 on all datasets")
 
+    def test_13_test_firewall_audit_classification(self):
+        """Test 13: Verify firewall audit correctly classifies post-screening test evaluations."""
+        path = "research/analysis/phase15b_test_firewall_audit.csv"
+        self.assertTrue(os.path.exists(path), f"Missing {path}")
+        df = pd.read_csv(path)
+        # Non-anchor models must NOT be selection-eligible
+        non_anchors = df[df["candidate"] != "Control_A_F2"]
+        self.assertEqual(non_anchors["selection_eligible"].sum(), 0)
+        self.assertEqual(non_anchors["used_for_selection"].sum(), 0)
+        # Evaluated non-anchors must be marked EXPLORATORY_POST_SCREENING_TEST_DIAGNOSTIC
+        eval_non_anchors = non_anchors[non_anchors["test_evaluated"]]
+        for _, r in eval_non_anchors.iterrows():
+            self.assertEqual(r["test_evaluation_status"], "EXPLORATORY_POST_SCREENING_TEST_DIAGNOSTIC")
+
+    def test_14_baseline_provenance_separation(self):
+        """Test 14: Verify baseline provenance audit strictly separates validation baseline and test benchmark."""
+        path = "research/analysis/phase15b_baseline_provenance_audit.csv"
+        self.assertTrue(os.path.exists(path), f"Missing {path}")
+        df = pd.read_csv(path)
+        # UCI LSTM val baseline = 7.554153, test benchmark = 7.794470
+        uci_val = df[(df["dataset"] == "UCI") & (df["baseline"] == "LSTM") & (df["split"] == "val")].iloc[0]
+        uci_test = df[(df["dataset"] == "UCI") & (df["baseline"] == "LSTM") & (df["split"] == "test")].iloc[0]
+        f2_test = df[(df["dataset"] == "UCI") & (df["baseline"] == "Control_A_F2") & (df["split"] == "test") & (df["aggregation"] == "mean across 5 seeds (ddof=0)")].iloc[0]
+
+        self.assertAlmostEqual(uci_val["value"], 7.554153, places=5)
+        self.assertAlmostEqual(uci_test["value"], 7.794470, places=5)
+        self.assertAlmostEqual(f2_test["value"], 7.737112, places=5)
+        # F2 beats test benchmark across 5 seeds, but does NOT beat validation baseline
+        self.assertLess(f2_test["value"], uci_test["value"])
+        self.assertGreater(f2_test["value"], uci_val["value"])
+
+    def test_15_claim_hygiene_and_limitations(self):
+        """Test 15: Verify reports contain no unsupported claims and include scientific boundaries."""
+        exp_path = "research/reports/phase15b_experiment_report.md"
+        with open(exp_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Disallowed overclaiming phrases
+        self.assertNotIn("Mandatory Regularizer", content)
+        self.assertNotIn("Bayesian prior", content)
+        self.assertNotIn("fails causally", content)
+        self.assertNotIn("trajectory covariance", content)
+        self.assertNotIn("negative regret", content)
+
+        # Mandatory sections
+        self.assertIn("Scientific Limitations and Interpretation Boundaries", content)
+        self.assertIn("Uniform-centroid shrinkage provides strong stabilization", content)
+        self.assertIn("Retrospective horizon specialization does not imply successful horizon-aware routing", content)
+        self.assertIn("Tested disagreement-aware mechanisms did not yield robust gains", content)
+
 
 if __name__ == "__main__":
     unittest.main()
+
