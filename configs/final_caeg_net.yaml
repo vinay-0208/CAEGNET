@@ -1,0 +1,104 @@
+# CAEG-Net Model Specification & Configuration
+# Model: CAEG-Net (Context-Adaptive Expert Gating Network)
+# Variant ID: F2 / A2-OOF (ConfidenceFallbackCAEGNet)
+# Certification: FINAL MODEL LOCKED — DEVELOPMENT COMPLETE
+
+model:
+  name: "CAEG-Net"
+  variant_id: "F2_A2_OOF"
+  architecture_class: "ConfidenceFallbackCAEGNet"
+  status: "LOCKED_FINAL_MODEL"
+  lock_date: "2026-09-12"
+  input_lookback_hours: 168
+  forecast_horizon_hours: 24
+  parameters:
+    lstm_expert: 56152
+    tcn_expert: 36952
+    cnn_expert: 27400
+    backbone_subtotal: 120504
+    context_router: 1075
+    confidence_head: 145
+    total_parameters: 121724
+
+experts:
+  lstm:
+    hidden_size: 64
+    num_layers: 2
+    dropout: 0.1
+    bidirectional: false
+  tcn:
+    num_channels: [32, 32, 32]
+    kernel_size: 3
+    dropout: 0.1
+    receptive_field_hours: 253
+  cnn:
+    kernel_sizes: [3, 5, 7]
+    filters_per_kernel: 32
+    pooling: "adaptive_avg"
+
+routing:
+  mechanism: "Context-Adaptive Soft Gating (Global)"
+  activation: "softmax"
+  features:
+    - "trend"
+    - "volatility"
+    - "periodicity"
+    - "causal_recent_forecast_error"
+    - "causal_out_of_fold_performance"
+  effective_expert_counts:
+    pjm: 2.9931
+    gefcom: 2.9765
+    uci: 2.9842
+
+confidence_fallback:
+  mechanism: "Dynamic Shrinkage Blend with Equal-Expert Centroid"
+  formulation: "y_final = lambda * y_adaptive + (1 - lambda) * y_equal"
+  learned_lambda_statistics:
+    pjm:
+      mean: 0.5066
+      std: 0.0038
+    gefcom2014:
+      mean: 0.5170
+      std: 0.0055
+    uci_electricity:
+      mean: 0.5064
+      std: 0.0030
+
+training:
+  optimizer: "AdamW"
+  loss_function: "MSE"
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 32
+  max_epochs: 100
+  early_stopping_patience: 15
+
+data_protocol:
+  split_ratios:
+    train: 0.70
+    val: 0.15
+    test: 0.15
+  split_strategy: "chronological"
+  scaling: "StandardScaler fitted on train partition only"
+  seeds: [42, 123, 999, 2024, 3407]
+
+authoritative_benchmark:
+  primary_metric: "MAE"
+  pjm:
+    unit: "MW"
+    mae_mean: 250.9747
+    mae_sd: 10.6938
+    rmse_mean: 335.3822
+    r2_mean: 0.8714
+  gefcom2014:
+    unit: "kW"
+    mae_mean: 12.4077
+    mae_sd: 0.1525
+    rmse_mean: 18.0446
+    r2_mean: 0.8610
+  uci_electricity:
+    unit: "MW"
+    mae_mean: 7.7371
+    mae_sd: 0.3037
+    rmse_mean: 10.9556
+    r2_mean: 0.9831

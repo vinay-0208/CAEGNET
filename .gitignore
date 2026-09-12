@@ -56,6 +56,7 @@ desktop.ini
 # Jupyter Notebook temporary checkpoints
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
+.pytest_cache/
 
 # Secrets / credentials / environment
 *.pem
