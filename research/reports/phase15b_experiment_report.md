@@ -254,13 +254,16 @@ Screening evaluated whether shorter lookback windows (P24, P48, P72) for out-of-
 ## 17. Reconciled Scientific Discoveries
 
 1. **Uniform-centroid shrinkage provides strong stabilization:**
-   Removing shrinkage and allowing unconstrained routing produced substantial degradation across the controlled benchmark suite. Fixed shrinkage near 0.51 remained highly competitive, indicating that constraining adaptive fusion toward the equal-expert centroid is an important practical stabilization mechanism. The experiments do not establish that shrinkage is theoretically mandatory or Bayesian.
+   Removing shrinkage and allowing unconstrained routing produced substantial degradation across the controlled benchmark suite. Fixed shrinkage near 0.51 remained highly competitive, indicating that constraining adaptive weights toward the equal-expert centroid can provide an important practical stabilization mechanism in the evaluated settings. The experiments do not establish that shrinkage is theoretically mandatory or Bayesian.
 
 2. **Retrospective horizon specialization does not imply successful horizon-aware routing:**
    Expert performance varied across forecast horizons in retrospective analysis, but explicit horizon-specific routing did not improve validation performance and degraded performance in controlled evaluation. Therefore, retrospective horizon specialization alone is insufficient justification for adopting horizon-dependent routing.
 
 3. **Tested disagreement-aware mechanisms did not yield robust gains:**
    Although expert disagreement showed associations with forecasting difficulty, the evaluated disagreement-conditioned mechanisms did not provide consistent improvements over F2. Converting disagreement into a reliable adaptive decision signal remains an unresolved research question.
+
+4. **Architecture Parsimony and Performance Balance:**
+   The final evaluated CAEG-Net formulation provides a strong forecasting-performance/complexity trade-off through a parsimonious architecture.
 
 ---
 

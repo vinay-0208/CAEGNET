@@ -89,7 +89,7 @@ MULTI-CRITERIA JUSTIFICATION:
     2. Strict adherence to Two-Stage Validation Firewall (no candidate qualified).
     3. F2 achieved lowest mean MAE on PJM and UCI; Control B was slightly lower on GEFCom.
     4. Statistically superior or equal to all evaluated complex mechanism candidates.
-    5. Preserves architectural parsimony without unneeded horizon parameterization.
+    5. The final evaluated CAEG-Net formulation provides a strong forecasting-performance/complexity trade-off through a parsimonious architecture.
 
 STATUS:
     MODEL FROZEN. NO FURTHER ARCHITECTURAL MODIFICATIONS PERMITTED.
