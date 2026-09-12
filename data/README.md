@@ -2,7 +2,17 @@
 
 This directory contains metadata and instructions for the three primary power grid benchmark datasets used in **CAEG-Net** (Context-Adaptive Expert Gating Network for Short-Term Electricity Load Forecasting).
 
+> **Important License & Repository Notice:**  
+> In accordance with data copyright and repository hygiene practices, raw external benchmark dataset archives are **not committed** to the Git repository. Preprocessed cache directories (`data/pjm/`, `data/gefcom/`, `data/uci/`) are populated during initial pipeline setup using publicly available public sources described below.
+
 ---
+
+## 0. Dataset Acquisition Sources
+
+- **PJM Interconnection:** Hourly metered load archives available directly from the PJM Data Miner portal ([pjm.com](https://dataminer2.pjm.com/)).
+- **GEFCom2014:** Global Energy Forecasting Competition 2014 electric load tracks available on Kaggle / IEEE DataPort.
+- **UCI Electricity Load Diagrams 2011–2014:** Available from the UCI Machine Learning Repository ([archive.ics.uci.edu](https://archive.ics.uci.edu/dataset/321/electricityloaddiagrams20112014)).
+
 
 ## 1. Benchmark Grid Cohorts Overview
 

@@ -658,3 +658,92 @@ def print_architecture_summary(model: CAEGNet):
 
 # Canonical V1 Alias
 CAEGNetV1 = CAEGNet
+ContextGatingRouter = ContextGatingNetwork
+
+
+# =====================================================================
+# 8. Final Locked CAEG-Net Architecture (F2 / A2-OOF)
+# =====================================================================
+
+class ConfidenceFallbackCAEGNet(nn.Module):
+    """
+    Final Locked CAEG-Net Architecture (F2 / A2-OOF, 121,724 Parameters).
+
+    Combines canonical 3-expert backbone (LSTM, TCN, CNN) with context-adaptive
+    soft routing and dynamic confidence shrinkage toward the equal-expert centroid:
+        y_final = lambda * y_adaptive + (1 - lambda) * y_equal
+        where lambda = Sigmoid(MLP(c)) in (0, 1)
+
+    Context vector c in R^7 comprises:
+    1. Trend
+    2. Volatility
+    3. Lag-24 Autocorrelation
+    4. Causal Recent Forecast Error
+    5. Causal OOF Relative Error (LSTM)
+    6. Causal OOF Relative Error (TCN)
+    7. Causal OOF Relative Error (CNN)
+    """
+    def __init__(
+        self,
+        input_dim: int = 1,
+        horizon: int = 24,
+        context_dim: int = 7,
+        latent_context_dim: int = 16,
+        lstm_hidden: int = 64,
+        lstm_layers: int = 2,
+        tcn_channels: int = 32,
+        dropout: float = 0.1,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.horizon = horizon
+        self.context_dim = context_dim
+
+        # Core CAEGNet with global context routing
+        self.caeg = CAEGNet(
+            input_dim=input_dim,
+            horizon=horizon,
+            context_dim=context_dim,
+            latent_context_dim=latent_context_dim,
+            lstm_hidden=lstm_hidden,
+            lstm_layers=lstm_layers,
+            tcn_channels=tcn_channels,
+            dropout=dropout,
+            horizon_dependent=False,
+        )
+
+        # 145-parameter dynamic confidence / shrinkage head
+        self.confidence_head = nn.Sequential(
+            nn.Linear(context_dim, 16),
+            nn.ReLU(),
+            nn.Linear(16, 1),
+            nn.Sigmoid(),
+        )
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        c: torch.Tensor,
+        return_diagnostics: bool = True,
+    ) -> Union[torch.Tensor, Tuple[torch.Tensor, torch.Tensor, Dict[str, torch.Tensor]]]:
+        """
+        Forward Pass of ConfidenceFallbackCAEGNet.
+        x: [B, 168, 1]
+        c: [B, context_dim] (typically context_dim = 7)
+        """
+        y_adapt, w, diag = self.caeg(x, c, return_diagnostics=True)
+        y_l = diag["lstm"]
+        y_t = diag["tcn"]
+        y_c = diag["cnn"]
+        y_equal = (y_l + y_t + y_c) / 3.0
+
+        lam = self.confidence_head(c)
+        y_final = lam * y_adapt + (1.0 - lam) * y_equal
+
+        if return_diagnostics:
+            diag["lambda"] = lam
+            diag["y_adaptive"] = y_adapt
+            diag["y_equal"] = y_equal
+            return y_final, w, diag
+        return y_final
+

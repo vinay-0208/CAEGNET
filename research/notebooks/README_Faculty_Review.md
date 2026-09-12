@@ -10,8 +10,6 @@ The notebook is explicitly designed for a **10–15 minute faculty review and or
 ## 1. File Locations
 - **Authoritative Faculty Review Notebook:**  
   `research/notebooks/CAEG_Net_Faculty_Review.ipynb`
-- **Mirrored Copy:**  
-  `notebooks/CAEG_Net_Faculty_Review.ipynb`
 - **Review Guide & Documentation:**  
   `research/notebooks/README_Faculty_Review.md`
 
