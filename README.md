@@ -45,7 +45,7 @@ Monolithic neural architectures suffer from structural trade-offs:
 
 ### Key Contributions
 1. **Heterogeneous Inductive Biases in STLF:** Demonstrates that combining distinct temporal model architectures (LSTM, TCN, CNN) addresses complementary grid regime variations better than relying on a single monolithic architecture.
-2. **Context-Aware Adaptive Gating:** Introduces an explicit 7-dimensional physical context vector (trend, volatility, lag-24 autocorrelation, causal recent forecast error, and out-of-fold relative expert errors).
+2. **Context-Aware Adaptive Gating:** Introduces an explicit 7-dimensional causal conditioning vector comprising **4 causal context features** (trend slope, short-term volatility, lag-24 autocorrelation, and causal recent forecast error) plus **3 causal out-of-fold relative expert-performance features**.
 3. **Out-of-Fold (OOF) Performance Conditioning:** Causal OOF expert-performance information was incorporated into the routing formulation and was associated with improved forecasting performance relative to the canonical V1 formulation in the evaluated settings.
 4. **Regularized Confidence Shrinkage:** Establishes a lightweight confidence fallback mechanism that provides a practical stabilization mechanism toward the equal-expert centroid ($\lambda \approx 0.51$).
 5. **Leakage-Aware Multi-Grid Evaluation:** Evaluates architectures across three major independent power grids with non-overlapping daily-block statistical validation.
@@ -59,7 +59,7 @@ CAEG-Net comprises three specialized temporal backbones coordinated by lightweig
 1. **LSTM Expert ($56,152$ parameters):** 2-layer sequential LSTM capturing multi-day cyclic continuity and diurnal persistence.
 2. **TCN Expert ($36,952$ parameters):** 6-stage dilated causal 1D residual convolutional network with receptive field of $253$ hours ($>168$ hours input window), capturing multi-scale non-recursive dynamics.
 3. **CNN Expert ($27,400$ parameters):** 3-stage 1D CNN with kernel sizes $[3, 5, 3]$ and adaptive pooling, isolating high-frequency localized ramping patterns.
-4. **Context-Adaptive Router ($1,075$ parameters):** Evaluates observable domain features (trend, volatility, lag-24 autocorrelation, causal recent error, and 3 causal OOF relative error metrics) to assign convex expert weights ($w_i > 0, \sum w_i = 1.0$).
+4. **Context-Adaptive Router ($1,075$ parameters):** Evaluates a 7-dimensional causal conditioning vector—comprising 4 causal context features (trend, volatility, lag-24 autocorrelation, recent tracking error) plus 3 causal out-of-fold relative expert-performance features—to assign convex expert weights ($w_i > 0, \sum w_i = 1.0$).
 5. **Confidence Fallback Head ($145$ parameters):** Dynamically regularizes adaptive predictions toward the robust equal-expert centroid ($\lambda \approx 0.51$), preventing single-expert overconfidence.
 
 ---
@@ -70,7 +70,7 @@ CAEG-Net comprises three specialized temporal backbones coordinated by lightweig
 graph TD
     subgraph Inputs ["Input Processing"]
         X["Input Load History<br/>L = 168 Hours (7 Days)"]
-        Ctx["Physical Context Vector (7D)<br/>[Trend, Volatility, Lag-24 Autocorr, Recent Error, 3x OOF Errors]"]
+        Ctx["7D Causal Conditioning Vector<br/>[4 Causal Context Features + 3 Causal OOF Expert-Performance Features]"]
     end
 
     subgraph Experts ["Heterogeneous Temporal Experts (120,504 Params)"]
@@ -314,7 +314,7 @@ python scripts/run_dashboard.py
 # or directly:
 streamlit run dashboard/app.py
 ```
-Provides 11 interactive academic panels covering executive KPI cards, modular architecture diagrams, parameter breakdowns, multi-grid benchmark comparisons, and step-by-step horizon degradation.
+Provides 12 interactive academic panels covering executive KPI cards, modular architecture diagrams, parameter breakdowns, multi-grid benchmark comparisons, and step-by-step horizon degradation.
 
 ### Supplementary Architecture & Reproducibility Documentation
 - **Architecture Deep-Dive:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (comprehensive tensor equations, parameter tables, inductive bias analyses).

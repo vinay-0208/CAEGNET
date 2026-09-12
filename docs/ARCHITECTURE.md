@@ -156,7 +156,7 @@ This demonstrates that the confidence head functions primarily as an effective, 
 
 | Dimension | Conventional Input-Gated MoE | CAEG-Net (Context-Adaptive Gating) |
 | :--- | :--- | :--- |
-| **Gating Input** | Raw lookback sequence $X_t \in \mathbb{R}^{168 \times 1}$ | Distilled 7D physical context vector $c_t \in \mathbb{R}^7$ |
+| **Gating Input** | Raw lookback sequence $X_t \in \mathbb{R}^{168 \times 1}$ | 7D causal conditioning vector (4 causal context features + 3 causal OOF expert-performance features) |
 | **Router Training** | End-to-end backpropagation with expert starvation risk | Out-of-fold causal performance calibration |
 | **Fail-Safe Mechanism** | None (unconstrained softmax) | Dynamic shrinkage to empirical centroid ($\lambda \approx 0.51$) |
 | **PJM Benchmark MAE** | $276.30 \pm 13.64$ MW | **$250.97 \pm 10.69$ MW** ($-9.17\%$ error reduction) |

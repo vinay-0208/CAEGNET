@@ -50,29 +50,46 @@ All data pipelines in CAEG-Net strictly adhere to a **zero-leakage temporal desi
 
 ---
 
-## 3. Directory Structure
+## 3. Dataset Acquisition & Local Placement Instructions
 
-```text
-data/
-├── README.md               # This document
-├── pjm/                    # PJM hourly series cache / artifacts
-├── gefcom/                 # GEFCom2014 hourly benchmark data
-└── uci/                    # UCI Electricity hourly aggregated dataset
-```
+In compliance with repository hygiene and data copyright governance, raw external dataset files are excluded from git tracking. To replicate local ingestion from scratch:
+
+### 1. PJM Interconnection (Regional US Transmission Grid)
+- **Source:** Download hourly metered load records from [PJM Data Miner 2](https://dataminer2.pjm.com/) (hourly load archive 2023–2024).
+- **Target Local Path:** `data/Modern_PJM/pjm_load.csv`
+- **Schema:** Requires a datetime column (e.g. `Datetime` or `timestamp`) and a numerical load demand column in MW (e.g. `load`).
+
+### 2. GEFCom2014 (Zonal Competition Grid)
+- **Source:** IEEE DataPort / Global Energy Forecasting Competition 2014 electric load track.
+- **Target Local Path:** `data/gefcom/load.csv` (or pre-extracted zone series).
+
+### 3. UCI Electricity (Portuguese Consumer Aggregation)
+- **Source:** [UCI Machine Learning Repository: ElectricityLoadDiagrams20112014](https://archive.ics.uci.edu/dataset/321/electricityloaddiagrams20112014).
+- **Target Local Path:** `data/uci/LD2011_2014.txt`
 
 ---
 
 ## 4. Reproducing Data Ingestion
 
-To verify data preprocessing and window generation locally:
+To verify data preprocessing, causal splitting, scaling, and window generation using the modular package:
 
 ```python
-from data_utils import load_dataset, create_sliding_windows
-
-# Example: Load PJM benchmark series
-df_pjm = load_dataset("pjm")
-X_train, y_train, X_val, y_val, X_test, y_test = create_sliding_windows(
-    df_pjm, lookback=168, horizon=24, train_ratio=0.70, val_ratio=0.15
+from src.data import (
+    load_and_clean_data,
+    chronological_split,
+    fit_and_transform_scaler,
+    create_partition_windows_with_context,
 )
-print(f"Train samples: {X_train.shape}, Test samples: {X_test.shape}")
+
+# Example: Ingest PJM dataset once placed locally
+# If raw CSV is not present, generate_synthetic_load_data() can be used for pipeline testing
+file_path = "data/Modern_PJM/pjm_load.csv"
+df, diagnostics = load_and_clean_data(file_path)
+
+train_df, val_df, test_df, split_info = chronological_split(df, 0.70, 0.15, 0.15)
+scaler, train_sc, val_sc, test_sc = fit_and_transform_scaler(train_df, val_df, test_df)
+windows = create_partition_windows_with_context(train_sc, val_sc, test_sc, lookback=168, horizon=24)
+
+print(f"Test input windows X: {windows['test']['X'].shape}")
+print(f"Test target windows Y: {windows['test']['Y'].shape}")
 ```

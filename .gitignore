@@ -73,9 +73,9 @@ desktop.ini
 research/checkpoints/phase7/
 research/results/*.pkl
 
-# Dataset files
+# Dataset files (raw external datasets)
+data/Modern_PJM/
 data/Load/
-
 data/ElectricityLoadDiagrams20112014/
 data/__MACOSX/
 

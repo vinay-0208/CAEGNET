@@ -37,7 +37,11 @@ class TestCAEGCausalityAndLeakage(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.data_path = os.path.join(os.path.dirname(__file__), "..", "data", "Modern_PJM", "pjm_load.csv")
-        cls.df, _ = load_and_clean_data(cls.data_path)
+        if os.path.exists(cls.data_path):
+            cls.df, _ = load_and_clean_data(cls.data_path)
+        else:
+            from src.data import generate_synthetic_load_data
+            cls.df = generate_synthetic_load_data(num_hours=3000, seed=42)
         cls.train_df, cls.val_df, cls.test_df, _ = chronological_split(cls.df, 0.70, 0.15, 0.15)
         cls.scaler, cls.train_sc, cls.val_sc, cls.test_sc = fit_and_transform_scaler(
             cls.train_df, cls.val_df, cls.test_df

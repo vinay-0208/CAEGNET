@@ -456,7 +456,18 @@ def load_pjm_prediction_cache():
 
 @st.cache_resource(show_spinner=False)
 def load_tri_benchmark_dataset():
-    """Load cached tri-benchmark dataset splits and scalers, or construct on-the-fly."""
+    """Load cached tri-benchmark dataset splits and scalers, or load bundled test context."""
+    ctx_bundled = os.path.join(cur_dir, "assets", "data", "pjm_test_context.npz")
+    if os.path.exists(ctx_bundled):
+        try:
+            d = np.load(ctx_bundled)
+            class SimpleScaler:
+                mean_ = [d["scaler_mean"]]
+                scale_ = [d["scaler_scale"]]
+            return {"PJM": {"scaler": SimpleScaler(), "windows": {"test": {"X": d["X"]}}}}
+        except Exception:
+            pass
+
     pkl_path = os.path.join(repo_root, "research", "results", "cached_tri_benchmark_datasets.pkl")
     if os.path.exists(pkl_path):
         try:
@@ -464,7 +475,7 @@ def load_tri_benchmark_dataset():
                 return pickle.load(f)
         except Exception:
             pass
-    # Dynamic fallback reconstruction from data/Modern_PJM/pjm_load.csv
+    # Dynamic fallback reconstruction from data/Modern_PJM/pjm_load.csv if downloaded by user
     pjm_csv = os.path.join(repo_root, "data", "Modern_PJM", "pjm_load.csv")
     if os.path.exists(pjm_csv):
         try:
@@ -834,7 +845,7 @@ if page == "⌂ Overview":
             <div class="dark-card-header">Key Research Contributions</div>
             <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
                 <strong>1. Heterogeneous Temporal Architecture:</strong> Combines 3 distinct neural inductive biases totaling 121,724 trainable parameters.<br>
-                <strong>2. Causal Context Conditioning:</strong> Evaluates a 7D regime vector (trend, volatility, autocorrelation, causal error, out-of-fold validation residuals).<br>
+                <strong>2. Causal Context Conditioning:</strong> Evaluates a 7D conditioning vector comprising 4 causal context features (trend, volatility, lag-24 autocorrelation, causal recent forecast error) plus 3 causal out-of-fold relative expert-performance features.<br>
                 <strong>3. Empirical Stabilization Mechanism:</strong> Smoothly blends adaptive convex predictions with the robust equal-expert centroid (learned λ ≈ 0.51).<br>
                 <strong>4. Rigorous Leakage Prevention:</strong> Enforces chronological 70/15/15 partitions, train-only scaling, and non-overlapping daily-block statistical validation ($K=53, 456, 163$).
             </div>
