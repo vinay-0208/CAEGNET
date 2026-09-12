@@ -46,10 +46,15 @@ if "selected_dataset" not in st.session_state:
 # =========================================================================
 st.markdown("""
 <style>
-    /* Reduce top padding above hero / page content */
+    /* Header & Top Safe Area: prevents header from clipping badges/titles */
+    header[data-testid="stHeader"] {
+        background: transparent !important;
+        height: 2.875rem !important;
+        z-index: 10 !important;
+    }
     .block-container {
-        padding-top: 1.8rem !important;
-        padding-bottom: 2rem !important;
+        padding-top: 4.2rem !important;
+        padding-bottom: 2.5rem !important;
         max-width: 1400px !important;
     }
 
