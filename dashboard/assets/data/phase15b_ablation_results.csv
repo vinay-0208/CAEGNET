@@ -1,0 +1,8 @@
+mechanism_level,candidate_id,adaptive_routing,performance_features,disagreement,confidence,horizon_aware,pjm_test_mae,gefcom_test_mae,uci_test_mae
+Equal Ensemble,Equal_Ensemble,No,No,No,No,No,250.73895677589852,12.719405918157488,8.564990927221922
+Control C (Horizon Only),Control_C_HorizonRouting,Yes,Yes,No,No (lambda=1.0),Yes (3-Group),257.54498798969746,12.858230458933772,8.130930218428288
+Control B (Fixed Shrinkage),Control_B_FixedShrinkage,Yes,Yes,No,Fixed (lambda=0.51),No,253.50077593361942,12.360712830335697,7.752270426719865
+Control D (Dynamic Confidence),Control_D_DynamicConfidence,Yes,Yes,Yes (D1 Spread),Dynamic,No,251.94187252045413,12.485536965895722,7.81768736349944
+Control A (Current F2),Control_A_F2,Yes,Yes,No,Dynamic,No,250.9747366735308,12.407666008857973,7.737111521224307
+Candidate E1 (HGR-FS),Candidate_E1_HGR_FS,Yes,Yes,No,Fixed (lambda=0.51),Yes (3-Group),257.9077500072052,12.523956007130266,8.19324993373682
+Candidate E2 (HGR-DGS),Candidate_E2_HGR_DGS,Yes,Yes,Yes (Group Spread),Dynamic (Group-Wise),Yes (3-Group),256.07080387973144,12.72198404589256,8.296902290783018

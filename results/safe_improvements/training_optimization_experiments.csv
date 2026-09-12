@@ -1,5 +1,0 @@
-Candidate_ID,Configuration,Learning_Rate,Loss_Function,Actual_Epochs,Best_Epoch,Best_Val_Loss,Val_MAE_MW,Val_RMSE_MW,Test_MAE_MW,Test_MSE_MW2,Test_RMSE_MW,Test_R2,Test_MAPE_pct,Runtime_s
-OPT-1-V1-Baseline,"CAEG V1 Baseline (AdamW lr=1e-3, MSE)",0.001,MSE,10,4,0.37603,411.16,525.48,255.29,117742.98,343.14,0.8656,4.8,280.9
-OPT-2-Lower-LR,"CAEG V1 Lower LR (AdamW lr=5e-4, MSE)",0.0005,MSE,10,4,0.4429,443.98,570.65,258.48,120236.62,346.75,0.8628,4.77,184.7
-OPT-3-Huber-1e3,"CAEG V1 Huber Loss (AdamW lr=1e-3, delta=1.0)",0.001,Huber(delta=1.0),10,4,0.18568,416.91,534.17,248.32,110086.84,331.79,0.8744,4.63,190.5
-OPT-4-Huber-5e4,"CAEG V1 Huber Loss (AdamW lr=5e-4, delta=1.0)",0.0005,Huber(delta=1.0),10,4,0.19357,429.04,546.26,267.03,125381.49,354.09,0.8569,4.96,151.3

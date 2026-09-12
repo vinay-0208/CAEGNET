@@ -56,6 +56,7 @@ desktop.ini
 # Jupyter Notebook temporary checkpoints
 .ipynb_checkpoints/
 */.ipynb_checkpoints/*
+.pytest_cache/
 
 # Secrets / credentials / environment
 *.pem
@@ -67,3 +68,16 @@ desktop.ini
 
 # Temporary and test logs
 *.log
+
+# Phase checkpoints
+research/checkpoints/phase7/
+research/results/*.pkl
+
+# Dataset files
+data/Load/
+
+data/ElectricityLoadDiagrams20112014/
+data/__MACOSX/
+
+# Research track history (maintained exclusively on research-track branch)
+research/

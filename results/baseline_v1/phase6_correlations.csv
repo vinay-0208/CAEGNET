@@ -1,5 +1,0 @@
-Context_Feature,w_LSTM_Pearson,w_LSTM_Spearman,w_TCN_Pearson,w_TCN_Spearman,w_CNN_Pearson,w_CNN_Spearman
-Trend,0.1261,0.135,0.1164,0.1655,-0.1636,-0.1771
-Volatility,-0.2107,-0.1433,-0.0606,-0.0305,0.1806,0.1228
-Periodicity,0.6089,0.5947,0.5119,0.6096,-0.7552,-0.7615
-Recent_Error,0.2397,0.3381,-0.1333,-0.5022,-0.0652,0.084

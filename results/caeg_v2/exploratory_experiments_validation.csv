@@ -1,6 +1,0 @@
-Experiment_ID,Hypothesis,Val_MSE_Scaled,Val_MAE_MW,Val_RMSE_MW,Decision,Notes
-EXP-00-Baseline-V1,"Current V1 Baseline (Global Gating, 4 Context, MSE Loss)",0.57202,503.92,646.95,BASELINE,Reference baseline
-EXP-A1-Huber-Loss,Huber loss improves robust convergence over MSE against load spikes,0.4491,456.37,573.24,KEEP,Diff vs Baseline: -47.55 MW MAE
-EXP-B1-Context-5D,Multi-lag harmonic periodicity provides richer context representation,0.64456,542.87,686.75,REJECT,Diff vs Baseline: +38.95 MW MAE
-EXP-D1-Gating-Capacity,Higher latent context capacity (24-dim) improves context routing fidelity,0.78237,602.1,756.61,REJECT,Diff vs Baseline: +98.18 MW MAE
-EXP-E1-Horizon-Gating,Horizon-dependent gating allows hour-specific expert specialization across the 24h cycle,0.49358,466.77,600.96,KEEP,Diff vs Baseline: -37.15 MW MAE
