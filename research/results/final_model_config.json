@@ -1,0 +1,92 @@
+{
+    "public_model_name": "CAEG-Net",
+    "internal_variant_id": "F2_A2_OOF",
+    "architecture_class": "ConfidenceFallbackCAEGNet",
+    "status": "LOCKED_FINAL_MODEL",
+    "lock_date": "2026-09-12",
+    "lock_statement": "MODEL DEVELOPMENT COMPLETE \u2014 NO FURTHER ARCHITECTURAL OPTIMIZATION PLANNED FOR THIS RESEARCH VERSION.",
+    "input_lookback_hours": 168,
+    "forecast_horizon_hours": 24,
+    "expert_family": [
+        "LSTM",
+        "TCN",
+        "CNN"
+    ],
+    "parameter_breakdown": {
+        "lstm_expert": 56152,
+        "tcn_expert": 36952,
+        "cnn_expert": 27400,
+        "backbone_subtotal": 120504,
+        "context_gating_router": 1075,
+        "confidence_fallback_head": 145,
+        "total_parameters": 121724
+    },
+    "routing_mechanism": {
+        "type": "Context-Adaptive Soft Gating (Global)",
+        "output": "Softmax Convex Combination (w_LSTM + w_TCN + w_CNN = 1.0)",
+        "features": [
+            "trend",
+            "volatility",
+            "periodicity",
+            "causal_recent_forecast_error",
+            "causal_out_of_fold_performance"
+        ]
+    },
+    "confidence_mechanism": {
+        "type": "Dynamic Shrinkage Blend with Equal-Expert Centroid",
+        "formulation": "y_final = lambda * y_adaptive + (1 - lambda) * y_equal",
+        "mean_lambda_pjm": 0.5066,
+        "mean_lambda_gefcom": 0.517,
+        "mean_lambda_uci": 0.5064
+    },
+    "training_specifications": {
+        "optimizer": "AdamW",
+        "loss_function": "Mean Squared Error (MSE)",
+        "learning_rate": 0.001,
+        "weight_decay": 0.0001,
+        "batch_size": 32,
+        "max_epochs": 100,
+        "early_stopping_patience": 15
+    },
+    "evaluation_protocol": {
+        "split_ratios": "70% Train / 15% Validation / 15% Test",
+        "scaling": "StandardScaler fitted strictly on training partition",
+        "evaluation_seeds": [
+            42,
+            123,
+            999,
+            2024,
+            3407
+        ],
+        "primary_metric": "Mean Absolute Error (MAE) in physical engineering units (MW / kW)",
+        "secondary_metrics": [
+            "RMSE",
+            "R2",
+            "MSE"
+        ],
+        "statistical_testing": "Non-overlapping daily blocks (K=53, 456, 163) with paired t-test, Wilcoxon signed-rank, and Holm-Bonferroni correction"
+    },
+    "authoritative_benchmark_metrics": {
+        "pjm": {
+            "unit": "MW",
+            "test_mae_mean": 250.974737,
+            "test_mae_std_ddof0": 10.693817,
+            "test_rmse_mean": 335.382246,
+            "test_r2_mean": 0.871448
+        },
+        "gefcom2014": {
+            "unit": "kW",
+            "test_mae_mean": 12.407666,
+            "test_mae_std_ddof0": 0.152461,
+            "test_rmse_mean": 18.044559,
+            "test_r2_mean": 0.860951
+        },
+        "uci_electricity": {
+            "unit": "MW",
+            "test_mae_mean": 7.737112,
+            "test_mae_std_ddof0": 0.30366,
+            "test_rmse_mean": 10.955631,
+            "test_r2_mean": 0.983078
+        }
+    }
+}
