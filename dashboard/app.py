@@ -49,12 +49,12 @@ st.markdown("""
     /* Header & Top Safe Area: prevents header from clipping badges/titles */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        height: 2.875rem !important;
+        height: 2.5rem !important;
         z-index: 10 !important;
     }
     .block-container {
-        padding-top: 4.2rem !important;
-        padding-bottom: 2.5rem !important;
+        padding-top: 4.8rem !important;
+        padding-bottom: 2.8rem !important;
         max-width: 1400px !important;
     }
 
@@ -105,7 +105,8 @@ st.markdown("""
 
     /* Page Hero Headers */
     .page-hero-container {
-        margin-bottom: 1.2rem;
+        padding-top: 0.4rem;
+        margin-bottom: 1.3rem;
     }
     .page-category-badge {
         background: rgba(56, 189, 248, 0.12);
@@ -358,6 +359,60 @@ st.markdown("""
     }
 
     /* Custom Clean Dark Table */
+    
+    /* Responsive Horizontal Scroll Table Container */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1.2rem;
+        border-radius: 8px;
+        border: 1px solid #1E293B;
+    }
+    .custom-table .best-cell {
+        color: #38BDF8 !important;
+        font-weight: 700;
+    }
+    .custom-table .na-cell {
+        color: #64748B !important;
+        font-style: italic;
+        font-size: 0.78rem;
+    }
+    .role-badge {
+        display: inline-block;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 0.70rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+    .role-proposed {
+        background: rgba(56, 189, 248, 0.15);
+        color: #38BDF8;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .role-expert {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10B981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .role-ensemble {
+        background: rgba(168, 85, 247, 0.12);
+        color: #A855F7;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+    }
+    .role-control {
+        background: rgba(100, 116, 139, 0.18);
+        color: #CBD5E1;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+    .role-classical {
+        background: rgba(71, 85, 105, 0.18);
+        color: #94A3B8;
+        border: 1px solid rgba(71, 85, 105, 0.3);
+    }
     .custom-table {
         width: 100%;
         border-collapse: collapse;
@@ -1572,141 +1627,516 @@ elif page == "▥ Benchmark Results":
     <div class="page-hero-container">
         <span class="page-category-badge">Performance Certification</span>
         <div class="page-title">Authoritative Benchmark Results</div>
-        <div class="page-subtitle">Evaluation across 3 diverse electrical grids using 5 independent random seeds with population standard deviation (ddof=0).</div>
+        <div class="page-subtitle">Cross-dataset evaluation across 3 diverse electrical grids using 5 independent random seeds with population standard deviation (ddof=0).</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 3 Primary Benchmark Cards in metric-grid-3
+    # -------------------------------------------------------------------------
+    # SECTION 1: Final Cross-Dataset Performance
+    # -------------------------------------------------------------------------
+    st.markdown('<div class="section-title">1. Final Cross-Dataset Performance</div>', unsafe_allow_html=True)
     st.markdown("""
     <div class="metric-grid-3">
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase;">PJM Interconnection (MW)</div>
-                <div style="font-size: 1.7rem; font-weight: 800; color: #F8FAFC; margin-bottom: 2px;">250.97 ± 10.69 <span style="font-size: 0.95rem; color: #94A3B8;">MW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45;">
+                <div class="metric-label">PJM Interconnection (MW)</div>
+                <div class="metric-value">250.97 ± 10.69 <span style="font-size: 0.92rem; color: #94A3B8; font-weight: 500;">MW</span></div>
+                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45; margin-top: 4px;">
                     RMSE: <strong>335.38 MW</strong> &nbsp;|&nbsp; R²: <strong>0.8714</strong><br>
                     Relative Seed Std: <strong>4.26%</strong> (High stability)
                 </div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.76rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 0.0406)
             </div>
         </div>
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase;">GEFCom2014 (kW)</div>
-                <div style="font-size: 1.7rem; font-weight: 800; color: #F8FAFC; margin-bottom: 2px;">12.41 ± 0.15 <span style="font-size: 0.95rem; color: #94A3B8;">kW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45;">
+                <div class="metric-label">GEFCom2014 (kW)</div>
+                <div class="metric-value">12.41 ± 0.15 <span style="font-size: 0.92rem; color: #94A3B8; font-weight: 500;">kW</span></div>
+                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45; margin-top: 4px;">
                     RMSE: <strong>18.04 kW</strong> &nbsp;|&nbsp; R²: <strong>0.8610</strong><br>
                     Relative Seed Std: <strong>1.23%</strong> (Exceptional consistency)
                 </div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.76rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 1.02e-27)
             </div>
         </div>
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase;">UCI Electricity (MW)</div>
-                <div style="font-size: 1.7rem; font-weight: 800; color: #F8FAFC; margin-bottom: 2px;">7.74 ± 0.30 <span style="font-size: 0.95rem; color: #94A3B8;">MW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45;">
+                <div class="metric-label">UCI Electricity (MW)</div>
+                <div class="metric-value">7.74 ± 0.30 <span style="font-size: 0.92rem; color: #94A3B8; font-weight: 500;">MW</span></div>
+                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.45; margin-top: 4px;">
                     RMSE: <strong>10.96 MW</strong> &nbsp;|&nbsp; R²: <strong>0.9831</strong><br>
                     Relative Seed Std: <strong>3.92%</strong> (High stability)
                 </div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.76rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 0.0017)
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="section-title">Seed-by-Seed Realizations (5 Random Evaluation Seeds)</div>', unsafe_allow_html=True)
+    # -------------------------------------------------------------------------
+    # SECTION 2: Model Comparison — Mean MAE (Interactive Plotly Chart)
+    # -------------------------------------------------------------------------
+    st.markdown('<div class="section-title">2. Model Comparison — Mean MAE</div>', unsafe_allow_html=True)
+    bench_datasets = ["PJM", "GEFCom2014", "UCI Electricity"]
+    selected_bench_ds = st.selectbox(
+        "Select Dataset to Compare Model Formulations",
+        bench_datasets,
+        index=0,
+        key="benchmark_dataset_selector",
+        help="Interactive chart dynamically displays verified experimental MAE for all model families on the selected grid."
+    )
+
+    if selected_bench_ds == "PJM":
+        models_bench = ["CAEG-Net (Proposed)", "Fixed Shrinkage", "TCN Expert", "Static Equal Ens.", "LSTM Expert", "CNN Expert"]
+        maes_bench = [250.9747, 253.5008, 259.3264, 279.8282, 291.7300, 432.0800]
+        colors_bench = ["#38BDF8", "#64748B", "#10B981", "#A855F7", "#F59E0B", "#EC4899"]
+        unit_b = "MW"
+        title_b = "PJM Interconnection — Model Comparison (Mean MAE MW, Lower is Better)"
+    elif selected_bench_ds == "GEFCom2014":
+        models_bench = ["Fixed Shrinkage", "CAEG-Net (Proposed)", "TCN Expert", "Static Equal Ens.", "LSTM Expert", "CNN Expert"]
+        maes_bench = [12.3607, 12.4077, 12.5729, 12.6248, 13.2300, 14.5000]
+        colors_bench = ["#64748B", "#38BDF8", "#10B981", "#A855F7", "#F59E0B", "#EC4899"]
+        unit_b = "kW"
+        title_b = "GEFCom2014 — Model Comparison (Mean MAE kW, Lower is Better)"
+    else:  # UCI Electricity
+        models_bench = ["LSTM Expert", "CAEG-Net (Proposed)", "Fixed Shrinkage", "Static Equal Ens.", "TCN Expert", "CNN Expert"]
+        maes_bench = [7.5542, 7.7371, 7.7523, 8.1675, 8.3400, 11.7100]
+        colors_bench = ["#F59E0B", "#38BDF8", "#64748B", "#A855F7", "#10B981", "#EC4899"]
+        unit_b = "MW"
+        title_b = "UCI Electricity — Model Comparison (Mean MAE MW, Lower is Better)"
+
+    fig_bench = go.Figure()
+    fig_bench.add_trace(go.Bar(
+        y=models_bench[::-1],
+        x=maes_bench[::-1],
+        orientation="h",
+        marker_color=colors_bench[::-1],
+        text=[f"{v:.2f} {unit_b}" for v in maes_bench[::-1]],
+        textposition="auto",
+        hovertemplate="<b>%{y}</b>: %{x:.4f} " + unit_b + "<extra></extra>"
+    ))
+    fig_bench.update_layout(
+        title=title_b,
+        xaxis_title=f"Mean Absolute Error ({unit_b})",
+        yaxis_title="Model Formulation",
+        margin=dict(l=20, r=20, t=50, b=40)
+    )
+    apply_dark_plotly_theme(fig_bench, height=360)
+    st.plotly_chart(fig_bench, use_container_width=True)
+
+    # -------------------------------------------------------------------------
+    # SECTION 3: Detailed Benchmark Tables (Table A & Table B)
+    # -------------------------------------------------------------------------
+    st.markdown('<div class="section-title">3. Detailed Benchmark Tables</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div style="font-size:0.92rem; font-weight:700; color:#38BDF8; margin: 12px 0 6px 0;">TABLE A — PRIMARY FINAL BENCHMARK</div>', unsafe_allow_html=True)
+    st.caption("Principal comparison between proposed CAEG-Net and core reference baselines across all three evaluated grids.")
+
+    table_a_html = """
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Dataset</th>
+                    <th style="text-align: right;">CAEG-Net MAE</th>
+                    <th style="text-align: right;">Best Standalone MAE</th>
+                    <th style="text-align: right;">Static Equal Ensemble MAE</th>
+                    <th style="text-align: right;">Fixed Shrinkage MAE</th>
+                    <th>Lowest MAE in Dataset</th>
+                    <th>Relative Result / Interpretation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="highlight-row">
+                    <td><strong>PJM Interconnection</strong> (MW)</td>
+                    <td class="num-cell best-cell">250.9747 ± 10.6938</td>
+                    <td class="num-cell">259.3264 (TCN)</td>
+                    <td class="num-cell">279.8282</td>
+                    <td class="num-cell">253.5008 ± 8.0264</td>
+                    <td><span class="role-badge role-proposed">CAEG-Net (250.97 MW)</span></td>
+                    <td>CAEG-Net achieves lowest overall MAE; TCN is lowest standalone baseline (-3.22% vs TCN, -10.31% vs Equal Ens)</td>
+                </tr>
+                <tr>
+                    <td><strong>GEFCom2014</strong> (kW)</td>
+                    <td class="num-cell">12.4077 ± 0.1525</td>
+                    <td class="num-cell">12.5729 (TCN)</td>
+                    <td class="num-cell">12.6248</td>
+                    <td class="num-cell best-cell">12.3607 ± 0.1841</td>
+                    <td><span class="role-badge role-control">Fixed Shrinkage (12.36 kW)</span></td>
+                    <td>Fixed Shrinkage achieves slightly lower MAE (-0.38% vs CAEG-Net); CAEG-Net outperforms all standalone experts (-1.31% vs TCN)</td>
+                </tr>
+                <tr>
+                    <td><strong>UCI Electricity</strong> (MW)</td>
+                    <td class="num-cell">7.7371 ± 0.3037</td>
+                    <td class="num-cell best-cell">7.5542 (LSTM)</td>
+                    <td class="num-cell">8.1675</td>
+                    <td class="num-cell">7.7523 ± 0.1814</td>
+                    <td><span class="role-badge role-expert">Standalone LSTM (7.55 MW)</span></td>
+                    <td>Standalone LSTM achieves lower MAE; CAEG-Net outperforms Equal Ensemble (-5.27%) and Fixed Shrinkage (-0.20%)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    """
+    st.markdown(table_a_html, unsafe_allow_html=True)
+
+    st.markdown('<div style="font-size:0.92rem; font-weight:700; color:#38BDF8; margin: 16px 0 6px 0;">TABLE B — DETAILED MODEL COMPARISON</div>', unsafe_allow_html=True)
+    st.caption("Comprehensive breakdown of all evaluated model formulations using only verified repository artifacts. Cells not evaluated under the authoritative protocol explicitly display 'N/A — not reported under this protocol'.")
+
+    table_b_html = """
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th>Dataset</th>
+                    <th>Model</th>
+                    <th style="text-align: right;">Mean MAE</th>
+                    <th style="text-align: right;">Population SD</th>
+                    <th style="text-align: right;">RMSE</th>
+                    <th style="text-align: right;">R² Score</th>
+                    <th style="text-align: right;">CV (%)</th>
+                    <th>Evaluation Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- PJM -->
+                <tr class="highlight-row">
+                    <td>PJM (MW)</td>
+                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                    <td class="num-cell best-cell">250.9747</td>
+                    <td class="num-cell">10.6938</td>
+                    <td class="num-cell">335.3822</td>
+                    <td class="num-cell">0.8714</td>
+                    <td class="num-cell">4.26%</td>
+                    <td><span class="role-badge role-proposed">PROPOSED MODEL</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>Dynamic Confidence Control</td>
+                    <td class="num-cell">251.9419</td>
+                    <td class="num-cell">9.7996</td>
+                    <td class="num-cell">336.7396</td>
+                    <td class="num-cell">0.8704</td>
+                    <td class="num-cell">3.89%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>Fixed Shrinkage Control</td>
+                    <td class="num-cell">253.5008</td>
+                    <td class="num-cell">8.0264</td>
+                    <td class="num-cell">338.9532</td>
+                    <td class="num-cell">0.8688</td>
+                    <td class="num-cell">3.17%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>Horizon Routing Control</td>
+                    <td class="num-cell">257.5450</td>
+                    <td class="num-cell">5.3670</td>
+                    <td class="num-cell">343.9132</td>
+                    <td class="num-cell">0.8650</td>
+                    <td class="num-cell">2.08%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>TCN Expert</td>
+                    <td class="num-cell">259.3264</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>Static Equal Ensemble</td>
+                    <td class="num-cell">279.8282</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>LSTM Expert</td>
+                    <td class="num-cell">291.7300</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr>
+                    <td>PJM (MW)</td>
+                    <td>CNN Expert</td>
+                    <td class="num-cell">432.0800</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+
+                <!-- GEFCom2014 -->
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>Fixed Shrinkage Control</td>
+                    <td class="num-cell best-cell">12.3607</td>
+                    <td class="num-cell">0.1841</td>
+                    <td class="num-cell">18.0181</td>
+                    <td class="num-cell">0.8614</td>
+                    <td class="num-cell">1.49%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr class="highlight-row">
+                    <td>GEFCom (kW)</td>
+                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                    <td class="num-cell">12.4077</td>
+                    <td class="num-cell">0.1525</td>
+                    <td class="num-cell">18.0446</td>
+                    <td class="num-cell">0.8610</td>
+                    <td class="num-cell">1.23%</td>
+                    <td><span class="role-badge role-proposed">PROPOSED MODEL</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>Dynamic Confidence Control</td>
+                    <td class="num-cell">12.4855</td>
+                    <td class="num-cell">0.2685</td>
+                    <td class="num-cell">18.1019</td>
+                    <td class="num-cell">0.8601</td>
+                    <td class="num-cell">2.15%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>TCN Expert</td>
+                    <td class="num-cell">12.5729</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>Static Equal Ensemble</td>
+                    <td class="num-cell">12.6248</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>Horizon Routing Control</td>
+                    <td class="num-cell">12.8582</td>
+                    <td class="num-cell">0.2520</td>
+                    <td class="num-cell">18.4392</td>
+                    <td class="num-cell">0.8548</td>
+                    <td class="num-cell">1.96%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>LSTM Expert</td>
+                    <td class="num-cell">13.2300</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr>
+                    <td>GEFCom (kW)</td>
+                    <td>CNN Expert</td>
+                    <td class="num-cell">14.5000</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+
+                <!-- UCI Electricity -->
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>Standalone LSTM Expert</td>
+                    <td class="num-cell best-cell">7.5542</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr class="highlight-row">
+                    <td>UCI (MW)</td>
+                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                    <td class="num-cell">7.7371</td>
+                    <td class="num-cell">0.3037</td>
+                    <td class="num-cell">10.9556</td>
+                    <td class="num-cell">0.9831</td>
+                    <td class="num-cell">3.92%</td>
+                    <td><span class="role-badge role-proposed">PROPOSED MODEL</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>Fixed Shrinkage Control</td>
+                    <td class="num-cell">7.7523</td>
+                    <td class="num-cell">0.1814</td>
+                    <td class="num-cell">10.9893</td>
+                    <td class="num-cell">0.9830</td>
+                    <td class="num-cell">2.34%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>Dynamic Confidence Control</td>
+                    <td class="num-cell">7.8177</td>
+                    <td class="num-cell">0.2838</td>
+                    <td class="num-cell">10.9980</td>
+                    <td class="num-cell">0.9830</td>
+                    <td class="num-cell">3.63%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>Horizon Routing Control</td>
+                    <td class="num-cell">8.1309</td>
+                    <td class="num-cell">0.4048</td>
+                    <td class="num-cell">11.4837</td>
+                    <td class="num-cell">0.9814</td>
+                    <td class="num-cell">4.98%</td>
+                    <td><span class="role-badge role-control">CONTROL / ABLATION</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>Static Equal Ensemble</td>
+                    <td class="num-cell">8.1675</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>TCN Expert</td>
+                    <td class="num-cell">8.3400</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+                <tr>
+                    <td>UCI (MW)</td>
+                    <td>CNN Expert</td>
+                    <td class="num-cell">11.7100</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    """
+    st.markdown(table_b_html, unsafe_allow_html=True)
+
+    # Seed realizations expander
+    with st.expander("🔍 Inspect Seed-by-Seed Realizations (5 Random Evaluation Seeds)", expanded=False):
+        st.markdown("""
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Benchmark Grid</th>
+                        <th style="text-align: right;">Seed 42</th>
+                        <th style="text-align: right;">Seed 123</th>
+                        <th style="text-align: right;">Seed 999</th>
+                        <th style="text-align: right;">Seed 2024</th>
+                        <th style="text-align: right;">Seed 3407</th>
+                        <th style="text-align: right;">Mean MAE</th>
+                        <th style="text-align: right;">Pop SD (ddof=0)</th>
+                        <th style="text-align: right;">CV (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>PJM Interconnection (MW)</strong></td>
+                        <td class="num-cell">249.90</td>
+                        <td class="num-cell">262.38</td>
+                        <td class="num-cell">233.76</td>
+                        <td class="num-cell">262.18</td>
+                        <td class="num-cell">246.65</td>
+                        <td class="num-cell"><strong>250.97</strong></td>
+                        <td class="num-cell">10.69</td>
+                        <td class="num-cell">4.26%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>GEFCom2014 (kW)</strong></td>
+                        <td class="num-cell">12.58</td>
+                        <td class="num-cell">12.24</td>
+                        <td class="num-cell">12.57</td>
+                        <td class="num-cell">12.43</td>
+                        <td class="num-cell">12.23</td>
+                        <td class="num-cell"><strong>12.41</strong></td>
+                        <td class="num-cell">0.15</td>
+                        <td class="num-cell">1.23%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>UCI Electricity (MW)</strong></td>
+                        <td class="num-cell">8.21</td>
+                        <td class="num-cell">7.94</td>
+                        <td class="num-cell">7.59</td>
+                        <td class="num-cell">7.34</td>
+                        <td class="num-cell">7.61</td>
+                        <td class="num-cell"><strong>7.74</strong></td>
+                        <td class="num-cell">0.30</td>
+                        <td class="num-cell">3.92%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # SECTION 4: Academic Interpretation
+    # -------------------------------------------------------------------------
+    st.markdown('<div class="section-title">4. Academic Interpretation</div>', unsafe_allow_html=True)
     st.markdown("""
-    <table class="custom-table">
-        <thead>
-            <tr>
-                <th>Benchmark Grid</th>
-                <th style="text-align: right;">Seed 42</th>
-                <th style="text-align: right;">Seed 123</th>
-                <th style="text-align: right;">Seed 999</th>
-                <th style="text-align: right;">Seed 2024</th>
-                <th style="text-align: right;">Seed 3407</th>
-                <th style="text-align: right;">Mean MAE</th>
-                <th style="text-align: right;">Pop SD (ddof=0)</th>
-                <th style="text-align: right;">CV (%)</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>PJM Interconnection (MW)</strong></td>
-                <td class="num-cell">249.90</td>
-                <td class="num-cell">262.38</td>
-                <td class="num-cell">233.76</td>
-                <td class="num-cell">262.18</td>
-                <td class="num-cell">246.65</td>
-                <td class="num-cell"><strong>250.97</strong></td>
-                <td class="num-cell">10.69</td>
-                <td class="num-cell">4.26%</td>
-            </tr>
-            <tr>
-                <td><strong>GEFCom2014 (kW)</strong></td>
-                <td class="num-cell">12.58</td>
-                <td class="num-cell">12.24</td>
-                <td class="num-cell">12.57</td>
-                <td class="num-cell">12.43</td>
-                <td class="num-cell">12.23</td>
-                <td class="num-cell"><strong>12.41</strong></td>
-                <td class="num-cell">0.15</td>
-                <td class="num-cell">1.23%</td>
-            </tr>
-            <tr>
-                <td><strong>UCI Electricity (MW)</strong></td>
-                <td class="num-cell">8.21</td>
-                <td class="num-cell">7.94</td>
-                <td class="num-cell">7.59</td>
-                <td class="num-cell">7.34</td>
-                <td class="num-cell">7.61</td>
-                <td class="num-cell"><strong>7.74</strong></td>
-                <td class="num-cell">0.30</td>
-                <td class="num-cell">3.92%</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="dark-card">
+        <div class="dark-card-header">Authoritative Empirical Synthesis</div>
+        <div style="font-size: 0.88rem; color: #CBD5E1; line-height: 1.6;">
+            <strong>F2/A2-OOF is the final CAEG-Net formulation.</strong> Fixed shrinkage achieves a slightly lower mean MAE on GEFCom2014, while the standalone LSTM has a lower MAE on UCI Electricity. CAEG-Net is therefore presented as the strongest overall balance across the evaluated datasets, not as universally best on every dataset.<br><br>
+            • <strong>PJM Interconnection:</strong> CAEG-Net achieves <strong>250.97 ± 10.69 MW</strong>, outperforming the major ensemble and control baselines (Static Equal Ensemble: 279.83 MW; Fixed Shrinkage: 253.50 MW), while TCN remains a strong standalone competitor (259.33 MW).<br>
+            • <strong>GEFCom2014:</strong> Fixed shrinkage achieves a slightly lower MAE (12.36 ± 0.18 kW) than CAEG-Net (12.41 ± 0.15 kW), while CAEG-Net outperforms all standalone neural experts (TCN: 12.57 kW, LSTM: 13.23 kW, CNN: 14.50 kW) and the unweighted ensemble (12.62 kW).<br>
+            • <strong>UCI Electricity:</strong> Standalone LSTM is slightly better than CAEG-Net (7.55 MW vs 7.74 ± 0.30 MW) due to the strong diurnal persistence of aggregated consumer demand, while CAEG-Net maintains stability and outperforms the equal ensemble (8.17 MW).<br>
+            • <strong>Cross-Dataset Balance:</strong> CAEG-Net provides the strongest overall balance across the evaluated datasets and achieves competitive performance against both standalone experts and ensemble controls without requiring dataset-specific architecture tuning.
+        </div>
+    </div>
     """, unsafe_allow_html=True)
 
-    col_note_l, col_note_r = st.columns(2)
-    with col_note_l:
-        st.markdown("""
-        <div class="dark-card">
-            <div class="dark-card-header">Balanced Cross-Grid Performance</div>
-            <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
-                CAEG-Net F2 provides the strongest overall balance of forecasting performance, seed stability, methodological integrity, and architectural simplicity across the evaluated formulations.<br>
-                F2 achieves strong results on PJM and UCI, while on GEFCom fixed shrinkage achieves a slightly lower mean MAE. Thus F2 is presented as a balanced multi-dataset model rather than claiming universal dominance on every benchmark.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_note_r:
-        st.markdown("""
-        <div class="dark-card">
-            <div class="dark-card-header">Statistical Dispersion Standard</div>
-            <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
-                Following strict mathematical conventions, all multi-seed standard deviations are computed as population standard deviations (<code>ddof=0</code>) across the 5 canonical evaluation seeds [42, 123, 999, 2024, 3407].<br>
-                These seeds serve to assess stochastic initialization sensitivity, while non-overlapping daily-block tests ($K$) evaluate temporal generalization.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
 
-
-# =========================================================================
-# 6. ◉ BASELINE COMPARISON (DATASET SWITCHABLE)
-# =========================================================================
 elif page == "◉ Baseline Comparison":
     st.markdown("""
     <div class="page-hero-container">
         <span class="page-category-badge">Empirical Comparison</span>
         <div class="page-title">Baseline Model Comparison</div>
-        <div class="page-subtitle">Evaluating CAEG-Net against standalone neural experts, static ensembles, classical time-series baselines, and controlled exploratory variants.</div>
+        <div class="page-subtitle">Evaluating CAEG-Net against standalone neural experts, static ensembles, and controlled exploratory variants using authoritative verified metrics.</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1718,364 +2148,307 @@ elif page == "◉ Baseline Comparison":
 
     if selected_b_ds == "PJM":
         st.markdown("""
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Family</th>
-                    <th>Model Formulation</th>
-                    <th style="text-align: right;">Parameters</th>
-                    <th style="text-align: right;">MAE (MW)</th>
-                    <th style="text-align: right;">RMSE (MW)</th>
-                    <th style="text-align: right;">R² Score</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="highlight-row">
-                    <td><strong>PROPOSED</strong></td>
-                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell"><strong>250.97 ± 10.69</strong></td>
-                    <td class="num-cell">335.38</td>
-                    <td class="num-cell">0.8714</td>
-                    <td><strong>CHAMPION_LOCKED</strong></td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone TCN</td>
-                    <td class="num-cell">36,952</td>
-                    <td class="num-cell">259.33</td>
-                    <td class="num-cell">345.12</td>
-                    <td class="num-cell">0.8637</td>
-                    <td>Best Standalone Expert</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone LSTM</td>
-                    <td class="num-cell">56,152</td>
-                    <td class="num-cell">291.73</td>
-                    <td class="num-cell">388.40</td>
-                    <td class="num-cell">0.8275</td>
-                    <td>Recurrent Baseline</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone CNN</td>
-                    <td class="num-cell">27,400</td>
-                    <td class="num-cell">432.08</td>
-                    <td class="num-cell">556.80</td>
-                    <td class="num-cell">0.6450</td>
-                    <td>Local Motif Baseline</td>
-                </tr>
-                <tr>
-                    <td>Ensemble</td>
-                    <td>Equal Ensemble (1/3 LSTM + TCN + CNN)</td>
-                    <td class="num-cell">120,504</td>
-                    <td class="num-cell">279.83</td>
-                    <td class="num-cell">368.90</td>
-                    <td class="num-cell">0.8443</td>
-                    <td>Static Mixture</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Ridge Regression (Multi-output L2)</td>
-                    <td class="num-cell">4,056</td>
-                    <td class="num-cell">260.40</td>
-                    <td class="num-cell">347.80</td>
-                    <td class="num-cell">0.8616</td>
-                    <td>Linear Autoregressive</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Naive-24 (Day-Ahead Persistence)</td>
-                    <td class="num-cell">0</td>
-                    <td class="num-cell">430.40</td>
-                    <td class="num-cell">584.20</td>
-                    <td class="num-cell">0.6091</td>
-                    <td>Zero-Parameter Persistence</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Seasonal Naive-168 (Week-Ahead Persistence)</td>
-                    <td class="num-cell">0</td>
-                    <td class="num-cell">468.10</td>
-                    <td class="num-cell">631.50</td>
-                    <td class="num-cell">0.5430</td>
-                    <td>Weekly Persistence</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Fixed Shrinkage Control</td>
-                    <td class="num-cell">121,579</td>
-                    <td class="num-cell">253.50 ± 8.03</td>
-                    <td class="num-cell">338.95</td>
-                    <td class="num-cell">0.8688</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Dynamic Confidence Control</td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell">251.94 ± 9.80</td>
-                    <td class="num-cell">336.74</td>
-                    <td class="num-cell">0.8704</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Horizon Routing Control</td>
-                    <td class="num-cell">122,253</td>
-                    <td class="num-cell">257.55 ± 5.37</td>
-                    <td class="num-cell">343.91</td>
-                    <td class="num-cell">0.8650</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Model Formulation</th>
+                        <th style="text-align: right;">Parameters</th>
+                        <th style="text-align: right;">MAE (MW)</th>
+                        <th style="text-align: right;">RMSE (MW)</th>
+                        <th style="text-align: right;">R² Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight-row">
+                        <td><span class="role-badge role-proposed">PROPOSED</span></td>
+                        <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell best-cell">250.97 ± 10.69</td>
+                        <td class="num-cell">335.38</td>
+                        <td class="num-cell">0.8714</td>
+                        <td><strong>CHAMPION_LOCKED</strong></td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Dynamic Confidence Control</td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell">251.94 ± 9.80</td>
+                        <td class="num-cell">336.74</td>
+                        <td class="num-cell">0.8704</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Fixed Shrinkage Control</td>
+                        <td class="num-cell">121,579</td>
+                        <td class="num-cell">253.50 ± 8.03</td>
+                        <td class="num-cell">338.95</td>
+                        <td class="num-cell">0.8688</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Horizon Routing Control</td>
+                        <td class="num-cell">122,253</td>
+                        <td class="num-cell">257.55 ± 5.37</td>
+                        <td class="num-cell">343.91</td>
+                        <td class="num-cell">0.8650</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone TCN</td>
+                        <td class="num-cell">36,952</td>
+                        <td class="num-cell">259.33</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Best Standalone Expert</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-ensemble">ENSEMBLE</span></td>
+                        <td>Equal Ensemble (1/3 LSTM + TCN + CNN)</td>
+                        <td class="num-cell">120,504</td>
+                        <td class="num-cell">279.83</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Static Mixture</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone LSTM</td>
+                        <td class="num-cell">56,152</td>
+                        <td class="num-cell">291.73</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Recurrent Baseline</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone CNN</td>
+                        <td class="num-cell">27,400</td>
+                        <td class="num-cell">432.08</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Local Motif Baseline</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         """, unsafe_allow_html=True)
 
         fig_b = go.Figure()
-        models_p = ["CAEG-Net", "Fixed Shrinkage", "Dynamic Conf", "Horizon Routing", "Standalone TCN", "Ridge", "Equal Ensemble", "Standalone LSTM", "Naive-24", "Standalone CNN", "Seasonal Naive"]
-        maes_p = [250.97, 253.50, 251.94, 257.55, 259.33, 260.40, 279.83, 291.73, 430.40, 432.08, 468.10]
-        colors_p = ["#38BDF8", "#64748B", "#64748B", "#64748B", "#10B981", "#94A3B8", "#A855F7", "#F59E0B", "#475569", "#EC4899", "#334155"]
+        models_p = ["CAEG-Net", "Dynamic Conf", "Fixed Shrinkage", "Horizon Routing", "Standalone TCN", "Equal Ensemble", "Standalone LSTM", "Standalone CNN"]
+        maes_p = [250.97, 251.94, 253.50, 257.55, 259.33, 279.83, 291.73, 432.08]
+        colors_p = ["#38BDF8", "#64748B", "#64748B", "#64748B", "#10B981", "#A855F7", "#F59E0B", "#EC4899"]
         fig_b.add_trace(go.Bar(
             y=models_p[::-1], x=maes_p[::-1], orientation="h", marker_color=colors_p[::-1],
             text=[f"{v:.1f} MW" for v in maes_p[::-1]], textposition="auto",
             hovertemplate="%{y}: %{x:.2f} MW<extra></extra>"
         ))
         fig_b.update_layout(title="PJM Interconnection — Model Comparison (MAE MW, Lower is Better)", xaxis_title="MAE (MW)")
-        apply_dark_plotly_theme(fig_b, height=380)
+        apply_dark_plotly_theme(fig_b, height=360)
         st.plotly_chart(fig_b, use_container_width=True)
 
     elif selected_b_ds == "GEFCom2014":
         st.markdown("""
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Family</th>
-                    <th>Model Formulation</th>
-                    <th style="text-align: right;">Parameters</th>
-                    <th style="text-align: right;">MAE (kW)</th>
-                    <th style="text-align: right;">RMSE (kW)</th>
-                    <th style="text-align: right;">R² Score</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr class="highlight-row">
-                    <td><strong>PROPOSED</strong></td>
-                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell"><strong>12.41 ± 0.15</strong></td>
-                    <td class="num-cell">18.04</td>
-                    <td class="num-cell">0.8610</td>
-                    <td><strong>CHAMPION_LOCKED</strong></td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Fixed Shrinkage Control</td>
-                    <td class="num-cell">121,579</td>
-                    <td class="num-cell">12.36 ± 0.18</td>
-                    <td class="num-cell">18.02</td>
-                    <td class="num-cell">0.8614</td>
-                    <td>Exploratory Diagnostic Min</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Dynamic Confidence Control</td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell">12.49 ± 0.27</td>
-                    <td class="num-cell">18.10</td>
-                    <td class="num-cell">0.8601</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone TCN</td>
-                    <td class="num-cell">36,952</td>
-                    <td class="num-cell">12.57</td>
-                    <td class="num-cell">18.02</td>
-                    <td class="num-cell">0.8613</td>
-                    <td>Best Standalone Expert</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Ridge Regression</td>
-                    <td class="num-cell">4,056</td>
-                    <td class="num-cell">12.57</td>
-                    <td class="num-cell">18.39</td>
-                    <td class="num-cell">0.8556</td>
-                    <td>Linear Autoregressive</td>
-                </tr>
-                <tr>
-                    <td>Ensemble</td>
-                    <td>Equal Ensemble (1/3)</td>
-                    <td class="num-cell">120,504</td>
-                    <td class="num-cell">12.62</td>
-                    <td class="num-cell">18.08</td>
-                    <td class="num-cell">0.8604</td>
-                    <td>Static Mixture</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Horizon Routing Control</td>
-                    <td class="num-cell">122,253</td>
-                    <td class="num-cell">12.86 ± 0.25</td>
-                    <td class="num-cell">18.44</td>
-                    <td class="num-cell">0.8548</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone LSTM</td>
-                    <td class="num-cell">56,152</td>
-                    <td class="num-cell">13.23</td>
-                    <td class="num-cell">18.94</td>
-                    <td class="num-cell">0.8468</td>
-                    <td>Recurrent Baseline</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone CNN</td>
-                    <td class="num-cell">27,400</td>
-                    <td class="num-cell">14.50</td>
-                    <td class="num-cell">20.25</td>
-                    <td class="num-cell">0.8248</td>
-                    <td>Local Motif Baseline</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Naive-24</td>
-                    <td class="num-cell">0</td>
-                    <td class="num-cell">16.68</td>
-                    <td class="num-cell">24.30</td>
-                    <td class="num-cell">0.7479</td>
-                    <td>Persistence</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Seasonal Naive-168</td>
-                    <td class="num-cell">0</td>
-                    <td class="num-cell">26.22</td>
-                    <td class="num-cell">36.61</td>
-                    <td class="num-cell">0.4276</td>
-                    <td>Weekly Persistence</td>
-                </tr>
-                <tr>
-                    <td>Classical Baseline</td>
-                    <td>Official Benchmark</td>
-                    <td class="num-cell">0</td>
-                    <td class="num-cell">30.19</td>
-                    <td class="num-cell">42.03</td>
-                    <td class="num-cell">0.2456</td>
-                    <td>Same-Month-Last-Year</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Model Formulation</th>
+                        <th style="text-align: right;">Parameters</th>
+                        <th style="text-align: right;">MAE (kW)</th>
+                        <th style="text-align: right;">RMSE (kW)</th>
+                        <th style="text-align: right;">R² Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Fixed Shrinkage Control</td>
+                        <td class="num-cell">121,579</td>
+                        <td class="num-cell best-cell">12.36 ± 0.18</td>
+                        <td class="num-cell">18.02</td>
+                        <td class="num-cell">0.8614</td>
+                        <td>Exploratory Diagnostic Min</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td><span class="role-badge role-proposed">PROPOSED</span></td>
+                        <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell">12.41 ± 0.15</td>
+                        <td class="num-cell">18.04</td>
+                        <td class="num-cell">0.8610</td>
+                        <td><strong>CHAMPION_LOCKED</strong></td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Dynamic Confidence Control</td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell">12.49 ± 0.27</td>
+                        <td class="num-cell">18.10</td>
+                        <td class="num-cell">0.8601</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone TCN</td>
+                        <td class="num-cell">36,952</td>
+                        <td class="num-cell">12.57</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Best Standalone Expert</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-ensemble">ENSEMBLE</span></td>
+                        <td>Equal Ensemble (1/3)</td>
+                        <td class="num-cell">120,504</td>
+                        <td class="num-cell">12.62</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Static Mixture</td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Horizon Routing Control</td>
+                        <td class="num-cell">122,253</td>
+                        <td class="num-cell">12.86 ± 0.25</td>
+                        <td class="num-cell">18.44</td>
+                        <td class="num-cell">0.8548</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone LSTM</td>
+                        <td class="num-cell">56,152</td>
+                        <td class="num-cell">13.23</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Recurrent Baseline</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone CNN</td>
+                        <td class="num-cell">27,400</td>
+                        <td class="num-cell">14.50</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Local Motif Baseline</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         """, unsafe_allow_html=True)
 
         fig_bg = go.Figure()
-        models_g = ["Fixed Shrinkage", "CAEG-Net", "Dynamic Conf", "Standalone TCN", "Ridge", "Equal Ensemble", "Horizon Routing", "Standalone LSTM", "Standalone CNN", "Naive-24", "Seasonal Naive", "Official Benchmark"]
-        maes_g = [12.36, 12.41, 12.49, 12.57, 12.57, 12.62, 12.86, 13.23, 14.50, 16.68, 26.22, 30.19]
-        colors_g = ["#64748B", "#38BDF8", "#64748B", "#10B981", "#94A3B8", "#A855F7", "#64748B", "#F59E0B", "#EC4899", "#475569", "#334155", "#1E293B"]
+        models_g = ["Fixed Shrinkage", "CAEG-Net", "Dynamic Conf", "Standalone TCN", "Equal Ensemble", "Horizon Routing", "Standalone LSTM", "Standalone CNN"]
+        maes_g = [12.36, 12.41, 12.49, 12.57, 12.62, 12.86, 13.23, 14.50]
+        colors_g = ["#64748B", "#38BDF8", "#64748B", "#10B981", "#A855F7", "#64748B", "#F59E0B", "#EC4899"]
         fig_bg.add_trace(go.Bar(
             y=models_g[::-1], x=maes_g[::-1], orientation="h", marker_color=colors_g[::-1],
             text=[f"{v:.2f} kW" for v in maes_g[::-1]], textposition="auto",
             hovertemplate="%{y}: %{x:.2f} kW<extra></extra>"
         ))
         fig_bg.update_layout(title="GEFCom2014 — Model Comparison (MAE kW, Lower is Better)", xaxis_title="MAE (kW)")
-        apply_dark_plotly_theme(fig_bg, height=400)
+        apply_dark_plotly_theme(fig_bg, height=360)
         st.plotly_chart(fig_bg, use_container_width=True)
 
     elif selected_b_ds == "UCI":
         st.markdown("""
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>Family</th>
-                    <th>Model Formulation</th>
-                    <th style="text-align: right;">Parameters</th>
-                    <th style="text-align: right;">MAE (MW)</th>
-                    <th style="text-align: right;">RMSE (MW)</th>
-                    <th style="text-align: right;">R² Score</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone LSTM</td>
-                    <td class="num-cell">56,152</td>
-                    <td class="num-cell">7.55</td>
-                    <td class="num-cell">11.94</td>
-                    <td class="num-cell">0.9799</td>
-                    <td>Best Standalone Expert (UCI)</td>
-                </tr>
-                <tr class="highlight-row">
-                    <td><strong>PROPOSED</strong></td>
-                    <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell"><strong>7.74 ± 0.30</strong></td>
-                    <td class="num-cell">10.96</td>
-                    <td class="num-cell">0.9831</td>
-                    <td><strong>CHAMPION_LOCKED</strong></td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Fixed Shrinkage Control</td>
-                    <td class="num-cell">121,579</td>
-                    <td class="num-cell">7.75 ± 0.18</td>
-                    <td class="num-cell">10.99</td>
-                    <td class="num-cell">0.9830</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Dynamic Confidence Control</td>
-                    <td class="num-cell">121,724</td>
-                    <td class="num-cell">7.82 ± 0.28</td>
-                    <td class="num-cell">11.00</td>
-                    <td class="num-cell">0.9830</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr style="background: rgba(30, 41, 59, 0.3);">
-                    <td>Controlled Variant</td>
-                    <td>Horizon Routing Control</td>
-                    <td class="num-cell">122,253</td>
-                    <td class="num-cell">8.13 ± 0.40</td>
-                    <td class="num-cell">11.48</td>
-                    <td class="num-cell">0.9814</td>
-                    <td>Exploratory Mechanism</td>
-                </tr>
-                <tr>
-                    <td>Ensemble</td>
-                    <td>Equal Ensemble (1/3)</td>
-                    <td class="num-cell">120,504</td>
-                    <td class="num-cell">8.17</td>
-                    <td class="num-cell">12.10</td>
-                    <td class="num-cell">0.9794</td>
-                    <td>Static Mixture</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone TCN</td>
-                    <td class="num-cell">36,952</td>
-                    <td class="num-cell">8.34</td>
-                    <td class="num-cell">11.90</td>
-                    <td class="num-cell">0.9800</td>
-                    <td>Causal Conv Baseline</td>
-                </tr>
-                <tr>
-                    <td>Standalone Expert</td>
-                    <td>Standalone CNN</td>
-                    <td class="num-cell">27,400</td>
-                    <td class="num-cell">11.71</td>
-                    <td class="num-cell">15.81</td>
-                    <td class="num-cell">0.9646</td>
-                    <td>Local Motif Baseline</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Model Formulation</th>
+                        <th style="text-align: right;">Parameters</th>
+                        <th style="text-align: right;">MAE (MW)</th>
+                        <th style="text-align: right;">RMSE (MW)</th>
+                        <th style="text-align: right;">R² Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone LSTM</td>
+                        <td class="num-cell">56,152</td>
+                        <td class="num-cell best-cell">7.55</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Best Standalone Expert</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td><span class="role-badge role-proposed">PROPOSED</span></td>
+                        <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell">7.74 ± 0.30</td>
+                        <td class="num-cell">10.96</td>
+                        <td class="num-cell">0.9831</td>
+                        <td><strong>CHAMPION_LOCKED</strong></td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Fixed Shrinkage Control</td>
+                        <td class="num-cell">121,579</td>
+                        <td class="num-cell">7.75 ± 0.18</td>
+                        <td class="num-cell">10.99</td>
+                        <td class="num-cell">0.9830</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Dynamic Confidence Control</td>
+                        <td class="num-cell">121,724</td>
+                        <td class="num-cell">7.82 ± 0.28</td>
+                        <td class="num-cell">11.00</td>
+                        <td class="num-cell">0.9830</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr style="background: rgba(30, 41, 59, 0.3);">
+                        <td><span class="role-badge role-control">CONTROL</span></td>
+                        <td>Horizon Routing Control</td>
+                        <td class="num-cell">122,253</td>
+                        <td class="num-cell">8.13 ± 0.40</td>
+                        <td class="num-cell">11.48</td>
+                        <td class="num-cell">0.9814</td>
+                        <td>Exploratory Mechanism</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-ensemble">ENSEMBLE</span></td>
+                        <td>Equal Ensemble (1/3)</td>
+                        <td class="num-cell">120,504</td>
+                        <td class="num-cell">8.17</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Static Mixture</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone TCN</td>
+                        <td class="num-cell">36,952</td>
+                        <td class="num-cell">8.34</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Dilated Causal Expert</td>
+                    </tr>
+                    <tr>
+                        <td><span class="role-badge role-expert">EXPERT</span></td>
+                        <td>Standalone CNN</td>
+                        <td class="num-cell">27,400</td>
+                        <td class="num-cell">11.71</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                        <td>Local Motif Baseline</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
         """, unsafe_allow_html=True)
 
         fig_bu = go.Figure()
@@ -2088,13 +2461,30 @@ elif page == "◉ Baseline Comparison":
             hovertemplate="%{y}: %{x:.2f} MW<extra></extra>"
         ))
         fig_bu.update_layout(title="UCI Electricity — Model Comparison (MAE MW, Lower is Better)", xaxis_title="MAE (MW)")
-        apply_dark_plotly_theme(fig_bu, height=340)
+        apply_dark_plotly_theme(fig_bu, height=360)
         st.plotly_chart(fig_bu, use_container_width=True)
 
+    col_note_l, col_note_r = st.columns(2)
+    with col_note_l:
+        st.markdown("""
+        <div class="dark-card">
+            <div class="dark-card-header">Academic Assessment</div>
+            <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
+                F2/A2-OOF is the final CAEG-Net formulation. Fixed shrinkage achieves a slightly lower mean MAE on GEFCom2014, while the standalone LSTM has a lower MAE on UCI Electricity. CAEG-Net is therefore presented as the strongest overall balance across the evaluated datasets, not as universally best on every dataset.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_note_r:
+        st.markdown("""
+        <div class="dark-card">
+            <div class="dark-card-header">Zero-Fabrication Guarantee</div>
+            <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
+                In strict compliance with academic research standards, metrics not computed during original multi-seed benchmark evaluations are explicitly stated as <em>N/A — not reported under this protocol</em> rather than filled with post-hoc estimates.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
-# =========================================================================
-# 7. ⌁ ROUTING BEHAVIOUR (DATASET SWITCHABLE)
-# =========================================================================
+
 elif page == "⌁ Routing Behaviour":
     st.markdown("""
     <div class="page-hero-container">

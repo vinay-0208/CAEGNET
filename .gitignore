@@ -80,4 +80,12 @@ data/ElectricityLoadDiagrams20112014/
 data/__MACOSX/
 
 # Research track history (maintained exclusively on research-track branch)
-research/
+research/archive/
+research/checkpoints/
+research/experiments/
+research/results/
+research/*.py
+!research/notebooks/
+!research/notebooks/CAEG_Net_Faculty_Review.ipynb
+!research/tests/
+!research/tests/test_causality.py

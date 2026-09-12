@@ -95,11 +95,11 @@ Open your web browser at `http://localhost:8501`.
 
 ## 5. Executing the Faculty Review Notebook
 
-The authoritative faculty review notebook (`notebooks/CAEG_Net_Faculty_Review.ipynb`) is genuinely executable from a fresh kernel and generates all 11 tables and figures dynamically from verified repository artifacts:
+The authoritative faculty review notebook (`research/notebooks/CAEG_Net_Faculty_Review.ipynb`) is genuinely executable from a fresh kernel and generates all 11 tables and figures dynamically from verified repository artifacts:
 
 ```bash
 # Execute the notebook end-to-end via nbconvert
-python -m jupyter nbconvert --to notebook --execute "notebooks/CAEG_Net_Faculty_Review.ipynb" --output "CAEG_Net_Faculty_Review.ipynb"
+python -m jupyter nbconvert --to notebook --execute --inplace "research/notebooks/CAEG_Net_Faculty_Review.ipynb"
 ```
 *Expected: 39 cells executed with 0 errors.*
 
