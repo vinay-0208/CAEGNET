@@ -1,12 +1,11 @@
-"""CAEG-Net Evaluation Re-exports."""
-import sys
-import os
+"""
+CAEG-Net Evaluation Package
+"""
+from .metrics import compute_metrics, evaluate_model_on_loader
+from .statistics import compute_daily_block_statistics
 
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if repo_root not in sys.path:
-    sys.path.insert(0, repo_root)
-
-try:
-    from evaluate import evaluate_model
-except ImportError:
-    pass
+__all__ = [
+    "compute_metrics",
+    "evaluate_model_on_loader",
+    "compute_daily_block_statistics",
+]

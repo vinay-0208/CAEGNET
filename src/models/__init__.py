@@ -1,12 +1,19 @@
-"""CAEG-Net Model Re-exports."""
-import sys
-import os
+"""
+CAEG-Net Models Package
+"""
+from .experts import LSTMExpert, TCNExpert, CNNExpert, CausalConv1dBlock
+from .router import ContextFeatureEncoder, ContextGatingNetwork, HorizonContextGatingNetwork
+from .caeg_net import CAEGNet, ConfidenceFallbackCAEGNet, StandardInputMoE
 
-repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if repo_root not in sys.path:
-    sys.path.insert(0, repo_root)
-
-try:
-    from caeg_net import CAEGNet, ConfidenceFallbackCAEGNet, LSTMExpert, TCNExpert, CNNExpert, ContextGatingRouter
-except ImportError:
-    pass
+__all__ = [
+    "LSTMExpert",
+    "TCNExpert",
+    "CNNExpert",
+    "CausalConv1dBlock",
+    "ContextFeatureEncoder",
+    "ContextGatingNetwork",
+    "HorizonContextGatingNetwork",
+    "CAEGNet",
+    "ConfidenceFallbackCAEGNet",
+    "StandardInputMoE",
+]

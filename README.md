@@ -298,19 +298,29 @@ python -m unittest discover -s research/tests
 
 ---
 
-## 14. Interactive Dashboard & Faculty Review Notebook
+## 14. Interactive Dashboard, Demonstration Notebook & Documentation
 
 ### Faculty Review Demonstration Notebook
 A complete, self-contained demonstration notebook is pre-rendered and ready for faculty defense:
-- Path: [`research/notebooks/CAEG_Net_Faculty_Review.ipynb`](research/notebooks/CAEG_Net_Faculty_Review.ipynb)
+- Path: [`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb) (mirrored in [`research/notebooks/CAEG_Net_Faculty_Review.ipynb`](research/notebooks/CAEG_Net_Faculty_Review.ipynb))
 - Features: 23 sections covering mathematical formulations, parameter tables, step-by-step horizon curves ($h=1 \dots 24$), and 18 complete Viva defense questions.
-- To open: Launch JupyterLab or VS Code and run all cells sequentially.
+- To execute end-to-end:
+  ```bash
+  jupyter nbconvert --to notebook --execute notebooks/CAEG_Net_Faculty_Review.ipynb
+  ```
 
 ### Interactive Streamlit Dashboard
 ```bash
+python scripts/run_dashboard.py
+# or directly:
 streamlit run dashboard/app.py
 ```
 Provides 11 interactive academic panels covering executive KPI cards, modular architecture diagrams, parameter breakdowns, multi-grid benchmark comparisons, and step-by-step horizon degradation.
+
+### Supplementary Architecture & Reproducibility Documentation
+- **Architecture Deep-Dive:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) (comprehensive tensor equations, parameter tables, inductive bias analyses).
+- **Reproducibility Guide:** [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (step-by-step instructions, test suites, artifact catalogs).
+- **Final Research Report (PDF):** [`docs/CAEG-Net_Final_Report.pdf`](docs/CAEG-Net_Final_Report.pdf) (2.35 MB formal manuscript).
 
 ---
 
@@ -318,41 +328,48 @@ Provides 11 interactive academic panels covering executive KPI cards, modular ar
 
 ```text
 CAEGNET/
+├── README.md                        # Master repository documentation
+├── LICENSE                          # MIT open-source license
+├── requirements.txt                 # Frozen environment dependencies
+├── .gitignore                       # Clean Git exclusion patterns
 ├── configs/
-│   └── final_caeg_net.yaml          # Authoritative YAML configuration
+│   └── final_caeg_net.yaml          # Authoritative YAML configuration (121,724 params)
 ├── data/
 │   └── README.md                    # Ingestion protocols, splits, scaling
 ├── dashboard/
 │   ├── app.py                       # Interactive Streamlit dashboard application
 │   ├── README.md                    # Dashboard documentation
-│   └── components/                  # UI visual components
+│   └── components/                  # UI visual components and assets
+├── docs/
+│   ├── CAEG-Net_Final_Report.pdf    # Formal academic research report (PDF)
+│   ├── ARCHITECTURE.md              # In-depth architectural & mathematical specification
+│   └── REPRODUCIBILITY.md           # End-to-end reproducibility instructions
+├── notebooks/
+│   └── CAEG_Net_Faculty_Review.ipynb# Authoritative runnable faculty review notebook
+├── src/
+│   ├── __init__.py                  # Package entry point
+│   ├── data/                        # Ingestion, datasets & sliding window loaders
+│   ├── evaluation/                  # Evaluation routines, paired t-tests & metrics
+│   ├── features/                    # 7D physical context extraction
+│   ├── models/                      # LSTM, TCN, CNN backbones, Router, and CAEG-Net
+│   └── utils/                       # Parameter counting, seeding, and YAML configs
+├── tests/                           # Root functional unit test suite
+├── scripts/
+│   ├── evaluate_benchmarks.py       # Authoritative benchmark results evaluator
+│   ├── verify_reproducibility.py    # Parameter count & forward pass verifier
+│   └── run_dashboard.py             # Convenience dashboard launcher
 ├── research/
 │   ├── analysis/                    # Statistical analysis & horizon CSVs
-│   ├── archive/                     # Historical logs & early phase scripts
-│   ├── notebooks/
-│   │   ├── CAEG_Net_Faculty_Review.ipynb # Authoritative faculty review notebook
-│   │   └── README_Faculty_Review.md      # Faculty review guide
-│   ├── reports/                     # Comprehensive scientific reports
-│   ├── results/
-│   │   ├── FINAL_MODEL_LOCK.md      # Certified model lock declaration
-│   │   ├── final_results.csv        # Authoritative benchmark metrics
-│   │   ├── final_results.md         # Markdown results documentation
-│   │   └── final_model_config.json  # Machine-readable model configuration
-│   └── tests/                       # 172-test research verification suite
-├── src/
-│   ├── data/                        # Ingestion & sliding window generation
-│   ├── evaluation/                  # Evaluation routines & metric computation
-│   ├── features/                    # Domain context extraction
-│   ├── models/                      # LSTM, TCN, CNN, and CAEG-Net definitions
-│   └── utils/                       # Reproducibility utilities
-├── tests/                           # Root functional tests
+│   ├── archive/                     # Historical logs & exploratory phase scripts
+│   ├── notebooks/                   # Faculty review notebook mirror
+│   ├── reports/                     # Comprehensive scientific audit reports
+│   ├── results/                     # Certified model locks & final benchmark CSVs
+│   └── tests/                       # Comprehensive research test suite
 ├── caeg_net.py                      # Canonical model implementation
 ├── data_utils.py                    # Canonical data utility functions
 ├── evaluate.py                      # Canonical evaluation script
 ├── experiments.py                   # Canonical experiment runner
-├── train.py                         # Canonical training pipeline
-├── requirements.txt                 # Frozen environment dependencies
-└── README.md                        # This document
+└── train.py                         # Canonical training pipeline
 ```
 
 ---
