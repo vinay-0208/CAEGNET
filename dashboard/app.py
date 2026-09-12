@@ -461,8 +461,18 @@ def load_tri_benchmark_dataset():
     return None
 
 @st.cache_data(show_spinner=False)
-def load_horizon_results():
-    """Load step-by-step h=1..24 lead-time evaluation results."""
+def load_horizon_specialization():
+    """Load step-by-step expert specialization results (h=1..24)."""
+    csv_path = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization.csv")
+    if not os.path.exists(csv_path):
+        csv_path = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization_corrected.csv")
+    if os.path.exists(csv_path):
+        return pd.read_csv(csv_path)
+    return None
+
+@st.cache_data(show_spinner=False)
+def load_horizon_candidates():
+    """Load step-by-step routing candidate ablation results (h=1..24)."""
     csv_path = os.path.join(repo_root, "research", "analysis", "phase15b_horizon_results.csv")
     if os.path.exists(csv_path):
         return pd.read_csv(csv_path)
@@ -587,7 +597,8 @@ def load_prediction_artifact(dataset_name: str):
     return None
 
 
-df_horizon = load_horizon_results()
+df_horizon_spec = load_horizon_specialization()
+df_horizon_cand = load_horizon_candidates()
 
 
 # =========================================================================
@@ -2316,54 +2327,124 @@ elif page == "◷ Horizon Analysis":
     </div>
     """, unsafe_allow_html=True)
 
+    # Dataset Selector for Horizon Analysis
+    h_options = ["PJM", "GEFCom2014", "UCI"]
+    h_curr_idx = h_options.index(st.session_state.get("selected_dataset", "PJM")) if st.session_state.get("selected_dataset") in h_options else 0
+    selected_h_ds = st.radio("Select Grid to Inspect Horizon Lead Dynamics", h_options, index=h_curr_idx, horizontal=True, key="horizon_ds_radio")
+    st.session_state["selected_dataset"] = selected_h_ds
+
+    dataset_map = {
+        "PJM": ("PJM", "MW", "PJM Interconnection (Regional Grid)"),
+        "GEFCom2014": ("GEFCom", "kW", "GEFCom2014 (Zonal Grid)"),
+        "UCI": ("UCI", "MW", "UCI Electricity (Aggregated Demand)")
+    }
+    ds_key, unit, ds_full_name = dataset_map[selected_h_ds]
+
+    # Metrics extraction from verified specialization artifact
+    h1, h12, h24, ratio = 0.0, 0.0, 0.0, 1.0
+    sub_spec = None
+    if df_horizon_spec is not None and "dataset" in df_horizon_spec.columns:
+        sub_spec = df_horizon_spec[df_horizon_spec["dataset"] == ds_key].sort_values("horizon_step")
+        if not sub_spec.empty and "mae_f2" in sub_spec.columns:
+            h1 = float(sub_spec[sub_spec["horizon_step"] == 1]["mae_f2"].values[0])
+            h12 = float(sub_spec[sub_spec["horizon_step"] == 12]["mae_f2"].values[0])
+            h24 = float(sub_spec[sub_spec["horizon_step"] == 24]["mae_f2"].values[0])
+            ratio = (h24 / h1) if h1 > 0 else 1.0
+
     # 4 Horizon Metric Cards in metric-grid-4
-    st.markdown("""
+    st.markdown(f"""
     <div class="metric-grid-4">
         <div class="metric-card">
             <div class="metric-label">Immediate Lead (h=1)</div>
-            <div class="metric-value">137.91 <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-            <div class="metric-sub">PJM lead step 1</div>
+            <div class="metric-value">{h1:.2f} <span style="font-size:0.8rem; color:#94A3B8;">{unit}</span></div>
+            <div class="metric-sub">{selected_h_ds} lead step 1</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Mid Horizon (h=12)</div>
-            <div class="metric-value">225.75 <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-            <div class="metric-sub">PJM lead step 12</div>
+            <div class="metric-value">{h12:.2f} <span style="font-size:0.8rem; color:#94A3B8;">{unit}</span></div>
+            <div class="metric-sub">{selected_h_ds} lead step 12</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Final Lead (h=24)</div>
-            <div class="metric-value">269.43 <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-            <div class="metric-sub">PJM lead step 24</div>
+            <div class="metric-value">{h24:.2f} <span style="font-size:0.8rem; color:#94A3B8;">{unit}</span></div>
+            <div class="metric-sub">{selected_h_ds} lead step 24</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Lead Degradation Ratio</div>
-            <div class="metric-value">1.95x</div>
+            <div class="metric-value">{ratio:.2f}x</div>
             <div class="metric-sub">h=24 MAE / h=1 MAE</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-    if df_horizon is not None:
-        st.markdown('<div class="section-title">Step-by-Step Lead MAE Progression (Lead h = 1 to 24 Hours)</div>', unsafe_allow_html=True)
+    # Primary Horizon Chart: Temporal Experts vs CAEG-Net
+    if sub_spec is not None and not sub_spec.empty:
+        st.markdown(f'<div class="section-title">Step-by-Step Lead MAE Progression ({ds_full_name})</div>', unsafe_allow_html=True)
+        st.caption("Retrospective diagnostic — not causal evidence")
+
         fig_h = go.Figure()
-        pjm_h = df_horizon[df_horizon["dataset"] == "PJM"]
-        for m in ["Control_A_F2", "Standalone_TCN", "Standalone_LSTM", "Standalone_CNN"]:
-            sub = pjm_h[pjm_h["model"] == m]
-            if not sub.empty:
-                c_map = {"Control_A_F2": "#38BDF8", "Standalone_TCN": "#10B981", "Standalone_LSTM": "#F59E0B", "Standalone_CNN": "#EC4899"}
-                l_map = {"Control_A_F2": "CAEG-Net (Locked F2)", "Standalone_TCN": "Standalone TCN", "Standalone_LSTM": "Standalone LSTM", "Standalone_CNN": "Standalone CNN"}
+        expert_traces = [
+            ("mae_f2", "CAEG-Net (Locked F2)", "#38BDF8", 3.2, None, "square"),
+            ("mae_equal", "Equal Ensemble (1/3)", "#A855F7", 2.0, "longdash", "circle"),
+            ("mae_tcn", "Standalone TCN", "#10B981", 2.0, "dash", "triangle-up"),
+            ("mae_lstm", "Standalone LSTM", "#F59E0B", 2.0, "dot", "diamond"),
+            ("mae_cnn", "Standalone CNN", "#EC4899", 2.0, "dashdot", "cross")
+        ]
+        for col, label, color, width, dash, marker_sym in expert_traces:
+            if col in sub_spec.columns:
                 fig_h.add_trace(go.Scatter(
-                    x=sub["lead_hour"], y=sub["mae"], mode="lines+markers",
-                    name=l_map.get(m, m), line=dict(color=c_map.get(m, "#94A3B8"), width=2.4),
-                    marker=dict(size=5), hovertemplate="Lead h=%{x}: %{y:.1f} MW<extra></extra>"
+                    x=sub_spec["horizon_step"],
+                    y=sub_spec[col],
+                    mode="lines+markers",
+                    name=label,
+                    line=dict(color=color, width=width, dash=dash),
+                    marker=dict(size=5, symbol=marker_sym),
+                    hovertemplate=f"Lead h=%{{x}}: %{{y:.2f}} {unit}<extra></extra>"
                 ))
         fig_h.update_layout(
-            title="PJM Interconnection — Error Growth Across Forecast Horizon (h = 1..24)",
+            title=f"{selected_h_ds} — Step-by-Step Lead MAE Progression (h = 1..24)",
             xaxis_title="Forecast Horizon (Hours Ahead)",
-            yaxis_title="Mean Absolute Error (MW)",
+            yaxis_title=f"Mean Absolute Error ({unit})",
             hovermode="x unified"
         )
         apply_dark_plotly_theme(fig_h, height=420)
         st.plotly_chart(fig_h, use_container_width=True)
+
+    # Secondary Ablation Chart: Routing Candidate Comparisons
+    if df_horizon_cand is not None and "dataset" in df_horizon_cand.columns:
+        with st.expander("🔍 Inspect Evaluated Horizon Routing Candidates (Ablation Diagnostics)", expanded=False):
+            sub_cand = df_horizon_cand[df_horizon_cand["dataset"] == ds_key].sort_values("horizon_step")
+            if not sub_cand.empty:
+                fig_cand = go.Figure()
+                cand_map = {
+                    "Control_A_F2": ("CAEG-Net (Unified Router)", "#38BDF8", 3.0, None),
+                    "Control_B_FixedShrinkage": ("Fixed Shrinkage Control", "#64748B", 1.8, "dash"),
+                    "Control_C_HorizonRouting": ("Horizon Routing Control", "#EF4444", 2.2, "dot"),
+                    "Control_D_DynamicConfidence": ("Dynamic Confidence Control", "#F59E0B", 1.8, "dashdot"),
+                    "Candidate_E1_HGR_FS": ("Candidate E1 (HGR-FS)", "#EC4899", 1.6, "longdash"),
+                    "Candidate_E2_HGR_DGS": ("Candidate E2 (HGR-DGS)", "#A855F7", 1.6, "longdashdot")
+                }
+                for cid in sub_cand["candidate_id"].unique():
+                    c_rows = sub_cand[sub_cand["candidate_id"] == cid]
+                    if not c_rows.empty:
+                        label, color, width, dash = cand_map.get(cid, (cid, "#94A3B8", 1.5, None))
+                        fig_cand.add_trace(go.Scatter(
+                            x=c_rows["horizon_step"],
+                            y=c_rows["mae"],
+                            mode="lines+markers",
+                            name=label,
+                            line=dict(color=color, width=width, dash=dash),
+                            marker=dict(size=4),
+                            hovertemplate=f"Lead h=%{{x}}: %{{y:.2f}} {unit}<extra></extra>"
+                        ))
+                fig_cand.update_layout(
+                    title=f"Retrospective Diagnostic: Evaluated Routing Candidates Across Horizon ({selected_h_ds})",
+                    xaxis_title="Forecast Horizon (Hours Ahead)",
+                    yaxis_title=f"Mean Absolute Error ({unit})",
+                    hovermode="x unified"
+                )
+                apply_dark_plotly_theme(fig_cand, height=400)
+                st.plotly_chart(fig_cand, use_container_width=True)
 
     col_h_l, col_h_r = st.columns(2)
     with col_h_l:
