@@ -40,7 +40,7 @@ python -m unittest discover -s tests
 *Expected: 4 tests ran in ~1.2s -> OK*
 
 ### 2.2. Comprehensive Research Unit Tests
-Verifies phase architectures, expert submodules, causal OOF gating, and locked parameter budgets:
+Verifies core model architectures, expert submodules, causal OOF gating, and locked parameter budgets:
 ```bash
 python -m unittest discover -s research/tests
 ```
@@ -95,11 +95,11 @@ Open your web browser at `http://localhost:8501`.
 
 ## 5. Executing the Faculty Review Notebook
 
-The authoritative faculty review notebook (`research/notebooks/CAEG_Net_Faculty_Review.ipynb`) is genuinely executable from a fresh kernel and generates all 11 tables and figures dynamically from verified repository artifacts:
+The authoritative faculty review notebook (`notebooks/CAEG_Net_Faculty_Review.ipynb`) is genuinely executable from a fresh kernel and generates all 11 tables and figures dynamically from verified repository artifacts:
 
 ```bash
 # Execute the notebook end-to-end via nbconvert
-python -m jupyter nbconvert --to notebook --execute --inplace "research/notebooks/CAEG_Net_Faculty_Review.ipynb"
+python -m jupyter nbconvert --to notebook --execute --inplace "notebooks/CAEG_Net_Faculty_Review.ipynb"
 ```
 *Expected: 39 cells executed with 0 errors.*
 

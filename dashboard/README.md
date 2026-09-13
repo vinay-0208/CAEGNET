@@ -43,15 +43,15 @@ The application is structured into 12 specialized academic panels accessible via
 7. **Routing Behaviour:** Grouped bar charts showing mean expert routing weights and effective expert counts ($N_{\text{eff}} \approx 2.98 - 2.99$).
 8. **Confidence / Fallback:** Visualization and interpretation of the learned shrinkage parameter $\lambda \approx 0.51$ and its low temporal variance ($CV < 1.1\%$).
 9. **Statistical Evidence:** Hypothesis testing tables for non-overlapping daily blocks ($K=53, 456, 163$) showing paired $t$-test, Wilcoxon signed-rank, and Holm-Bonferroni corrections.
-10. **Horizon Analysis:** Interactive step-by-step ($h=1 \dots 24$) lead-time error curves plotted directly from `research/analysis/phase15b_horizon_results.csv`.
-11. **Research Findings:** Synthesis of the five primary empirical discoveries from controlled Phase 15 experimentation.
+10. **Horizon Analysis:** Interactive step-by-step ($h=1 \dots 24$) lead-time error curves plotted directly from `dashboard/assets/data/horizon_results.csv`.
+11. **Research Findings:** Synthesis of the five primary empirical discoveries from controlled experimental ablation studies.
 12. **Limitations & Ethics:** Honest disclosure of technical boundaries, univariate scope, deterministic point forecasting, and the zero-fabrication academic guarantee.
 
 ---
 
 ## 3. Data & Provenance Integrity
 
-- **Artifact-Driven:** All numerical metrics and plots are generated exclusively from audited repository artifacts (`results/phase5_multiseed_cache.npz`, `research/results/cached_tri_benchmark_datasets.pkl`, `research/analysis/phase15b_horizon_results.csv`, `research/results/final_model_config.json`).
+- **Artifact-Driven:** All numerical metrics and plots are generated exclusively from audited repository artifacts (`dashboard/assets/data/research_multiseed_cache.npz`, `research/results/cached_tri_benchmark_datasets.pkl`, `dashboard/assets/data/horizon_results.csv`, `dashboard/assets/data/final_results.csv`).
 - **Zero-Fabrication Guarantee:** The dashboard does **not** generate synthetic prediction arrays, fake actual-vs-predicted curves, or simulated real-time traces. All visual curves correspond strictly to verified historical test evaluation data.
 - **No Live Inference Pretence:** The dashboard presents certified retrospective research findings and does not claim to execute real-time grid stream inference.
 

@@ -85,7 +85,8 @@ research/checkpoints/
 research/experiments/
 research/results/
 research/*.py
-!research/notebooks/
-!research/notebooks/CAEG_Net_Faculty_Review.ipynb
+# Public notebooks
+!notebooks/
+!notebooks/CAEG_Net_Faculty_Review.ipynb
 !research/tests/
 !research/tests/test_causality.py

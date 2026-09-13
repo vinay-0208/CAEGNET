@@ -552,10 +552,11 @@ def load_tri_benchmark_dataset():
 @st.cache_data(show_spinner=False)
 def load_horizon_specialization():
     """Load step-by-step expert specialization results (h=1..24)."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase15a_horizon_specialization.csv")
-    p_res1 = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization.csv")
-    p_res2 = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization_corrected.csv")
-    for p in [p_bundled, p_res1, p_res2]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "horizon_specialization.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase15a_horizon_specialization.csv")
+    p_res1 = os.path.join(repo_root, "research", "analysis", "horizon_specialization.csv")
+    p_res2 = os.path.join(repo_root, "research", "analysis", "phase15a_horizon_specialization.csv")
+    for p in [p_bundled, p_legacy, p_res1, p_res2]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -563,9 +564,10 @@ def load_horizon_specialization():
 @st.cache_data(show_spinner=False)
 def load_horizon_candidates():
     """Load step-by-step routing candidate ablation results (h=1..24)."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase15b_horizon_results.csv")
-    p_res = os.path.join(repo_root, "research", "analysis", "phase15b_horizon_results.csv")
-    for p in [p_bundled, p_res]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "horizon_results.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase15b_horizon_results.csv")
+    p_res = os.path.join(repo_root, "research", "analysis", "horizon_results.csv")
+    for p in [p_bundled, p_legacy, p_res]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -573,9 +575,10 @@ def load_horizon_candidates():
 @st.cache_data(show_spinner=False)
 def load_gefcom_seed_results():
     """Load GEFCom2014 verified seed results."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase8_seed_results.csv")
-    p_res = os.path.join(repo_root, "research", "results", "phase8_seed_results.csv")
-    for p in [p_bundled, p_res]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "gefcom_seed_results.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase8_seed_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "gefcom_seed_results.csv")
+    for p in [p_bundled, p_legacy, p_res]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -583,9 +586,10 @@ def load_gefcom_seed_results():
 @st.cache_data(show_spinner=False)
 def load_gefcom_task_results():
     """Load GEFCom2014 verified task breakdown results."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase8_task_results.csv")
-    p_res = os.path.join(repo_root, "research", "results", "phase8_task_results.csv")
-    for p in [p_bundled, p_res]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "gefcom_task_results.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase8_task_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "gefcom_task_results.csv")
+    for p in [p_bundled, p_legacy, p_res]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -593,9 +597,10 @@ def load_gefcom_task_results():
 @st.cache_data(show_spinner=False)
 def load_uci_seed_results():
     """Load UCI Electricity verified seed results."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase9_seed_results.csv")
-    p_res = os.path.join(repo_root, "research", "results", "phase9_seed_results.csv")
-    for p in [p_bundled, p_res]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "uci_seed_results.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase9_seed_results.csv")
+    p_res = os.path.join(repo_root, "research", "results", "uci_seed_results.csv")
+    for p in [p_bundled, p_legacy, p_res]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -603,9 +608,10 @@ def load_uci_seed_results():
 @st.cache_data(show_spinner=False)
 def load_uci_routing_diagnostics():
     """Load UCI Electricity verified routing diagnostics."""
-    p_bundled = os.path.join(cur_dir, "assets", "data", "phase9_routing_diagnostics.csv")
-    p_res = os.path.join(repo_root, "research", "results", "phase9_routing_diagnostics.csv")
-    for p in [p_bundled, p_res]:
+    p_bundled = os.path.join(cur_dir, "assets", "data", "uci_routing_diagnostics.csv")
+    p_legacy = os.path.join(cur_dir, "assets", "data", "phase9_routing_diagnostics.csv")
+    p_res = os.path.join(repo_root, "research", "results", "uci_routing_diagnostics.csv")
+    for p in [p_bundled, p_legacy, p_res]:
         if os.path.exists(p):
             return pd.read_csv(p)
     return None
@@ -1264,7 +1270,7 @@ elif page == "◈ Prediction / Forecast":
 
         # Show dataset-specific verified seed/task breakdown
         if chosen_ds == "GEFCom2014":
-            st.markdown('<div class="section-title">Verified GEFCom2014 Multi-Seed Results (Phase 8 Artifacts)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Verified GEFCom2014 Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
             df_g_seeds = load_gefcom_seed_results()
             if df_g_seeds is not None:
                 caeg_seeds = df_g_seeds[df_g_seeds["model"] == "Original_CAEGNet_V1"][["seed", "MAE", "RMSE", "R2", "MAPE"]].copy()
@@ -1317,7 +1323,7 @@ elif page == "◈ Prediction / Forecast":
                 """, unsafe_allow_html=True)
 
         elif chosen_ds == "UCI":
-            st.markdown('<div class="section-title">Verified UCI Electricity Multi-Seed Results (Phase 9 Artifacts)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-title">Verified UCI Electricity Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
             df_u_seeds = load_uci_seed_results()
             if df_u_seeds is not None:
                 caeg_u = df_u_seeds[df_u_seeds["model"] == "Original CAEG-Net V1"][["seed", "test_mae", "test_rmse", "test_r2", "test_mape"]].copy()
@@ -1795,9 +1801,10 @@ elif page == "▥ Benchmark Results":
             <thead>
                 <tr>
                     <th>Dataset</th>
-                    <th>Model</th>
+                    <th>Model Formulation</th>
                     <th style="text-align: right;">Mean MAE</th>
-                    <th style="text-align: right;">Population SD</th>
+                    <th style="text-align: right;">Sample SD (s)</th>
+                    <th style="text-align: right;">Population SD (σ)</th>
                     <th style="text-align: right;">RMSE</th>
                     <th style="text-align: right;">R² Score</th>
                     <th style="text-align: right;">CV (%)</th>
@@ -1811,6 +1818,7 @@ elif page == "▥ Benchmark Results":
                     <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
                     <td class="num-cell best-cell">250.9747</td>
                     <td class="num-cell">10.6938</td>
+                    <td class="num-cell">9.5648</td>
                     <td class="num-cell">335.3822</td>
                     <td class="num-cell">0.8714</td>
                     <td class="num-cell">4.26%</td>
@@ -1821,6 +1829,7 @@ elif page == "▥ Benchmark Results":
                     <td>Dynamic Confidence Control</td>
                     <td class="num-cell">251.9419</td>
                     <td class="num-cell">9.7996</td>
+                    <td class="num-cell">8.7650</td>
                     <td class="num-cell">336.7396</td>
                     <td class="num-cell">0.8704</td>
                     <td class="num-cell">3.89%</td>
@@ -1831,6 +1840,7 @@ elif page == "▥ Benchmark Results":
                     <td>Fixed Shrinkage Control</td>
                     <td class="num-cell">253.5008</td>
                     <td class="num-cell">8.0264</td>
+                    <td class="num-cell">7.1790</td>
                     <td class="num-cell">338.9532</td>
                     <td class="num-cell">0.8688</td>
                     <td class="num-cell">3.17%</td>
@@ -1841,6 +1851,7 @@ elif page == "▥ Benchmark Results":
                     <td>Horizon Routing Control</td>
                     <td class="num-cell">257.5450</td>
                     <td class="num-cell">5.3670</td>
+                    <td class="num-cell">4.8004</td>
                     <td class="num-cell">343.9132</td>
                     <td class="num-cell">0.8650</td>
                     <td class="num-cell">2.08%</td>
@@ -1850,40 +1861,44 @@ elif page == "▥ Benchmark Results":
                     <td>PJM (MW)</td>
                     <td>TCN Expert</td>
                     <td class="num-cell">259.3264</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr>
                     <td>PJM (MW)</td>
                     <td>Static Equal Ensemble</td>
                     <td class="num-cell">279.8282</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
                 </tr>
                 <tr>
                     <td>PJM (MW)</td>
                     <td>LSTM Expert</td>
                     <td class="num-cell">291.7300</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr>
                     <td>PJM (MW)</td>
                     <td>CNN Expert</td>
                     <td class="num-cell">432.0800</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
 
@@ -1893,6 +1908,7 @@ elif page == "▥ Benchmark Results":
                     <td>Fixed Shrinkage Control</td>
                     <td class="num-cell best-cell">12.3607</td>
                     <td class="num-cell">0.1841</td>
+                    <td class="num-cell">0.1647</td>
                     <td class="num-cell">18.0181</td>
                     <td class="num-cell">0.8614</td>
                     <td class="num-cell">1.49%</td>
@@ -1903,6 +1919,7 @@ elif page == "▥ Benchmark Results":
                     <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
                     <td class="num-cell">12.4077</td>
                     <td class="num-cell">0.1525</td>
+                    <td class="num-cell">0.1364</td>
                     <td class="num-cell">18.0446</td>
                     <td class="num-cell">0.8610</td>
                     <td class="num-cell">1.23%</td>
@@ -1913,6 +1930,7 @@ elif page == "▥ Benchmark Results":
                     <td>Dynamic Confidence Control</td>
                     <td class="num-cell">12.4855</td>
                     <td class="num-cell">0.2685</td>
+                    <td class="num-cell">0.2402</td>
                     <td class="num-cell">18.1019</td>
                     <td class="num-cell">0.8601</td>
                     <td class="num-cell">2.15%</td>
@@ -1922,20 +1940,22 @@ elif page == "▥ Benchmark Results":
                     <td>GEFCom (kW)</td>
                     <td>TCN Expert</td>
                     <td class="num-cell">12.5729</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr>
                     <td>GEFCom (kW)</td>
                     <td>Static Equal Ensemble</td>
                     <td class="num-cell">12.6248</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
                 </tr>
                 <tr>
@@ -1943,6 +1963,7 @@ elif page == "▥ Benchmark Results":
                     <td>Horizon Routing Control</td>
                     <td class="num-cell">12.8582</td>
                     <td class="num-cell">0.2520</td>
+                    <td class="num-cell">0.2254</td>
                     <td class="num-cell">18.4392</td>
                     <td class="num-cell">0.8548</td>
                     <td class="num-cell">1.96%</td>
@@ -1952,20 +1973,22 @@ elif page == "▥ Benchmark Results":
                     <td>GEFCom (kW)</td>
                     <td>LSTM Expert</td>
                     <td class="num-cell">13.2300</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr>
                     <td>GEFCom (kW)</td>
                     <td>CNN Expert</td>
                     <td class="num-cell">14.5000</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
 
@@ -1974,10 +1997,11 @@ elif page == "▥ Benchmark Results":
                     <td>UCI (MW)</td>
                     <td>Standalone LSTM Expert</td>
                     <td class="num-cell best-cell">7.5542</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr class="highlight-row">
@@ -1985,9 +2009,10 @@ elif page == "▥ Benchmark Results":
                     <td><strong>CAEG-Net (F2 / A2-OOF)</strong></td>
                     <td class="num-cell">7.7371</td>
                     <td class="num-cell">0.3037</td>
+                    <td class="num-cell">0.2716</td>
                     <td class="num-cell">10.9556</td>
                     <td class="num-cell">0.9831</td>
-                    <td class="num-cell">3.92%</td>
+                    <td class="num-cell">3.93%</td>
                     <td><span class="role-badge role-proposed">PROPOSED MODEL</span></td>
                 </tr>
                 <tr>
@@ -1995,6 +2020,7 @@ elif page == "▥ Benchmark Results":
                     <td>Fixed Shrinkage Control</td>
                     <td class="num-cell">7.7523</td>
                     <td class="num-cell">0.1814</td>
+                    <td class="num-cell">0.1622</td>
                     <td class="num-cell">10.9893</td>
                     <td class="num-cell">0.9830</td>
                     <td class="num-cell">2.34%</td>
@@ -2005,6 +2031,7 @@ elif page == "▥ Benchmark Results":
                     <td>Dynamic Confidence Control</td>
                     <td class="num-cell">7.8177</td>
                     <td class="num-cell">0.2838</td>
+                    <td class="num-cell">0.2538</td>
                     <td class="num-cell">10.9980</td>
                     <td class="num-cell">0.9830</td>
                     <td class="num-cell">3.63%</td>
@@ -2015,6 +2042,7 @@ elif page == "▥ Benchmark Results":
                     <td>Horizon Routing Control</td>
                     <td class="num-cell">8.1309</td>
                     <td class="num-cell">0.4048</td>
+                    <td class="num-cell">0.3621</td>
                     <td class="num-cell">11.4837</td>
                     <td class="num-cell">0.9814</td>
                     <td class="num-cell">4.98%</td>
@@ -2024,30 +2052,33 @@ elif page == "▥ Benchmark Results":
                     <td>UCI (MW)</td>
                     <td>Static Equal Ensemble</td>
                     <td class="num-cell">8.1675</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-ensemble">ENSEMBLE BASELINE</span></td>
                 </tr>
                 <tr>
                     <td>UCI (MW)</td>
                     <td>TCN Expert</td>
                     <td class="num-cell">8.3400</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
                 <tr>
                     <td>UCI (MW)</td>
                     <td>CNN Expert</td>
                     <td class="num-cell">11.7100</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
-                    <td class="num-cell na-cell">N/A — not reported under this protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — protocol logged MAE only</td>
+                    <td class="num-cell na-cell">N/A — single run protocol</td>
                     <td><span class="role-badge role-expert">STANDALONE EXPERTS</span></td>
                 </tr>
             </tbody>
@@ -2887,7 +2918,7 @@ elif page == "◷ Horizon Analysis":
         <div class="dark-card">
             <div class="dark-card-header">Controlled Experimental Findings</div>
             <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
-                • <strong>Per-Step Routing Degradation:</strong> During Phase 15 screening, explicit per-step routing models (Candidates E1, E2, E3) severely overfit the validation set, degrading validation MAE by +10.0% to +13.3% on PJM.<br>
+                • <strong>Per-Step Routing Degradation:</strong> During candidate architecture screening, explicit per-step routing models (Candidates E1, E2, E3) severely overfit the validation set, degrading validation MAE by +10.0% to +13.3% on PJM.<br>
                 • <strong>Single Gating Representation:</strong> Conditioning on a unified 168h causal context vector produces significantly more robust generalization than splitting routing across individual lead hours.
             </div>
         </div>
@@ -2912,7 +2943,7 @@ elif page == "✦ Research Findings":
     <div class="page-hero-container">
         <span class="page-category-badge">Scientific Synthesis</span>
         <div class="page-title">Key Research Findings</div>
-        <div class="page-subtitle">Structured, publication-grade insights established during the multi-phase CAEG-Net experimental campaign.</div>
+        <div class="page-subtitle">Structured, publication-grade insights established during the systematic CAEG-Net evaluation campaign.</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -3002,7 +3033,7 @@ elif page == "ⓘ Limitations & Ethics":
     <div class="accent-card" style="margin-top: 1.5rem;">
         <div style="font-size: 0.8rem; font-weight: 700; color: #38BDF8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px;">Zero-Fabrication Research Guarantee</div>
         <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
-            Every numerical value, metric, table cell, and prediction trace presented in this dashboard is directly traceable to audited repository artifacts produced during locked experimental phases. 
+            Every numerical value, metric, table cell, and prediction trace presented in this dashboard is directly traceable to audited repository artifacts produced during rigorous, locked evaluation protocols. 
             No simulated arrays, placeholder constants, or smoothed synthetic curves have been introduced.
         </div>
     </div>

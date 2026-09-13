@@ -106,6 +106,37 @@ graph TD
 | **GEFCom2014** (kW) | 12.4077 ± 0.1525 | 12.5729 (TCN) | 12.6248 | **12.3607 ± 0.1841** | **Fixed Shrinkage (12.36 kW)** | Fixed Shrinkage achieves slightly lower MAE (-0.38% vs CAEG-Net); CAEG-Net outperforms all standalone experts (-1.31% vs TCN) |
 | **UCI Electricity** (MW) | 7.7371 ± 0.3037 | **7.5542 (LSTM)** | 8.1675 | 7.7523 ± 0.1814 | **Standalone LSTM (7.55 MW)** | Standalone LSTM achieves lower MAE; CAEG-Net outperforms Equal Ensemble (-5.27%) and Fixed Shrinkage (-0.20%) |
 
+### Detailed Model Comparison (Table B)
+
+| Dataset | Model Formulation | Mean MAE | Sample SD ($s$) | Population SD ($\sigma$) | RMSE | R² Score | CV (%) | Evaluation Role |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **PJM** (MW) | **CAEG-Net (F2 / A2-OOF)** | **250.9747** | **10.6938** | **9.5648** | **335.3822** | **0.8714** | **4.26%** | **PROPOSED MODEL** |
+| PJM (MW) | Dynamic Confidence Control | 251.9419 | 9.7996 | 8.7650 | 336.7396 | 0.8704 | 3.89% | CONTROL / ABLATION |
+| PJM (MW) | Fixed Shrinkage Control | 253.5008 | 8.0264 | 7.1790 | 338.9532 | 0.8688 | 3.17% | CONTROL / ABLATION |
+| PJM (MW) | Horizon Routing Control | 257.5450 | 5.3670 | 4.8004 | 343.9132 | 0.8650 | 2.08% | CONTROL / ABLATION |
+| PJM (MW) | TCN Expert | 259.3264 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| PJM (MW) | Static Equal Ensemble | 279.8282 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
+| PJM (MW) | LSTM Expert | 291.7300 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| PJM (MW) | CNN Expert | 432.0800 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| **GEFCom** (kW) | **Fixed Shrinkage Control** | **12.3607** | 0.1841 | 0.1647 | 18.0181 | 0.8614 | 1.49% | CONTROL / ABLATION |
+| GEFCom (kW) | CAEG-Net (F2 / A2-OOF) | 12.4077 | 0.1525 | 0.1364 | 18.0446 | 0.8610 | 1.23% | PROPOSED MODEL |
+| GEFCom (kW) | Dynamic Confidence Control | 12.4855 | 0.2685 | 0.2402 | 18.1019 | 0.8601 | 2.15% | CONTROL / ABLATION |
+| GEFCom (kW) | TCN Expert | 12.5729 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| GEFCom (kW) | Static Equal Ensemble | 12.6248 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
+| GEFCom (kW) | Horizon Routing Control | 12.8582 | 0.2520 | 0.2254 | 18.4392 | 0.8548 | 1.96% | CONTROL / ABLATION |
+| GEFCom (kW) | LSTM Expert | 13.2300 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| GEFCom (kW) | CNN Expert | 14.5000 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| **UCI** (MW) | **Standalone LSTM Expert** | **7.5542** | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | **STANDALONE EXPERTS** |
+| UCI (MW) | CAEG-Net (F2 / A2-OOF) | 7.7371 | 0.3037 | 0.2716 | 10.9556 | 0.9831 | 3.93% | PROPOSED MODEL |
+| UCI (MW) | Fixed Shrinkage Control | 7.7523 | 0.1814 | 0.1622 | 10.9893 | 0.9830 | 2.34% | CONTROL / ABLATION |
+| UCI (MW) | Dynamic Confidence Control | 7.8177 | 0.2838 | 0.2538 | 10.9980 | 0.9830 | 3.63% | CONTROL / ABLATION |
+| UCI (MW) | Horizon Routing Control | 8.1309 | 0.4048 | 0.3621 | 11.4837 | 0.9814 | 4.98% | CONTROL / ABLATION |
+| UCI (MW) | Static Equal Ensemble | 8.1675 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
+| UCI (MW) | TCN Expert | 8.3400 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+| UCI (MW) | CNN Expert | 11.7100 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+
+> *Table Notes:* Cells with *N/A* indicate standalone models evaluated under the single-run benchmark protocol where only test MAE was logged in the repository evidence. Multi-seed models report both Sample Standard Deviation ($s$, $N-1$ denominator) and Population Standard Deviation ($\sigma$, $N$ denominator), with Coefficient of Variation $\text{CV} = (s / \text{Mean}) \times 100$.
+
 > **Academic Assessment:** F2/A2-OOF is the final CAEG-Net formulation. Fixed shrinkage achieves a slightly lower mean MAE on GEFCom2014, while the standalone LSTM has a lower MAE on UCI Electricity. CAEG-Net is therefore presented as the strongest overall balance across the evaluated datasets, not as universally best on every dataset.
 
 ---
@@ -123,7 +154,7 @@ All experimental evaluations adhere strictly to an uncompromising causal researc
 4. **Out-of-Fold (OOF) Expert-Performance Conditioning:**
    Relative expert ranking features are derived from out-of-fold validation residuals, preventing circular self-bias and ensuring realistic gating inputs.
 5. **Five-Seed Stochastic Sensitivity Evaluation:**
-   To assess optimizer convergence variance rather than lucky initialization, models are trained and evaluated across 5 random seeds [42, 123, 999, 2024, 3407]. All reported standard deviations are population standard deviations ($	ext{ddof}=0$).
+   To assess optimizer convergence variance rather than lucky initialization, models are trained and evaluated across 5 random seeds [42, 123, 999, 2024, 3407]. Multi-seed models report both sample SD and population SD.
 6. **Non-Overlapping Daily-Block Hypothesis Testing:**
    Rolling test windows overlap by 167 hours, inducing extreme residual autocorrelation. To restore statistical independence, paired hypothesis testing (paired $t$-test, Wilcoxon signed-rank test, and Holm-Bonferroni correction) is evaluated across disjoint 24-hour daily blocks ($K=53$ on PJM, $K=456$ on GEFCom2014, $K=163$ on UCI Electricity).
 
@@ -156,12 +187,12 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 
 The authoritative, fully runnable Jupyter review notebook is located at:
 
-[`research/notebooks/CAEG_Net_Faculty_Review.ipynb`](research/notebooks/CAEG_Net_Faculty_Review.ipynb)
+[`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb)
 
 To execute all code cells and verify the experimental tables and visualizations from the command line:
 
 ```bash
-jupyter nbconvert --to notebook --execute --inplace research/notebooks/CAEG_Net_Faculty_Review.ipynb
+jupyter nbconvert --to notebook --execute --inplace notebooks/CAEG_Net_Faculty_Review.ipynb
 ```
 
 ---
