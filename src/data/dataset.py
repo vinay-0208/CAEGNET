@@ -52,6 +52,13 @@ def create_forecasting_windows(
     series_1d = np.asarray(series, dtype=np.float32).flatten()
     n = len(series_1d)
 
+    if np.isnan(series_1d).any():
+        nan_count = int(np.isnan(series_1d).sum())
+        raise ValueError(
+            f"Input series contains {nan_count} unresolved NaN values. "
+            "Clean or impute all missing intervals before window generation."
+        )
+
     start_origin = lookback - 1
     end_origin = n - horizon - 1
 
@@ -138,9 +145,8 @@ class ChronologicalWalkForwardForecaster:
 
         self.final_deployment_model.fit(X_2d, Y_train)
         self.is_fitted = True
-
-        cohort_end = min(self.warmup + 500, N)
-        self.warmup_prior_mae = float(np.mean(np.abs(oof_preds[self.warmup:cohort_end] - Y_train[self.warmup:cohort_end])))
+        # ISS-02: Warmup prior is fixed and predeclared at initialization (0.35 on standardized scale)
+        # to prevent temporal lookahead into future training residuals [warmup:warmup+500].
         return oof_preds
 
     def predict_deployment(self, X: np.ndarray) -> np.ndarray:

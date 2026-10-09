@@ -38,6 +38,7 @@ def load_and_clean_data(
     freq: str = "h",
     fill_strategy: str = "interpolate",
     max_fill_limit: int = 6,
+    split_ratios: Optional[Tuple[float, float, float]] = (0.70, 0.15, 0.15),
 ) -> Tuple[pd.DataFrame, Dict[str, Union[int, str, float, bool]]]:
     df = pd.read_csv(file_path)
     diagnostics: Dict[str, Union[int, str, float, bool]] = {
@@ -104,7 +105,68 @@ def load_and_clean_data(
 
     if missing_intervals > 0:
         if fill_strategy == "interpolate":
-            clean_series["load"] = clean_series["load"].interpolate(method="time", limit=max_fill_limit)
+            n_total = len(clean_series)
+            tr_end = int(n_total * split_ratios[0]) if split_ratios is not None else 0
+            val_end = int(n_total * (split_ratios[0] + split_ratios[1])) if split_ratios is not None else 0
+
+            if split_ratios is not None and tr_end > 0 and val_end > tr_end and val_end < n_total:
+                assert np.isclose(sum(split_ratios), 1.0), "split_ratios must sum to 1.0"
+                s = clean_series["load"].copy()
+                # 1. Train partition: strictly isolated from val and test
+                s_tr = s.iloc[:tr_end].interpolate(method="time", limit=max_fill_limit)
+                if pd.isna(s_tr.iloc[-1]):
+                    last_idx = s_tr.last_valid_index()
+                    if last_idx is not None:
+                        val = s_tr.loc[last_idx]
+                        pos = s_tr.index.get_loc(last_idx)
+                        fill_end = min(pos + 1 + max_fill_limit, len(s_tr))
+                        s_tr.iloc[pos + 1 : fill_end] = val
+
+                # 2. Validation partition: can access completed train tail, strictly isolated from test
+                valid_tr = s_tr.dropna()
+                last_tr = valid_tr.iloc[-1] if not valid_tr.empty else np.nan
+                s_val = s.iloc[tr_end:val_end].copy()
+                if pd.isna(s_val.iloc[0]) and not pd.isna(last_tr):
+                    combined_val = pd.concat([
+                        pd.Series([last_tr], index=[s_val.index[0] - pd.Timedelta(freq)]),
+                        s_val,
+                    ])
+                    combined_val = combined_val.interpolate(method="time", limit=max_fill_limit)
+                    s_val = combined_val.iloc[1:]
+                else:
+                    s_val = s_val.interpolate(method="time", limit=max_fill_limit)
+                if pd.isna(s_val.iloc[-1]):
+                    last_idx = s_val.last_valid_index()
+                    if last_idx is not None:
+                        val = s_val.loc[last_idx]
+                        pos = s_val.index.get_loc(last_idx)
+                        fill_end = min(pos + 1 + max_fill_limit, len(s_val))
+                        s_val.iloc[pos + 1 : fill_end] = val
+
+                # 3. Test partition: can access completed val tail, strictly isolated from future
+                valid_val = s_val.dropna()
+                last_val = valid_val.iloc[-1] if not valid_val.empty else np.nan
+                s_test = s.iloc[val_end:].copy()
+                if pd.isna(s_test.iloc[0]) and not pd.isna(last_val):
+                    combined_test = pd.concat([
+                        pd.Series([last_val], index=[s_test.index[0] - pd.Timedelta(freq)]),
+                        s_test,
+                    ])
+                    combined_test = combined_test.interpolate(method="time", limit=max_fill_limit)
+                    s_test = combined_test.iloc[1:]
+                else:
+                    s_test = s_test.interpolate(method="time", limit=max_fill_limit)
+                if pd.isna(s_test.iloc[-1]):
+                    last_idx = s_test.last_valid_index()
+                    if last_idx is not None:
+                        val = s_test.loc[last_idx]
+                        pos = s_test.index.get_loc(last_idx)
+                        fill_end = min(pos + 1 + max_fill_limit, len(s_test))
+                        s_test.iloc[pos + 1 : fill_end] = val
+
+                clean_series["load"] = pd.concat([s_tr, s_val, s_test])
+            else:
+                clean_series["load"] = clean_series["load"].interpolate(method="time", limit=max_fill_limit)
         elif fill_strategy == "ffill":
             clean_series["load"] = clean_series["load"].ffill(limit=max_fill_limit)
 

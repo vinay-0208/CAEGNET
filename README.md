@@ -14,7 +14,7 @@
 
 Monolithic neural architectures typically suffer from structural trade-offs: recurrent models (LSTM) capture long-range diurnal persistence but struggle with high-frequency ramp events; dilated convolutional models (TCN) capture multi-scale patterns with broad receptive fields but exhibit parameter rigidity across shifting volatility regimes; and shallow convolutional networks (CNN) excel at localized edge motifs while lacking global context. CAEG-Net resolves these trade-offs by orchestrating heterogeneous temporal experts through a lightweight context-adaptive gating router and a regularized confidence fallback mechanism.
 
-Rather than relying on unconstrained end-to-end routing that risks expert starvation or routing instability, CAEG-Net conditions its convex gating weights on a distilled 7-dimensional causal conditioning vector (comprising 4 physical context features and 3 causal out-of-fold relative expert-performance features). A dedicated confidence fallback head anchors predictions toward the robust equal-expert centroid ($\lambda pprox 0.51$), preventing single-expert overconfidence during abrupt regime transitions.
+Rather than relying on unconstrained end-to-end routing that risks expert starvation or routing instability, CAEG-Net conditions its convex gating weights on a distilled 7-dimensional causal conditioning vector (comprising 4 physical context features and 3 causal out-of-fold relative expert-performance features). A dedicated confidence fallback head anchors predictions toward the robust equal-expert centroid ($\lambda \approx 0.51$), preventing single-expert overconfidence during abrupt regime transitions.
 
 ---
 
@@ -66,13 +66,13 @@ graph TD
 ```
 
 ### Flow of Tensors:
-1. **168-Hour Historical Load** ($\mathbf{X}_t \in \mathbb{R}^{168 	imes 1}$): Passed simultaneously into the three parallel temporal backbones.
+1. **168-Hour Historical Load** ($\mathbf{X}_t \in \mathbb{R}^{168 \times 1}$): Passed simultaneously into the three parallel temporal backbones.
 2. **Context Encoder** ($\mathbf{c}_t \in \mathbb{R}^7$): Evaluates 4 causal sequence statistics (trend slope, short-term volatility, lag-24 autocorrelation, recent tracking error) and 3 causal out-of-fold relative expert error indicators.
 3. **LSTM / TCN / CNN Experts**: Produce independent candidate 24-hour forecasts $\hat{\mathbf{y}}_L, \hat{\mathbf{y}}_T, \hat{\mathbf{y}}_C \in \mathbb{R}^{24}$.
-4. **Adaptive Routing**: Softmax gating network maps $\mathbf{c}_t$ to simplex weights $\mathbf{w}_t = [w_L, w_T, w_C]^	op$ ($\sum w_i = 1.0, w_i > 0$) to compute adaptive blend $\hat{\mathbf{y}}_{	ext{gate}} = \sum w_i \hat{\mathbf{y}}_i$.
-5. **Confidence Fallback**: Evaluates gating certainty and adaptively shrinks toward the equal-expert centroid $\hat{\mathbf{y}}_{	ext{equal}} = rac{1}{3}(\hat{\mathbf{y}}_L + \hat{\mathbf{y}}_T + \hat{\mathbf{y}}_C)$ via learned shrinkage parameter $\lambda_t \in [0, 1]$:
-   $$\hat{\mathbf{y}}_{	ext{final}} = \lambda_t \hat{\mathbf{y}}_{	ext{gate}} + (1 - \lambda_t) \hat{\mathbf{y}}_{	ext{equal}}$$
-6. **24-Hour Forecast** ($\hat{\mathbf{y}}_{	ext{final}} \in \mathbb{R}^{24}$): Inverted back to physical engineering units (MW or kW).
+4. **Adaptive Routing**: Softmax gating network maps $\mathbf{c}_t$ to simplex weights $\mathbf{w}_t = [w_L, w_T, w_C]^\top$ ($\sum w_i = 1.0, w_i > 0$) to compute adaptive blend $\hat{\mathbf{y}}_{\text{gate}} = \sum w_i \hat{\mathbf{y}}_i$.
+5. **Confidence Fallback**: Evaluates gating certainty and adaptively shrinks toward the equal-expert centroid $\hat{\mathbf{y}}_{\text{equal}} = \frac{1}{3}(\hat{\mathbf{y}}_L + \hat{\mathbf{y}}_T + \hat{\mathbf{y}}_C)$ via learned shrinkage parameter $\lambda_t \in [0, 1]$:
+   $$\hat{\mathbf{y}}_{\text{final}} = \lambda_t \hat{\mathbf{y}}_{\text{gate}} + (1 - \lambda_t) \hat{\mathbf{y}}_{\text{equal}}$$
+6. **24-Hour Forecast** ($\hat{\mathbf{y}}_{\text{final}} \in \mathbb{R}^{24}$): Inverted back to physical engineering units (MW or kW).
 
 ---
 
@@ -90,7 +90,7 @@ graph TD
 | **Temporal Experts** | LSTM (2 layers), TCN (6 dilated stages), CNN (3 multi-scale stages) |
 | **Evaluation Datasets** | PJM Interconnection (MW), GEFCom2014 Zone 21 (kW), UCI Electricity (MW) |
 | **Random Evaluation Seeds** | 5 canonical initialization seeds [42, 123, 999, 2024, 3407] |
-| **Primary Metric** | Mean Absolute Error (MAE) with population standard deviation ($	ext{ddof}=0$) |
+| **Primary Metric** | Mean Absolute Error (MAE) with population standard deviation ($\text{ddof}=0$) |
 
 ---
 
