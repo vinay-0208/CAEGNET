@@ -197,6 +197,13 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/CAEG_Net_Faculty_R
 
 ---
 
+## Contributors
+
+- Sharun Kumar D
+- Tabrez N
+
+---
+
 ## License
 
 This project is licensed under the terms of the [MIT License](LICENSE).
