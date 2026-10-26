@@ -181,16 +181,13 @@ streamlit run dashboard/app.py
 
 ---
 
-## Authoritative Jupyter Notebooks
+## Faculty Evaluation & Replication Notebook
 
-The repository provides two authoritative, self-contained Jupyter notebooks for faculty evaluation:
+The authoritative, self-contained Jupyter review notebook for faculty evaluation and replication is located at:
 
-1. **Faculty Review & Benchmark Verification:**
-   - [`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb) — End-to-end evaluation, multi-seed statistical analysis, cross-dataset benchmarks, and causal validation checks.
-2. **Canonical V1 Audited Benchmark:**
-   - [`notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb`](notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb) — Audited Canonical CAEG-Net V1 baseline implementation, zero-retraining inference, and artifact provenance verification.
+- [`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb) — End-to-end evaluation, multi-seed statistical analysis (PJM, GEFCom2014, UCI), model architecture, and causal validation checks.
 
-To execute all cells in a fresh kernel:
+To execute all cells end-to-end in a fresh kernel:
 
 ```bash
 jupyter nbconvert --to notebook --execute --inplace notebooks/CAEG_Net_Faculty_Review.ipynb

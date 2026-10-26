@@ -87,10 +87,15 @@ tmp_inspect/
 colab_implementation/
 implementation_docs/
 
+# Binary document reports
+docs/*.pdf
+
 # Research track internal experiments and artifacts
 research/
-!research/tests/
-!research/tests/test_causality.py
+
+# Auxiliary / untracked development scripts
+train.py
+experiments.py
 
 # Scripts: strictly track authoritative verification and runner scripts
 scripts/*
@@ -98,7 +103,6 @@ scripts/*
 !scripts/run_dashboard.py
 !scripts/verify_reproducibility.py
 
-# Public notebooks: strictly track only the two authoritative public notebooks
+# Public notebooks: strictly track only the final faculty review notebook
 notebooks/*.ipynb
 !notebooks/CAEG_Net_Faculty_Review.ipynb
-!notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb
