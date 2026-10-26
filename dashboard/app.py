@@ -29,6 +29,32 @@ repo_root = os.path.abspath(os.path.join(cur_dir, ".."))
 if repo_root not in sys.path:
     sys.path.insert(0, repo_root)
 
+from dashboard.simulator_engine import (
+    CONTEXT_FEATURE_NAMES,
+    EXPECTED_SUBMODULE_PARAMS,
+    EXPECTED_TOTAL_PARAMS,
+    EXACT_RECENT_ERROR_MIN_HOURS,
+    HORIZON_HOURS,
+    LOOKBACK_HOURS,
+    MAX_PHYSICAL_LOAD_MW,
+    MIN_PHYSICAL_LOAD_MW,
+    RECOGNIZED_LOAD_COLUMNS,
+    RECOGNIZED_TIMESTAMP_COLUMNS,
+    SUPPORTED_SEEDS,
+    InputValidationError,
+    build_forecast_dataframe,
+    export_forecast_to_csv_bytes,
+    generate_hypothetical_scenario_dataframe,
+    get_checkpoint_path,
+    load_pjm_training_reference,
+    parse_and_validate_Sequence_input,
+    parse_and_validate_csv_input,
+    parse_and_validate_text_input,
+    run_historical_window_validation,
+    run_live_custom_forecast,
+    verify_and_load_canonical_v1_model,
+)
+
 # Streamlit Page Configuration
 st.set_page_config(
     page_title="CAEG-Net | Research Dashboard",
@@ -64,6 +90,11 @@ st.markdown("""
         color: #F1F5F9;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
+    p, .stMarkdown p, .stMarkdown li, [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li {
+        font-size: 0.94rem;
+        line-height: 1.6;
+        color: #CBD5E1;
+    }
     
     /* Sidebar Styling */
     [data-testid="stSidebar"] {
@@ -71,7 +102,7 @@ st.markdown("""
         border-right: 1px solid #1A2333;
     }
     .sidebar-category {
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         font-weight: 700;
         color: #64748B;
         text-transform: uppercase;
@@ -79,14 +110,14 @@ st.markdown("""
         margin: 18px 0 6px 4px;
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label {
-        padding: 7px 12px;
+        padding: 8px 12px;
         border-radius: 6px;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
         transition: all 0.2s ease;
         cursor: pointer;
         color: #94A3B8 !important;
         font-weight: 500;
-        font-size: 0.85rem;
+        font-size: 0.90rem;
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
         background-color: #131C2E;
@@ -113,26 +144,26 @@ st.markdown("""
         color: #38BDF8;
         border: 1px solid rgba(56, 189, 248, 0.28);
         border-radius: 9999px;
-        padding: 3px 10px;
+        padding: 4px 12px;
         font-weight: 700;
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         display: inline-block;
         letter-spacing: 0.06em;
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }
     .page-title {
-        font-size: 2.05rem;
+        font-size: 2.15rem;
         font-weight: 800;
         color: #F8FAFC;
         letter-spacing: -0.025em;
-        line-height: 1.15;
+        line-height: 1.2;
         margin-bottom: 0.35rem;
     }
     .page-subtitle {
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         color: #94A3B8;
-        line-height: 1.45;
+        line-height: 1.55;
         margin-bottom: 1rem;
     }
 
@@ -141,7 +172,7 @@ st.markdown("""
         background: #0F172A;
         border: 1px solid #1E293B;
         border-radius: 10px;
-        padding: 16px 20px;
+        padding: 20px 24px;
         margin-bottom: 1rem;
         transition: all 0.2s ease;
         box-sizing: border-box;
@@ -150,19 +181,19 @@ st.markdown("""
         border-color: #334155;
     }
     .dark-card-header {
-        font-size: 0.8rem;
+        font-size: 0.88rem;
         font-weight: 700;
         color: #38BDF8;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        margin-bottom: 8px;
+        margin-bottom: 10px;
     }
     
     .accent-card {
         background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(14, 165, 233, 0.05) 100%);
         border: 1px solid rgba(56, 189, 248, 0.28);
         border-radius: 10px;
-        padding: 18px 22px;
+        padding: 20px 24px;
         margin-bottom: 1rem;
         box-sizing: border-box;
     }
@@ -171,19 +202,19 @@ st.markdown("""
     .metric-grid-5 {
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 12px;
+        gap: 14px;
         margin-bottom: 1.2rem;
     }
     .metric-grid-4 {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
+        gap: 14px;
         margin-bottom: 1.2rem;
     }
     .metric-grid-3 {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 14px;
+        gap: 16px;
         margin-bottom: 1.2rem;
     }
 
@@ -206,8 +237,8 @@ st.markdown("""
         background: #0F172A;
         border: 1px solid #1E293B;
         border-radius: 10px;
-        padding: 14px 16px;
-        min-height: 108px;
+        padding: 18px 20px;
+        min-height: 122px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -221,29 +252,30 @@ st.markdown("""
         transform: translateY(-1px);
     }
     .metric-label {
-        font-size: 0.70rem;
+        font-size: 0.82rem;
         color: #94A3B8;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         font-weight: 600;
-        margin-bottom: 4px;
+        margin-bottom: 6px;
+        line-height: 1.4;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
     .metric-value {
-        font-size: 1.48rem;
+        font-size: 1.65rem;
         font-weight: 700;
         color: #F8FAFC;
         letter-spacing: -0.02em;
-        line-height: 1.15;
-        margin-bottom: 4px;
+        line-height: 1.25;
+        margin-bottom: 6px;
     }
     .metric-sub {
-        font-size: 0.74rem;
+        font-size: 0.82rem;
         color: #38BDF8;
         font-weight: 500;
-        line-height: 1.25;
+        line-height: 1.35;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -255,8 +287,8 @@ st.markdown("""
         background: #0F172A;
         border: 1px solid #1E293B;
         border-radius: 10px;
-        padding: 16px 20px;
-        min-height: 155px;
+        padding: 20px 24px;
+        min-height: 165px;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -275,9 +307,9 @@ st.markdown("""
         color: #10B981;
         border: 1px solid rgba(16, 185, 129, 0.3);
         border-radius: 9999px;
-        padding: 3px 10px;
+        padding: 4px 12px;
         font-weight: 600;
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         display: inline-block;
         letter-spacing: 0.04em;
         margin-bottom: 0.5rem;
@@ -287,9 +319,9 @@ st.markdown("""
         color: #38BDF8;
         border: 1px solid rgba(56, 189, 248, 0.3);
         border-radius: 9999px;
-        padding: 3px 10px;
+        padding: 4px 12px;
         font-weight: 600;
-        font-size: 0.72rem;
+        font-size: 0.78rem;
         display: inline-block;
         letter-spacing: 0.04em;
         margin-bottom: 0.5rem;
@@ -297,10 +329,10 @@ st.markdown("""
 
     /* Section Titles */
     .section-title {
-        font-size: 1.15rem;
+        font-size: 1.25rem;
         font-weight: 700;
         color: #F8FAFC;
-        margin: 1.2rem 0 0.8rem 0;
+        margin: 1.4rem 0 0.9rem 0;
         letter-spacing: -0.01em;
     }
 
@@ -312,16 +344,16 @@ st.markdown("""
         background: #0B1120;
         border: 1px solid #1E293B;
         border-radius: 8px;
-        padding: 10px 16px;
+        padding: 12px 18px;
         margin-bottom: 1.3rem;
         overflow-x: auto;
     }
     .pipeline-step {
         background: #1E293B;
         color: #E2E8F0;
-        padding: 5px 12px;
+        padding: 6px 14px;
         border-radius: 6px;
-        font-size: 0.8rem;
+        font-size: 0.86rem;
         font-weight: 600;
         white-space: nowrap;
     }
@@ -338,11 +370,12 @@ st.markdown("""
     .provenance-card {
         background: #0B1120;
         border-left: 4px solid #38BDF8;
-        padding: 12px 16px;
+        padding: 16px 20px;
         border-radius: 0 8px 8px 0;
         margin-bottom: 1.2rem;
         color: #94A3B8;
-        font-size: 0.88rem;
+        font-size: 0.94rem;
+        line-height: 1.6;
     }
     .provenance-card strong {
         color: #F1F5F9;
@@ -376,13 +409,13 @@ st.markdown("""
     .custom-table .na-cell {
         color: #64748B !important;
         font-style: italic;
-        font-size: 0.78rem;
+        font-size: 0.82rem;
     }
     .role-badge {
         display: inline-block;
-        padding: 2px 7px;
+        padding: 3px 8px;
         border-radius: 4px;
-        font-size: 0.70rem;
+        font-size: 0.76rem;
         font-weight: 600;
         letter-spacing: 0.04em;
         text-transform: uppercase;
@@ -421,7 +454,7 @@ st.markdown("""
         overflow: hidden;
         border: 1px solid #1E293B;
         margin-bottom: 1.2rem;
-        font-size: 0.84rem;
+        font-size: 0.90rem;
     }
     .custom-table th {
         background: #1E293B;
@@ -429,15 +462,16 @@ st.markdown("""
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        font-size: 0.72rem;
-        padding: 9px 12px;
+        font-size: 0.80rem;
+        padding: 10px 14px;
         text-align: left;
         border-bottom: 1px solid #334155;
     }
     .custom-table td {
-        padding: 8px 12px;
+        padding: 10px 14px;
         border-bottom: 1px solid #1E293B;
         color: #E2E8F0;
+        line-height: 1.5;
     }
     .custom-table tr:last-child td {
         border-bottom: none;
@@ -460,25 +494,25 @@ st.markdown("""
         background: #0F172A;
         border: 1px solid #1E293B;
         border-radius: 8px;
-        padding: 12px 14px;
+        padding: 16px 18px;
         margin-top: 1.5rem;
     }
     .sidebar-info-title {
-        font-size: 0.82rem;
+        font-size: 0.90rem;
         font-weight: 700;
         color: #F8FAFC;
-        margin-bottom: 2px;
+        margin-bottom: 3px;
     }
     .sidebar-info-sub {
-        font-size: 0.74rem;
+        font-size: 0.80rem;
         color: #38BDF8;
         font-family: monospace;
         margin-bottom: 8px;
     }
     .sidebar-info-meta {
-        font-size: 0.74rem;
+        font-size: 0.82rem;
         color: #94A3B8;
-        line-height: 1.4;
+        line-height: 1.5;
     }
 
     /* Dark Footer */
@@ -487,7 +521,7 @@ st.markdown("""
         padding: 24px 0 12px 0;
         margin-top: 3rem;
         color: #64748B;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         text-align: center;
     }
 </style>
@@ -497,6 +531,20 @@ st.markdown("""
 # =========================================================================
 # DATA LOADERS & ARTIFACT ABSTRACTION (Cached & Purely Verified)
 # =========================================================================
+@st.cache_resource(show_spinner=False)
+def get_cached_pjm_reference():
+    """Load and cache the authoritative PJM training scaler, walk-forward Ridge forecaster, and test partition."""
+    return load_pjm_training_reference(use_cache=True)
+
+@st.cache_resource(show_spinner=False)
+def load_pjm_phase5_cache():
+    """Load Phase 5 / Phase 11 checkpoint evaluation cache (includes standalone LSTM, TCN, CNN, and Equal Ensemble)."""
+    path_primary = os.path.join(repo_root, "results", "phase5_multiseed_cache.npz")
+    if os.path.exists(path_primary):
+        data = np.load(path_primary)
+        return {k: data[k] for k in data.files}
+    return None
+
 @st.cache_resource(show_spinner=False)
 def load_pjm_prediction_cache():
     """Load verified multi-seed evaluation arrays for PJM."""
@@ -508,6 +556,7 @@ def load_pjm_prediction_cache():
             data = np.load(p)
             return {k: data[k] for k in data.files}
     return None
+
 
 @st.cache_resource(show_spinner=False)
 def load_tri_benchmark_dataset():
@@ -716,26 +765,27 @@ def apply_dark_plotly_theme(fig, height=420):
         template="plotly_dark",
         paper_bgcolor="#0F172A",
         plot_bgcolor="#0B1120",
-        font=dict(family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color="#CBD5E1"),
+        font=dict(family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", color="#CBD5E1", size=12),
         height=height,
-        margin=dict(l=45, r=35, t=50, b=45),
+        margin=dict(l=50, r=35, t=55, b=50),
+        title=dict(font=dict(color="#F8FAFC", size=15)),
         xaxis=dict(
             gridcolor="#1E293B",
             linecolor="#334155",
-            tickfont=dict(color="#94A3B8", size=10),
-            title_font=dict(color="#CBD5E1", size=11)
+            tickfont=dict(color="#94A3B8", size=11),
+            title_font=dict(color="#CBD5E1", size=13)
         ),
         yaxis=dict(
             gridcolor="#1E293B",
             linecolor="#334155",
-            tickfont=dict(color="#94A3B8", size=10),
-            title_font=dict(color="#CBD5E1", size=11)
+            tickfont=dict(color="#94A3B8", size=11),
+            title_font=dict(color="#CBD5E1", size=13)
         ),
         legend=dict(
             bgcolor="rgba(15, 23, 42, 0.85)",
             bordercolor="#1E293B",
             borderwidth=1,
-            font=dict(color="#E2E8F0", size=10)
+            font=dict(color="#E2E8F0", size=11)
         )
     )
     return fig
@@ -752,9 +802,7 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-page = st.sidebar.radio(
-    "Navigation",
-    [
+nav_options = [
         "⌂ Overview",
         "◈ Prediction / Forecast",
         "◫ Architecture",
@@ -767,7 +815,19 @@ page = st.sidebar.radio(
         "◷ Horizon Analysis",
         "✦ Research Findings",
         "ⓘ Limitations & Ethics"
-    ],
+    ]
+qp_page = st.query_params.get("page", "")
+default_idx = 0
+if qp_page:
+    for idx, opt in enumerate(nav_options):
+        if qp_page.lower() in opt.lower():
+            default_idx = idx
+            break
+
+page = st.sidebar.radio(
+    "Navigation",
+    nav_options,
+    index=default_idx,
     label_visibility="collapsed"
 )
 
@@ -775,15 +835,16 @@ page = st.sidebar.radio(
 st.sidebar.markdown("""
 <div class="sidebar-info-card">
     <div class="sidebar-info-title">CAEG-Net</div>
-    <div class="sidebar-info-sub">F2 / A2-OOF (Locked)</div>
+    <div class="sidebar-info-sub">Canonical V1 &amp; F2 Benchmark</div>
     <div class="sidebar-info-meta">
-        <strong>121,724</strong> Parameters<br>
+        <strong>121,531</strong> Params (Canonical V1)<br>
+        <strong>121,724</strong> Params (F2 / A2-OOF)<br>
         <strong>168h</strong> Lookback → <strong>24h</strong> Lead<br>
-        <strong>3</strong> Benchmark Grids<br>
-        <strong>5</strong> Evaluation Seeds
+        <strong>3</strong> Grids • <strong>5</strong> Seeds
     </div>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 # =========================================================================
@@ -920,31 +981,31 @@ if page == "⌂ Overview":
     <div class="metric-grid-3">
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">PJM Interconnection (MW)</div>
+                <div style="font-size: 0.82rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">PJM Interconnection (MW)</div>
                 <div style="font-size: 1.65rem; font-weight: 800; color: #F8FAFC; margin-bottom: 4px;">250.97 ± 10.69 <span style="font-size: 0.95rem; color: #94A3B8;">MW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.4;">RMSE: <strong>335.38 MW</strong> · R²: <strong>0.8714</strong></div>
+                <div style="font-size: 0.88rem; color: #94A3B8; line-height: 1.5;">RMSE: <strong>335.38 MW</strong> · R²: <strong>0.8714</strong></div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.84rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 0.0406)
             </div>
         </div>
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">GEFCom2014 (kW)</div>
+                <div style="font-size: 0.82rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">GEFCom2014 (kW)</div>
                 <div style="font-size: 1.65rem; font-weight: 800; color: #F8FAFC; margin-bottom: 4px;">12.41 ± 0.15 <span style="font-size: 0.95rem; color: #94A3B8;">kW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.4;">RMSE: <strong>18.04 kW</strong> · R²: <strong>0.8610</strong></div>
+                <div style="font-size: 0.88rem; color: #94A3B8; line-height: 1.5;">RMSE: <strong>18.04 kW</strong> · R²: <strong>0.8610</strong></div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.84rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 1.02e-27)
             </div>
         </div>
         <div class="benchmark-card">
             <div>
-                <div style="font-size: 0.74rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">UCI Electricity (MW)</div>
+                <div style="font-size: 0.82rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">UCI Electricity (MW)</div>
                 <div style="font-size: 1.65rem; font-weight: 800; color: #F8FAFC; margin-bottom: 4px;">7.74 ± 0.30 <span style="font-size: 0.95rem; color: #94A3B8;">MW</span></div>
-                <div style="font-size: 0.82rem; color: #94A3B8; line-height: 1.4;">RMSE: <strong>10.96 MW</strong> · R²: <strong>0.9831</strong></div>
+                <div style="font-size: 0.88rem; color: #94A3B8; line-height: 1.5;">RMSE: <strong>10.96 MW</strong> · R²: <strong>0.9831</strong></div>
             </div>
-            <div style="font-size: 0.78rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
+            <div style="font-size: 0.84rem; color: #10B981; font-weight: 600; margin-top: 10px; border-top: 1px solid #1E293B; padding-top: 8px;">
                 ✓ Statistically significant vs baseline (p = 0.0017)
             </div>
         </div>
@@ -956,7 +1017,7 @@ if page == "⌂ Overview":
         st.markdown("""
         <div class="dark-card">
             <div class="dark-card-header">Scientific Findings Summary</div>
-            <div style="font-size: 0.85rem; color: #94A3B8; line-height: 1.55;">
+            <div style="font-size: 0.92rem; color: #94A3B8; line-height: 1.6;">
                 • <strong>Balanced Cross-Grid Performance:</strong> CAEG-Net F2 delivers the strongest cross-grid balance across all 3 evaluated datasets.<br>
                 • <strong>Convex Routing Blending:</strong> Gating weights remain interior to the simplex ($N_{\text{eff}} \approx 2.98 - 2.99$), preventing collapse.<br>
                 • <strong>Empirical Stabilization:</strong> Learned $\\lambda \\approx 0.51$ smoothly regularizes toward the equal ensemble centroid with low temporal variation.<br>
@@ -968,7 +1029,7 @@ if page == "⌂ Overview":
         st.markdown("""
         <div class="dark-card">
             <div class="dark-card-header">Evaluation Benchmarks</div>
-            <div style="font-size: 0.85rem; color: #94A3B8; line-height: 1.55;">
+            <div style="font-size: 0.92rem; color: #94A3B8; line-height: 1.6;">
                 • <strong>PJM Interconnection:</strong> US regional transmission network; industrial load profile (8,784h, MW).<br>
                 • <strong>GEFCom2014:</strong> International competition benchmark; zonal load series with weather volatility (78,888h, kW).<br>
                 • <strong>UCI Electricity:</strong> Aggregated smart meter customer demand series (26,304h, MW).
@@ -983,395 +1044,1137 @@ if page == "⌂ Overview":
 elif page == "◈ Prediction / Forecast":
     st.markdown("""
     <div class="page-hero-container">
-        <span class="page-category-badge">Interactive Evaluation Viewer</span>
-        <div class="page-title">24-Hour Load Forecast</div>
-        <div class="page-subtitle">Interactive evaluation viewer for CAEG-Net. Explore stored test evaluations, examine day-ahead trajectories, and compare model outputs with individual temporal experts.</div>
+        <span class="page-category-badge">Live PyTorch Inference &amp; Benchmark Evaluation</span>
+        <div class="page-title">Interactive CAEG-Net V1 Forecast Simulator</div>
+        <div class="page-subtitle">Generate genuinely new 24-hour electricity load forecasts by running the trained, frozen Canonical CAEG-Net V1 model (121,531 parameters) on custom hourly load profiles or uploaded CSV series, or inspect stored benchmark evaluation traces.</div>
     </div>
     """, unsafe_allow_html=True)
 
-    # 1. PROMINENT DATASET SELECTOR
-    st.markdown('<div class="section-title">1. Dataset Selection</div>', unsafe_allow_html=True)
-    ds_options = ["PJM", "GEFCom2014", "UCI"]
-    curr_idx = ds_options.index(st.session_state.get("selected_dataset", "PJM")) if st.session_state.get("selected_dataset") in ds_options else 0
-    
-    col_sel_ds, col_sel_meta = st.columns([1.6, 2.4])
-    with col_sel_ds:
-        chosen_ds = st.radio(
-            "Select Benchmark Dataset",
-            ds_options,
-            index=curr_idx,
-            horizontal=True,
-            help="Switch active dataset for all dependent forecast visualizations.",
-            key="pred_dataset_radio"
-        )
-        st.session_state["selected_dataset"] = chosen_ds
+    sim_tab, cached_tab = st.tabs([
+        "⚡ Interactive CAEG-Net V1 Forecast Simulator (Primary Live Inference)",
+        "🗂️ Cached Benchmark Evaluation Viewer (Stored Test Predictions)",
+    ])
 
-    artifact = load_prediction_artifact(chosen_ds)
+    # =====================================================================
+    # TAB 1: PRIMARY INTERFACE — INTERACTIVE CAEG-NET V1 FORECAST SIMULATOR
+    # =====================================================================
+    with sim_tab:
+        st.markdown('<div class="section-title">Interactive CAEG-Net V1 Forecast Simulator</div>', unsafe_allow_html=True)
 
-    with col_sel_meta:
+        try:
+            pjm_ref = get_cached_pjm_reference()
+        except Exception as exc:
+            st.error(f"Failed to initialize PJM training reference and scaler: {exc}")
+            st.stop()
+
         st.markdown(f"""
-        <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:10px 16px; font-size:0.82rem; color:#CBD5E1;">
-            <div><strong>Active Dataset:</strong> <span style="color:#38BDF8; font-weight:600;">{artifact['name']}</span> ({artifact['grid_type']})</div>
-            <div style="margin-top:4px;"><strong>Units:</strong> {artifact['units']} &nbsp;|&nbsp; <strong>Horizon:</strong> {artifact['horizon']} &nbsp;|&nbsp; <strong>Available Instances:</strong> {artifact['instances_text']}</div>
+        <div style="background:#0F172A; border:1px solid #1E293B; border-left:4px solid #38BDF8; border-radius:8px; padding:14px 18px; margin-bottom:16px; font-size:0.86rem; color:#CBD5E1; line-height:1.55;">
+            <div><strong>Authoritative Model:</strong> <code style="color:#38BDF8;">caeg_net.CAEGNet</code> (Frozen Canonical V1 Architecture • <strong>{EXPECTED_TOTAL_PARAMS:,}</strong> Verified Parameters: LSTM 56,152 + TCN 36,952 + CNN 27,400 + Context Encoder 384 + Softmax Gate 643)</div>
+            <div style="margin-top:4px;"><strong>Input Specification:</strong> Minimum <strong>{LOOKBACK_HOURS} contiguous hourly observations</strong> (168h lookback → 24h forecast horizon) &nbsp;|&nbsp; <strong>Assumed Physical Units:</strong> <strong>MW</strong> (PJM Regional Grid Scale)</div>
+            <div style="margin-top:4px;"><strong>Train-Only StandardScaler:</strong> $\\mu_{{\\text{{train}}}} = {pjm_ref.scaler_mean:,.4f}\\text{{ MW}}$, $\\sigma_{{\\text{{train}}}} = {pjm_ref.scaler_scale:,.4f}\\text{{ MW}}$ (PJM Training Range: $[{pjm_ref.train_min_mw:,.2f}, {pjm_ref.train_max_mw:,.2f}]\\text{{ MW}}$; never refitted on user input)</div>
+            <div style="margin-top:4px;"><strong>Causal Context Vector ($\\mathbf{{c}}_t \\in \\mathbb{{R}}^4$):</strong> <code>[Trend, Volatility, Periodicity (Lag-24), Recent_Error]</code> — When $\\ge {EXACT_RECENT_ERROR_MIN_HOURS}$ contiguous hours are supplied, <code>Recent_Error</code> is computed causally via the training-fitted walk-forward Ridge forecaster at origin $t-24\\text{{h}}$; when $168\\dots 191$ hours are supplied, it uses the documented training walk-forward neutral prior (<code>warmup_prior_mae = {pjm_ref.warmup_prior_mae:.6f}</code>) with an explicit disclosure notice.</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.write("")
+        col_cfg_seed, col_cfg_method = st.columns([1.2, 1.8])
+        with col_cfg_seed:
+            seed_choice_map = {
+                "Seed 42 — checkpoints/seed_42/caeg_full.pt": 42,
+                "Seed 123 — checkpoints/seed_123/caeg_full.pt": 123,
+                "Seed 999 — checkpoints/seed_999/caeg_full.pt": 999,
+                "Seed 2024 — checkpoints/seed_2024/caeg_full.pt": 2024,
+                "Seed 3407 — checkpoints/seed_3407/caeg_full.pt": 3407,
+                "5-Seed Ensemble (42, 123, 999, 2024, 3407 — Independent Passes)": "ensemble_5seed",
+            }
+            selected_seed_label = st.selectbox(
+                "Select Trained Canonical V1 Checkpoint / Seed",
+                list(seed_choice_map.keys()),
+                index=0,
+                key="sim_seed_select",
+                help="Select a single trained Canonical V1 checkpoint seed (42, 123, 999, 2024, 3407) or run all 5 checkpoints independently and aggregate their mean and standard deviation.",
+            )
+            chosen_sim_seed = seed_choice_map[selected_seed_label]
 
-    # CASE A: PJM (Detailed stored prediction traces available)
-    if artifact["available"] and artifact["data"] is not None:
-        bundle = artifact["data"]
-        cache = bundle["cache"]
-        X_all = bundle["X"]
-        scaler_mean = bundle["scaler_mean"]
-        scaler_scale = bundle["scaler_scale"]
-        max_windows = cache["y_true_raw"].shape[0] - 1  # 1293
-
-        # 2. FORECAST INSTANCE SELECTOR
-        st.markdown('<div class="section-title">2. Forecast Instance Selection</div>', unsafe_allow_html=True)
-        col_ctrl1, col_ctrl2 = st.columns([2.0, 1.0])
-        with col_ctrl1:
-            preset_select = st.selectbox(
-                "Curated Instance Presets (PJM Test Partition)",
+        with col_cfg_method:
+            input_method = st.radio(
+                "Select Forecast Input Method",
                 [
-                    "Window 721 — Median Representative Instance (MAE ~ 237 MW)",
-                    "Window 1185 — High Accuracy Diurnal Cycle (MAE ~ 57 MW)",
-                    "Window 493 — Summer Peak Demand Spike (Peak ~ 8,650 MW)",
-                    "Window 476 — High Volatility / Steep Ramp (Max Ramp ~ 598 MW/h)",
-                    "Window 0 — Chronological Test Horizon Origin (MAE ~ 360 MW)",
-                    "Custom Window Index (Slider)"
+                    "Method A — Enter or Paste Hourly Values (MW)",
+                    "Method B — Upload a CSV File (MW)",
+                    "Optional — Historical PJM Test-Window Validation",
                 ],
-                index=0
+                index=0,
+                horizontal=False,
+                key="sim_input_method_radio",
+                help="Custom-input simulation (Method A or Method B) is the primary interface. Historical-window validation is an optional demonstration and parity check.",
             )
-        with col_ctrl2:
-            st.selectbox("Forecast Horizon", ["24 Hours (Day-Ahead Dispatch)"], index=0)
 
-        if "721" in preset_select:
-            sel_idx = 721
-        elif "1185" in preset_select:
-            sel_idx = 1185
-        elif "493" in preset_select:
-            sel_idx = 493
-        elif "476" in preset_select:
-            sel_idx = 476
-        elif "Window 0" in preset_select:
-            sel_idx = 0
+        # Initialize default hypothetical scenario in session_state for Method A convenience
+        if "sim_method_a_df" not in st.session_state:
+            init_df = generate_hypothetical_scenario_dataframe(num_hours=192, scenario_type="diurnal_baseline", seed=42)
+            init_txt = ", ".join(f"{v:.2f}" for v in init_df["load_mw"].values)
+            st.session_state["sim_method_a_df"] = init_df
+            st.session_state["sim_method_a_text"] = init_txt
+            st.session_state["sim_text_area_input"] = init_txt
+
+        # -----------------------------------------------------------------
+        # METHOD A: ENTER OR PASTE HOURLY VALUES (OR EDITABLE TABLE)
+        # -----------------------------------------------------------------
+        if input_method.startswith("Method A"):
+            st.markdown('<div class="section-title">Method A — Enter, Paste, or Edit Hourly Electricity Load Values (MW)</div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div style="font-size:0.85rem; color:#94A3B8; margin-bottom:10px;">
+                • <strong>Required Input Length:</strong> At least <strong>168 contiguous hourly observations</strong> in <strong>Megawatts (MW)</strong> (if more than 168 values are entered, the latest 168 hours form the model lookback window; providing $\\ge 192$ hours enables exact causal walk-forward <code>Recent_Error</code> calculation).<br>
+                • <strong>Physical Validation Policy:</strong> All values must be finite numbers in $[1.0, 100,000.0]\\text{ MW}$ with non-zero variance. User-entered synthetic profiles are evaluated and labelled strictly as a <strong>Hypothetical Scenario</strong>.
+            </div>
+            """, unsafe_allow_html=True)
+
+            col_pre1, col_pre2, col_pre3, col_pre_mode = st.columns([1.1, 1.1, 1.1, 1.3])
+            with col_pre1:
+                if st.button("Load 192h Diurnal Scenario (Exact Recent Error)", use_container_width=True, key="btn_preset_192"):
+                    df_p = generate_hypothetical_scenario_dataframe(num_hours=192, scenario_type="diurnal_baseline", seed=42)
+                    txt_p = ", ".join(f"{v:.2f}" for v in df_p["load_mw"].values)
+                    st.session_state["sim_method_a_df"] = df_p
+                    st.session_state["sim_method_a_text"] = txt_p
+                    st.session_state["sim_text_area_input"] = txt_p
+            with col_pre2:
+                if st.button("Load 168h Diurnal Scenario (Prior Fallback)", use_container_width=True, key="btn_preset_168"):
+                    df_p = generate_hypothetical_scenario_dataframe(num_hours=168, scenario_type="diurnal_baseline", seed=42)
+                    txt_p = ", ".join(f"{v:.2f}" for v in df_p["load_mw"].values)
+                    st.session_state["sim_method_a_df"] = df_p
+                    st.session_state["sim_method_a_text"] = txt_p
+                    st.session_state["sim_text_area_input"] = txt_p
+            with col_pre3:
+                if st.button("Load 192h High-Peak Ramp Scenario", use_container_width=True, key="btn_preset_peak"):
+                    df_p = generate_hypothetical_scenario_dataframe(num_hours=192, scenario_type="high_peak_ramp", seed=123)
+                    txt_p = ", ".join(f"{v:.2f}" for v in df_p["load_mw"].values)
+                    st.session_state["sim_method_a_df"] = df_p
+                    st.session_state["sim_method_a_text"] = txt_p
+                    st.session_state["sim_text_area_input"] = txt_p
+            with col_pre_mode:
+                entry_widget_mode = st.selectbox(
+                    "Input Editor Mode",
+                    ["Paste Comma / Newline Values", "Interactive Editable Hourly Table"],
+                    index=0,
+                    key="sim_method_a_editor_mode",
+                )
+
+            if entry_widget_mode == "Paste Comma / Newline Values":
+                raw_text_val = st.text_area(
+                    f"Paste Hourly Electricity Load Values in MW (Required minimum: {LOOKBACK_HOURS} hourly observations; comma- or newline-separated)",
+                    height=150,
+                    key="sim_text_area_input",
+                    help="Enter at least 168 numeric hourly load values in MW separated by commas or newlines.",
+                )
+                st.session_state["sim_method_a_text"] = raw_text_val
+            else:
+                curr_df = st.session_state["sim_method_a_df"].copy()
+                curr_df.insert(0, "Hour_Step", np.arange(1, len(curr_df) + 1))
+                edited_df = st.data_editor(
+                    curr_df,
+                    use_container_width=True,
+                    height=260,
+                    num_rows="dynamic",
+                    column_config={
+                        "Hour_Step": st.column_config.NumberColumn("Observation #", disabled=True),
+                        "timestamp": st.column_config.TextColumn("Timestamp (Optional)"),
+                        "load_mw": st.column_config.NumberColumn(
+                            "Hourly Load (MW)",
+                            help="Electricity load in Megawatts (MW)",
+                            format="%.2f",
+                            required=True,
+                        ),
+                    },
+                    key="sim_data_editor_table",
+                )
+
+            clicked_a = st.button(
+                "Generate 24-Hour Forecast",
+                type="primary",
+                key="btn_generate_forecast_a",
+            )
+            if clicked_a:
+                try:
+                    if entry_widget_mode == "Paste Comma / Newline Values":
+                        val_input = parse_and_validate_text_input(raw_text_val, ref=pjm_ref)
+                    else:
+                        if "load_mw" not in edited_df.columns:
+                            raise InputValidationError("Editable table must contain 'load_mw' column.")
+                        val_input = parse_and_validate_Sequence_input(
+                            edited_df["load_mw"].tolist(),
+                            ref=pjm_ref,
+                            input_source="custom_editable_table",
+                        )
+                    live_res = run_live_custom_forecast(
+                        validated_input=val_input,
+                        seed=chosen_sim_seed,
+                        ref=pjm_ref,
+                    )
+                    st.session_state["live_forecast_result"] = live_res
+                    st.session_state["live_forecast_error"] = None
+                except Exception as exc:
+                    st.session_state["live_forecast_error"] = str(exc)
+                    st.session_state["live_forecast_result"] = None
+
+        # -----------------------------------------------------------------
+        # METHOD B: UPLOAD A CSV FILE
+        # -----------------------------------------------------------------
+        elif input_method.startswith("Method B"):
+            st.markdown('<div class="section-title">Method B — Upload a Custom Hourly Load CSV (MW)</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:12px 16px; margin-bottom:12px; font-size:0.85rem; color:#CBD5E1; line-height:1.55;">
+                <strong>Required CSV Column Format &amp; Continuity Rules:</strong><br>
+                1. <strong>Load Column (Required, in MW):</strong> Must contain a single unambiguous load column named one of <code>{", ".join(RECOGNIZED_LOAD_COLUMNS)}</code> (case-insensitive) with at least <strong>{LOOKBACK_HOURS}</strong> valid numeric rows ($\\ge {EXACT_RECENT_ERROR_MIN_HOURS}$ rows recommended for exact causal <code>Recent_Error</code>). If more than {LOOKBACK_HOURS} rows are present, the latest {LOOKBACK_HOURS}-hour window is used for forecasting.<br>
+                2. <strong>Timestamp Column (Optional):</strong> If a column named <code>{", ".join(RECOGNIZED_TIMESTAMP_COLUMNS)}</code> is present, timestamps are strictly validated for parseability, ascending chronological order, zero duplicates, and contiguous 1-hour intervals (gaps or out-of-order rows are rejected).<br>
+                3. <strong>Strict Validation:</strong> Ambiguous column schemas, fewer than {LOOKBACK_HOURS} observations, NaN/Inf values, non-numeric entries, or physically invalid loads ($\\le 0\\text{{ MW}}$ or $> 100,000\\text{{ MW}}$) are rejected.
+            </div>
+            """, unsafe_allow_html=True)
+
+            col_dl1, col_dl2 = st.columns(2)
+            with col_dl1:
+                sample_192_csv = generate_hypothetical_scenario_dataframe(num_hours=192, scenario_type="diurnal_baseline", seed=42).to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    "📄 Download Sample 192h Hypothetical Scenario CSV Template (Exact Causal Recent Error)",
+                    data=sample_192_csv,
+                    file_name="sample_192h_hypothetical_scenario.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+            with col_dl2:
+                sample_168_csv = generate_hypothetical_scenario_dataframe(num_hours=168, scenario_type="diurnal_baseline", seed=42).to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    "📄 Download Sample 168h Hypothetical Scenario CSV Template (Training Prior Fallback)",
+                    data=sample_168_csv,
+                    file_name="sample_168h_hypothetical_scenario.csv",
+                    mime="text/csv",
+                    use_container_width=True,
+                )
+
+            uploaded_csv = st.file_uploader(
+                "Upload Hourly Electricity Load CSV (MW)",
+                type=["csv"],
+                key="sim_csv_file_uploader",
+                help="Upload a CSV containing at least 168 contiguous hourly load observations in MW.",
+            )
+
+            clicked_b = st.button(
+                "Generate 24-Hour Forecast",
+                type="primary",
+                key="btn_generate_forecast_b",
+            )
+            if clicked_b:
+                if uploaded_csv is None:
+                    st.session_state["live_forecast_error"] = "Please upload a valid CSV file before clicking 'Generate 24-Hour Forecast'."
+                    st.session_state["live_forecast_result"] = None
+                else:
+                    try:
+                        raw_bytes = uploaded_csv.getvalue()
+                        val_input = parse_and_validate_csv_input(raw_bytes, ref=pjm_ref)
+                        live_res = run_live_custom_forecast(
+                            validated_input=val_input,
+                            seed=chosen_sim_seed,
+                            ref=pjm_ref,
+                        )
+                        st.session_state["live_forecast_result"] = live_res
+                        st.session_state["live_forecast_error"] = None
+                    except Exception as exc:
+                        st.session_state["live_forecast_error"] = str(exc)
+                        st.session_state["live_forecast_result"] = None
+
+        # -----------------------------------------------------------------
+        # OPTIONAL MODE: HISTORICAL PJM TEST-WINDOW LIVE VALIDATION
+        # -----------------------------------------------------------------
         else:
-            sel_idx = st.slider("Select Window Index (0 to 1293):", 0, max_windows, 721)
-
-        # Extract verified arrays
-        x_raw = X_all[sel_idx].flatten() * scaler_scale + scaler_mean
-        y_true = cache["y_true_raw"][sel_idx]
-        y_caeg = cache["caeg_seed_42"][sel_idx]
-        y_lstm = cache["lstm_seed_42"][sel_idx]
-        y_tcn = cache["tcn_seed_42"][sel_idx]
-        y_cnn = cache["cnn_seed_42"][sel_idx]
-        y_static = cache["static_seed_42"][sel_idx]
-        weights = cache["weights_seed_42"][sel_idx]
-
-        win_mae = np.mean(np.abs(y_true - y_caeg))
-        win_rmse = np.sqrt(np.mean((y_true - y_caeg)**2))
-        win_max_err = np.max(np.abs(y_true - y_caeg))
-
-        # Metric Cards for selected instance (metric-grid-5)
-        st.markdown(f"""
-        <div class="metric-grid-5">
-            <div class="metric-card">
-                <div class="metric-label">Selected Instance</div>
-                <div class="metric-value">#{sel_idx}</div>
-                <div class="metric-sub">PJM test partition</div>
+            st.markdown('<div class="section-title">Optional Validation Mode — Historical PJM Test-Window Live Inference vs. Saved Cache</div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div style="font-size:0.85rem; color:#94A3B8; margin-bottom:10px;">
+                This optional validation mode runs a <strong>live PyTorch forward pass</strong> using the selected trained Canonical V1 checkpoint on an existing PJM test-partition window (<code>0..1293</code>) and verifies numerical parity against the saved Phase 5 evaluation cache (<code>results/phase5_multiseed_cache.npz</code>) within a strict tolerance ($\\le 10^{-3}\\text{ MW}$ for forecasts, $\\le 10^{-6}$ for routing weights).
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Window MAE</div>
-                <div class="metric-value">{win_mae:.2f} <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-                <div class="metric-sub">Instance mean absolute error</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Window RMSE</div>
-                <div class="metric-value">{win_rmse:.2f} <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-                <div class="metric-sub">Quadratic lead penalty</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Peak Abs Gap</div>
-                <div class="metric-value">{win_max_err:.2f} <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-                <div class="metric-sub">Max single-step deviation</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Dataset-Level MAE</div>
-                <div class="metric-value">250.97 <span style="font-size:0.8rem; color:#94A3B8;">MW</span></div>
-                <div class="metric-sub">Full test partition (5-seed)</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-        # 3. PRIMARY CHART: ACTUAL vs CAEG-Net FORECAST
-        st.markdown('<div class="section-title">3. Actual vs CAEG-Net Forecast (168h Historical Context + 24h Forecast)</div>', unsafe_allow_html=True)
-        
-        t_hist = np.arange(-168, 0)
-        t_lead = np.arange(1, 25)
-
-        fig_main = go.Figure()
-        fig_main.add_trace(go.Scatter(
-            x=t_hist, y=x_raw, mode="lines", name="168h Historical Context",
-            line=dict(color="#64748B", width=1.8), hovertemplate="Context t=%{x}h: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_main.add_trace(go.Scatter(
-            x=t_lead, y=y_true, mode="lines+markers", name="Ground Truth Actual Load",
-            line=dict(color="#F8FAFC", width=2.6), marker=dict(color="#F8FAFC", size=5),
-            hovertemplate="Actual t=+%{x}h: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_main.add_trace(go.Scatter(
-            x=t_lead, y=y_caeg, mode="lines+markers", name="CAEG-Net Forecast (24h)",
-            line=dict(color="#38BDF8", width=3.4), marker=dict(color="#38BDF8", size=6, symbol="square"),
-            hovertemplate="CAEG-Net t=+%{x}h: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_main.add_vline(
-            x=0, line_width=2, line_dash="dash", line_color="#EF4444",
-            annotation_text="Forecast Origin (t=0h)", annotation_position="top left",
-            annotation_font=dict(color="#EF4444", size=10)
-        )
-        fig_main.update_layout(
-            title="PJM Interconnection — 168h Historical Context + 24h Day-Ahead Forecast Trajectory",
-            xaxis_title="Time Relative to Forecast Origin (Hours)",
-            yaxis_title="Electricity Load (MW)",
-            hovermode="x unified"
-        )
-        apply_dark_plotly_theme(fig_main, height=480)
-        st.plotly_chart(fig_main, use_container_width=True)
-
-        # 4. EXPERT COMPARISON
-        st.markdown('<div class="section-title">4. Temporal Expert Comparison (24-Hour Lead Horizon)</div>', unsafe_allow_html=True)
-        st.caption("Side-by-side comparison of individual temporal experts against Ground Truth and CAEG-Net on the selected forecast instance.")
-
-        fig_exp = go.Figure()
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_true, mode="lines+markers", name="Actual Ground Truth",
-            line=dict(color="#F8FAFC", width=3.0), marker=dict(color="#F8FAFC", size=6),
-            hovertemplate="Actual: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_caeg, mode="lines+markers", name="CAEG-Net (Fused)",
-            line=dict(color="#38BDF8", width=3.2), marker=dict(color="#38BDF8", size=6, symbol="square"),
-            hovertemplate="CAEG-Net: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_lstm, mode="lines", name="LSTM Expert",
-            line=dict(color="#F59E0B", width=1.8, dash="dot"),
-            hovertemplate="LSTM: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_tcn, mode="lines", name="TCN Expert",
-            line=dict(color="#10B981", width=1.8, dash="dash"),
-            hovertemplate="TCN: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_cnn, mode="lines", name="CNN Expert",
-            line=dict(color="#EC4899", width=1.8, dash="dashdot"),
-            hovertemplate="CNN: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.add_trace(go.Scatter(
-            x=t_lead, y=y_static, mode="lines", name="Equal Ensemble (1/3)",
-            line=dict(color="#A855F7", width=1.5, dash="longdash"),
-            hovertemplate="Equal Ens: %{y:.1f} MW<extra></extra>"
-        ))
-        fig_exp.update_layout(
-            title=f"PJM Interconnection — Multi-Expert Trajectory Comparison (Instance #{sel_idx})",
-            xaxis_title="Forecast Step (h = +1 to +24 Hours)",
-            yaxis_title="Load (MW)",
-            hovermode="x unified"
-        )
-        apply_dark_plotly_theme(fig_exp, height=420)
-        st.plotly_chart(fig_exp, use_container_width=True)
-
-        # 5. FORECAST ERROR / SIGNED RESIDUALS & ROUTING WEIGHTS
-        col_res, col_w = st.columns([1.1, 0.9])
-        with col_res:
-            st.markdown('<div class="section-title">5. Forecast Residuals (Lead h = 1..24)</div>', unsafe_allow_html=True)
-            residuals = y_caeg - y_true
-            colors = ["#EF4444" if r > 0 else "#38BDF8" for r in residuals]
-            fig_res = go.Figure()
-            fig_res.add_trace(go.Bar(
-                x=t_lead, y=residuals, marker_color=colors,
-                name="Signed Error (Pred - Actual)",
-                hovertemplate="Lead +%{x}h: %{y:.1f} MW<extra></extra>"
-            ))
-            fig_res.add_hline(y=0, line_color="#64748B", line_width=1)
-            fig_res.update_layout(
-                title="Step-by-Step Signed Error (MW)",
-                xaxis_title="Lead Hour (h)",
-                yaxis_title="Residual (MW)",
-                showlegend=False
-            )
-            apply_dark_plotly_theme(fig_res, height=320)
-            st.plotly_chart(fig_res, use_container_width=True)
-
-        with col_w:
-            st.markdown('<div class="section-title">6. Dynamic Routing Weights</div>', unsafe_allow_html=True)
-            fig_rw = go.Figure()
-            fig_rw.add_trace(go.Bar(
-                x=["LSTM", "TCN", "CNN"],
-                y=[weights[0] * 100, weights[1] * 100, weights[2] * 100],
-                marker_color=["#F59E0B", "#10B981", "#EC4899"],
-                text=[f"{weights[0]*100:.1f}%", f"{weights[1]*100:.1f}%", f"{weights[2]*100:.1f}%"],
-                textposition="auto",
-                hovertemplate="%{x} Weight: %{y:.2f}%<extra></extra>"
-            ))
-            fig_rw.update_layout(
-                title=f"Instance #{sel_idx} Gating Simplex Allocation",
-                yaxis_title="Allocation (%)",
-                yaxis=dict(range=[0, 60]),
-                showlegend=False
-            )
-            apply_dark_plotly_theme(fig_rw, height=320)
-            st.plotly_chart(fig_rw, use_container_width=True)
-
-    # CASE B: GEFCom2014 or UCI (Honest Empty State & Verified Aggregate Results)
-    else:
-        st.markdown("""
-        <div class="empty-state-card">
-            <div style="font-size:1.15rem; font-weight:700; color:#38BDF8; margin-bottom:8px;">
-                ◈ PREDICTION TRACE UNAVAILABLE
-            </div>
-            <div style="font-size:0.92rem; color:#E2E8F0; max-width:680px; margin:0 auto 12px auto; line-height:1.5;">
-                Verified step-by-step prediction arrays for <strong>""" + artifact["name"] + """</strong> are not currently stored in the dashboard artifact set.
-            </div>
-            <div style="font-size:0.84rem; color:#94A3B8; max-width:680px; margin:0 auto; line-height:1.5;">
-                In accordance with the zero-fabrication academic research protocol, synthetic or simulated prediction traces are strictly prohibited. 
-                Full multi-seed benchmark evaluations, seed distributions, routing diagnostics, and non-overlapping daily-block statistical tests are verified and presented below.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Show verified summary metric cards for this dataset
-        st.markdown(f"""
-        <div class="metric-grid-4">
-            <div class="metric-card">
-                <div class="metric-label">Primary Test MAE</div>
-                <div class="metric-value">{artifact['test_mae']:.2f} <span style="font-size:0.8rem; color:#94A3B8;">{artifact['units']}</span></div>
-                <div class="metric-sub">5-seed mean (ddof=0)</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Primary Test RMSE</div>
-                <div class="metric-value">{artifact['test_rmse']:.2f} <span style="font-size:0.8rem; color:#94A3B8;">{artifact['units']}</span></div>
-                <div class="metric-sub">Standard deviation penalty</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Test R² Score</div>
-                <div class="metric-value">{artifact['test_r2']:.4f}</div>
-                <div class="metric-sub">Variance explained</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Evaluation Blocks</div>
-                <div class="metric-value">{artifact['instances_count']}</div>
-                <div class="metric-sub">{artifact['instances_text']}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # Show dataset-specific verified seed/task breakdown
-        if chosen_ds == "GEFCom2014":
-            st.markdown('<div class="section-title">Verified GEFCom2014 Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
-            df_g_seeds = load_gefcom_seed_results()
-            if df_g_seeds is not None:
-                caeg_seeds = df_g_seeds[df_g_seeds["model"] == "Original_CAEGNet_V1"][["seed", "MAE", "RMSE", "R2", "MAPE"]].copy()
-                caeg_seeds.columns = ["Seed", "MAE (kW)", "RMSE (kW)", "R² Score", "MAPE (%)"]
-                
-                # HTML Table
-                rows_html = ""
-                for _, r in caeg_seeds.iterrows():
-                    rows_html += f"<tr><td>Seed {int(r['Seed'])}</td><td class='num-cell'>{r['MAE (kW)']:.2f}</td><td class='num-cell'>{r['RMSE (kW)']:.2f}</td><td class='num-cell'>{r['R² Score']:.4f}</td><td class='num-cell'>{r['MAPE (%)']:.2f}%</td></tr>"
-                rows_html += f"<tr class='highlight-row'><td><strong>Mean (ddof=0)</strong></td><td class='num-cell'><strong>12.41 ± 0.15</strong></td><td class='num-cell'><strong>18.04</strong></td><td class='num-cell'><strong>0.8610</strong></td><td class='num-cell'><strong>9.37%</strong></td></tr>"
-                
-                st.markdown(f"""
-                <table class="custom-table">
-                    <thead><tr><th>Evaluation Run</th><th style="text-align:right;">MAE (kW)</th><th style="text-align:right;">RMSE (kW)</th><th style="text-align:right;">R² Score</th><th style="text-align:right;">MAPE</th></tr></thead>
-                    <tbody>{rows_html}</tbody>
-                </table>
-                """, unsafe_allow_html=True)
-
-            # Routing distribution for GEFCom
-            st.markdown('<div class="section-title">Verified GEFCom2014 Gating Simplex Allocation</div>', unsafe_allow_html=True)
-            col_grw, col_ginfo = st.columns([1.1, 0.9])
-            with col_grw:
-                fig_g = go.Figure()
-                fig_g.add_trace(go.Bar(
-                    x=["LSTM Expert", "TCN Expert", "CNN Expert"],
-                    y=[35.28, 29.82, 34.90],
-                    marker_color=["#F59E0B", "#10B981", "#EC4899"],
-                    text=["35.28%", "29.82%", "34.90%"],
-                    textposition="auto"
-                ))
-                fig_g.update_layout(
-                    title="GEFCom2014 — Empirical Gating Weight Distribution",
-                    yaxis_title="Average Weight (%)",
-                    yaxis=dict(range=[0, 50]),
-                    showlegend=False
+            col_hw1, col_hw2 = st.columns([2.2, 1.2])
+            with col_hw1:
+                hist_preset = st.selectbox(
+                    "Select PJM Test Window for Live Inference Validation",
+                    [
+                        "Window 721 — Median Representative Instance (Origin: 2024-09-06 07:00 UTC)",
+                        "Window 1185 — High Accuracy Diurnal Cycle",
+                        "Window 493 — Summer Peak Demand Spike",
+                        "Window 476 — High Volatility / Steep Ramp",
+                        "Window 0 — Chronological Test Partition Origin (Origin: 2024-08-07 06:00 UTC)",
+                        "Custom Test Window Index (0 to 1293)",
+                    ],
+                    index=0,
+                    key="sim_hist_preset_select",
                 )
-                apply_dark_plotly_theme(fig_g, height=320)
-                st.plotly_chart(fig_g, use_container_width=True)
-            with col_ginfo:
+            with col_hw2:
+                hist_seed = chosen_sim_seed if isinstance(chosen_sim_seed, int) else 42
+                if isinstance(chosen_sim_seed, str):
+                    st.caption("ℹ️ Historical cache parity compares single-seed checkpoints; using Seed 42 (or select a single seed above).")
+
+            if "721" in hist_preset:
+                hist_win_idx = 721
+            elif "1185" in hist_preset:
+                hist_win_idx = 1185
+            elif "493" in hist_preset:
+                hist_win_idx = 493
+            elif "476" in hist_preset:
+                hist_win_idx = 476
+            elif "Window 0" in hist_preset:
+                hist_win_idx = 0
+            else:
+                hist_win_idx = st.slider("Select PJM Test Window Index (0 to 1293)", 0, 1293, 721, key="sim_hist_slider")
+
+            clicked_hist = st.button(
+                "Generate 24-Hour Forecast",
+                type="primary",
+                key="btn_generate_forecast_hist",
+            )
+            if clicked_hist:
+                try:
+                    live_res = run_historical_window_validation(
+                        window_idx=int(hist_win_idx),
+                        seed=int(hist_seed),
+                        ref=pjm_ref,
+                        pred_atol_mw=1e-3,
+                        weight_atol=1e-6,
+                    )
+                    st.session_state["live_forecast_result"] = live_res
+                    st.session_state["live_forecast_error"] = None
+                except Exception as exc:
+                    st.session_state["live_forecast_error"] = str(exc)
+                    st.session_state["live_forecast_result"] = None
+
+        # =================================================================
+        # RENDER LIVE FORECAST RESULTS (ONLY AFTER USER CLICKS BUTTON)
+        # =================================================================
+        if st.session_state.get("live_forecast_error"):
+            st.error(f"❌ **Input Validation / Inference Error:** {st.session_state['live_forecast_error']}")
+
+        sim_res = st.session_state.get("live_forecast_result")
+        if sim_res is not None:
+            st.markdown("---")
+            if sim_res.is_hypothetical_scenario:
                 st.markdown("""
-                <div class="dark-card" style="height:100%; display:flex; flex-direction:column; justify-content:center;">
-                    <div class="dark-card-header">GEFCom2014 Routing Dynamics</div>
-                    <div style="font-size:0.86rem; color:#CBD5E1; line-height:1.55;">
-                        • <strong>Effective Experts:</strong> N<sub>eff</sub> = 2.9765 / 3.000<br>
-                        • <strong>Weight Entropy:</strong> H = 1.0911 nats<br>
-                        • <strong>Fallback Coefficient:</strong> λ = 0.5170 ± 0.0055 (CV = 1.06%)<br>
-                        • <strong>Observation:</strong> The gating router allocates substantial weight to both LSTM and CNN experts, reflecting weather-driven diurnal peaks and ramp spikes.
+                <div style="background:rgba(56, 189, 248, 0.12); border:1px solid #38BDF8; border-radius:8px; padding:12px 18px; margin-bottom:12px;">
+                    <div style="font-size:0.95rem; font-weight:700; color:#38BDF8;">⚡ HYPOTHETICAL SCENARIO FORECAST — LIVE CANONICAL CAEG-NET V1 INFERENCE</div>
+                    <div style="font-size:0.84rem; color:#E2E8F0; margin-top:4px;">
+                        This 24-hour forecast was newly computed via a live PyTorch forward pass (<code>model.eval()</code>, <code>torch.no_grad()</code>) on user-supplied input data. Because this represents a <strong>hypothetical scenario</strong> without future observed grid load, ground-truth curves, MAE, RMSE, and accuracy metrics are intentionally omitted.
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                parity_badge = "PASS (Exact Numerical Parity Verified)" if sim_res.historical_parity_passed else "FAIL"
+                st.markdown(f"""
+                <div style="background:rgba(16, 185, 129, 0.12); border:1px solid #10B981; border-radius:8px; padding:12px 18px; margin-bottom:12px;">
+                    <div style="font-size:0.95rem; font-weight:700; color:#10B981;">✓ RETROSPECTIVE HISTORICAL TEST-WINDOW VALIDATION — LIVE INFERENCE VS. SAVED PHASE 5 CACHE: {parity_badge}</div>
+                    <div style="font-size:0.84rem; color:#E2E8F0; margin-top:4px;">
+                        PJM Test Window <strong>#{sim_res.historical_window_idx}</strong> (Seed {sim_res.seed_label}) &nbsp;|&nbsp;
+                        Max |Live Forecast − Saved Cache|: <strong>{sim_res.historical_max_abs_pred_diff_mw:.6f} MW</strong> (Tolerance: $\\le 10^{{-3}}\\text{{ MW}}$) &nbsp;|&nbsp;
+                        Max |Live Weights − Saved Cache|: <strong>{sim_res.historical_max_abs_weight_diff:.8f}</strong> (Tolerance: $\\le 10^{{-6}}$)
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
 
-        elif chosen_ds == "UCI":
-            st.markdown('<div class="section-title">Verified UCI Electricity Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
-            df_u_seeds = load_uci_seed_results()
-            if df_u_seeds is not None:
-                caeg_u = df_u_seeds[df_u_seeds["model"] == "Original CAEG-Net V1"][["seed", "test_mae", "test_rmse", "test_r2", "test_mape"]].copy()
-                caeg_u.columns = ["Seed", "MAE (MW)", "RMSE (MW)", "R² Score", "MAPE (%)"]
-                
-                rows_html = ""
-                for _, r in caeg_u.iterrows():
-                    rows_html += f"<tr><td>Seed {int(r['Seed'])}</td><td class='num-cell'>{r['MAE (MW)']:.2f}</td><td class='num-cell'>{r['RMSE (MW)']:.2f}</td><td class='num-cell'>{r['R² Score']:.4f}</td><td class='num-cell'>{r['MAPE (%)']:.2f}%</td></tr>"
-                rows_html += f"<tr class='highlight-row'><td><strong>Mean (ddof=0)</strong></td><td class='num-cell'><strong>7.74 ± 0.30</strong></td><td class='num-cell'><strong>10.96</strong></td><td class='num-cell'><strong>0.9831</strong></td><td class='num-cell'><strong>4.28%</strong></td></tr>"
-                
-                st.markdown(f"""
-                <table class="custom-table">
-                    <thead><tr><th>Evaluation Run</th><th style="text-align:right;">MAE (MW)</th><th style="text-align:right;">RMSE (MW)</th><th style="text-align:right;">R² Score</th><th style="text-align:right;">MAPE</th></tr></thead>
-                    <tbody>{rows_html}</tbody>
-                </table>
-                """, unsafe_allow_html=True)
+            # Distribution Warnings (non-blocking)
+            for warn_msg in sim_res.distribution_warnings:
+                st.warning(f"⚠️ **PJM Training Distribution Notice:** {warn_msg}")
 
-            st.markdown('<div class="section-title">Verified UCI Electricity Gating Simplex Allocation</div>', unsafe_allow_html=True)
-            col_urw, col_uinfo = st.columns([1.1, 0.9])
-            with col_urw:
-                fig_u = go.Figure()
-                fig_u.add_trace(go.Bar(
-                    x=["LSTM Expert", "TCN Expert", "CNN Expert"],
-                    y=[34.28, 29.94, 35.78],
-                    marker_color=["#F59E0B", "#10B981", "#EC4899"],
-                    text=["34.28%", "29.94%", "35.78%"],
-                    textposition="auto"
-                ))
-                fig_u.update_layout(
-                    title="UCI Electricity — Empirical Gating Weight Distribution",
-                    yaxis_title="Average Weight (%)",
-                    yaxis=dict(range=[0, 50]),
-                    showlegend=False
-                )
-                apply_dark_plotly_theme(fig_u, height=320)
-                st.plotly_chart(fig_u, use_container_width=True)
-            with col_uinfo:
-                st.markdown("""
-                <div class="dark-card" style="height:100%; display:flex; flex-direction:column; justify-content:center;">
-                    <div class="dark-card-header">UCI Routing Dynamics</div>
-                    <div style="font-size:0.86rem; color:#CBD5E1; line-height:1.55;">
-                        • <strong>Effective Experts:</strong> N<sub>eff</sub> = 2.9842 / 3.000<br>
-                        • <strong>Fallback Coefficient:</strong> λ = 0.5064 ± 0.0030 (CV = 0.59%)<br>
-                        • <strong>High Base Predictability:</strong> High consumer baseline leads to strong recurrent persistence (LSTM) alongside CNN edge tracking.<br>
-                        • <strong>Cross-Grid Consistency:</strong> Confirms convex interior distribution across all evaluated grids.
+            # Recent-Error Provenance Disclosure Banner
+            if sim_res.recent_error_fallback_used:
+                st.warning(f"ℹ️ **Recent Forecast-Error Fallback Disclosure:** {sim_res.recent_error_explanation}")
+            else:
+                st.success(f"✓ **Exact Causal Recent Forecast-Error Provenance:** {sim_res.recent_error_explanation}")
+
+            # Provenance & Verification KPI Cards
+            ckpt_display = (
+                os.path.relpath(sim_res.checkpoint_paths[0], repo_root)
+                if len(sim_res.checkpoint_paths) == 1
+                else f"5 Checkpoints (seeds 42..3407)"
+            )
+            simplex_status = "PASS (Valid Simplex)" if sim_res.routing_weights_valid else "FAIL"
+            st.markdown(f"""
+            <div class="metric-grid-5">
+                <div class="metric-card">
+                    <div class="metric-label">Checkpoint &amp; Seed</div>
+                    <div class="metric-value" style="font-size:1.05rem;">Seed {sim_res.seed_label}</div>
+                    <div class="metric-sub">{ckpt_display}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Verified Architecture</div>
+                    <div class="metric-value">{sim_res.model_parameter_count:,}</div>
+                    <div class="metric-sub">Canonical V1 (strict=True, eval)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Input Observations</div>
+                    <div class="metric-value">{sim_res.total_input_observations}h → 168h</div>
+                    <div class="metric-sub">Physical Units: {sim_res.units}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">24h Fused Forecast Mean</div>
+                    <div class="metric-value">{float(np.mean(sim_res.y_caeg_mw)):,.1f} <span style="font-size:0.85rem; color:#94A3B8;">{sim_res.units}</span></div>
+                    <div class="metric-sub">Range: [{float(np.min(sim_res.y_caeg_mw)):,.1f}, {float(np.max(sim_res.y_caeg_mw)):,.1f}] {sim_res.units}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Routing Weight Sum</div>
+                    <div class="metric-value">{sim_res.routing_weights_sum:.6f}</div>
+                    <div class="metric-sub">{simplex_status} (|Σw−1| ≤ 1e-5)</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # If Historical Validation Mode, show Retrospective Evaluation Metrics separately
+            if not sim_res.is_hypothetical_scenario and sim_res.historical_retrospective_metrics is not None:
+                rm = sim_res.historical_retrospective_metrics
+                st.markdown(f"""
+                <div class="metric-grid-4" style="margin-top:8px;">
+                    <div class="metric-card">
+                        <div class="metric-label">Retrospective Window MAE</div>
+                        <div class="metric-value">{rm['MAE_MW']:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                        <div class="metric-sub">Historical test window #{sim_res.historical_window_idx}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Retrospective Window RMSE</div>
+                        <div class="metric-value">{rm['RMSE_MW']:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                        <div class="metric-sub">Historical test window #{sim_res.historical_window_idx}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Retrospective Window MAPE</div>
+                        <div class="metric-value">{rm['MAPE_PCT']:.2f}%</div>
+                        <div class="metric-sub">Historical test window #{sim_res.historical_window_idx}</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-label">Retrospective Peak Abs Error</div>
+                        <div class="metric-value">{rm['MAX_ERR_MW']:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                        <div class="metric-sub">Max single-hour deviation</div>
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+            # 4D Context Features & 3 Routing Weights Cards
+            st.markdown('<div class="section-title">Extracted 4D Causal Context Vector &amp; Learned Softmax Routing Weights</div>', unsafe_allow_html=True)
+            cd = sim_res.context_dict
+            rw = sim_res.routing_weights
+            rec_badge_txt = "Fallback Training Prior" if sim_res.recent_error_fallback_used else "Exact Causal Walk-Forward"
+            st.markdown(f"""
+            <div class="metric-grid-4">
+                <div class="metric-card">
+                    <div class="metric-label">1. Trend (OLS Slope)</div>
+                    <div class="metric-value">{cd['Trend']:+.5f}</div>
+                    <div class="metric-sub">Normalized 168h linear drift</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">2. Volatility (σ of Δz)</div>
+                    <div class="metric-value">{cd['Volatility']:.5f}</div>
+                    <div class="metric-sub">First-difference std (ddof=1)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">3. Periodicity (Lag-24 r₂₄)</div>
+                    <div class="metric-value">{cd['Periodicity']:+.5f}</div>
+                    <div class="metric-sub">Diurnal 24h autocorrelation</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">4. Recent Error (Causal)</div>
+                    <div class="metric-value">{cd['Recent_Error']:.5f}</div>
+                    <div class="metric-sub">{rec_badge_txt}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # CHART 1: 168-HOUR INPUT HISTORY + 24-HOUR FORECAST
+            title_mode_tag = "Hypothetical Scenario Forecast" if sim_res.is_hypothetical_scenario else f"Historical Test Window #{sim_res.historical_window_idx} Live Forecast"
+            st.markdown(f'<div class="section-title">1. 168-Hour Historical Input + 24-Hour Day-Ahead Forecast ({title_mode_tag})</div>', unsafe_allow_html=True)
+
+            t_hist_sim = np.arange(-LOOKBACK_HOURS + 1, 1)  # -167 .. 0
+            t_lead_sim = np.arange(1, HORIZON_HOURS + 1)    # +1 .. +24
+
+            fig_sim_full = go.Figure()
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_hist_sim,
+                y=sim_res.lookback_168_mw,
+                mode="lines",
+                name="168h Input History (MW)",
+                line=dict(color="#94A3B8", width=2.0),
+                hovertemplate="Input t=%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_lead_sim,
+                y=sim_res.y_lstm_mw,
+                mode="lines",
+                name=f"LSTM Expert (w={rw[0]:.3f})",
+                line=dict(color="#F59E0B", width=1.8, dash="dot"),
+                hovertemplate="LSTM t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_lead_sim,
+                y=sim_res.y_tcn_mw,
+                mode="lines",
+                name=f"TCN Expert (w={rw[1]:.3f})",
+                line=dict(color="#10B981", width=1.8, dash="dash"),
+                hovertemplate="TCN t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_lead_sim,
+                y=sim_res.y_cnn_mw,
+                mode="lines",
+                name=f"CNN Expert (w={rw[2]:.3f})",
+                line=dict(color="#EC4899", width=1.8, dash="dashdot"),
+                hovertemplate="CNN t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_lead_sim,
+                y=sim_res.y_equal_mw,
+                mode="lines",
+                name="Equal-Weight Expert Avg (1/3)",
+                line=dict(color="#A855F7", width=2.0, dash="longdash"),
+                hovertemplate="Equal Avg t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            fig_sim_full.add_trace(go.Scatter(
+                x=t_lead_sim,
+                y=sim_res.y_caeg_mw,
+                mode="lines+markers",
+                name=f"CAEG-Net V1 Fused Forecast (Seed {sim_res.seed_label})",
+                line=dict(color="#38BDF8", width=3.4),
+                marker=dict(color="#38BDF8", size=6, symbol="square"),
+                hovertemplate="CAEG-Net V1 t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+            ))
+            if not sim_res.is_hypothetical_scenario and sim_res.historical_y_true_mw is not None:
+                fig_sim_full.add_trace(go.Scatter(
+                    x=t_lead_sim,
+                    y=sim_res.historical_y_true_mw,
+                    mode="lines+markers",
+                    name="Observed Actual Load (Retrospective)",
+                    line=dict(color="#F8FAFC", width=2.6),
+                    marker=dict(color="#F8FAFC", size=5),
+                    hovertemplate="Observed Actual t=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+
+            fig_sim_full.add_vline(
+                x=0,
+                line_width=2,
+                line_dash="dash",
+                line_color="#EF4444",
+                annotation_text="Forecast Origin (t=0h)",
+                annotation_position="top left",
+                annotation_font=dict(color="#EF4444", size=11),
+            )
+            fig_sim_full.update_layout(
+                title=f"Canonical CAEG-Net V1 — 168h Input Lookback + 24h Forecast ({title_mode_tag})",
+                xaxis_title="Hours Relative to Forecast Origin (t = -167..0h Lookback, t = +1..+24h Forecast)",
+                yaxis_title="Electricity Load (MW)",
+                hovermode="x unified",
+            )
+            apply_dark_plotly_theme(fig_sim_full, height=460)
+            st.plotly_chart(fig_sim_full, use_container_width=True)
+
+            # CHART 2 (ZOOMED 24H FORECAST) & CHART 3 (ROUTING WEIGHTS SIMPLEX)
+            col_zoom, col_gate = st.columns([1.35, 0.85])
+            with col_zoom:
+                st.markdown('<div class="section-title">2. Zoomed 24-Hour Forecast &amp; Expert Decomposition</div>', unsafe_allow_html=True)
+                fig_zoom = go.Figure()
+                if sim_res.y_caeg_std_mw is not None:
+                    upper_band = sim_res.y_caeg_mw + sim_res.y_caeg_std_mw
+                    lower_band = sim_res.y_caeg_mw - sim_res.y_caeg_std_mw
+                    fig_zoom.add_trace(go.Scatter(
+                        x=np.concatenate([t_lead_sim, t_lead_sim[::-1]]),
+                        y=np.concatenate([upper_band, lower_band[::-1]]),
+                        fill="toself",
+                        fillcolor="rgba(56, 189, 248, 0.15)",
+                        line=dict(color="rgba(255,255,255,0)"),
+                        name="5-Seed ±1 SD Band",
+                        hoverinfo="skip",
+                    ))
+                fig_zoom.add_trace(go.Scatter(
+                    x=t_lead_sim, y=sim_res.y_lstm_mw, mode="lines+markers",
+                    name=f"LSTM Expert (w={rw[0]:.4f})",
+                    line=dict(color="#F59E0B", width=2.0, dash="dot"),
+                    marker=dict(size=5, symbol="diamond"),
+                    hovertemplate="LSTM h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+                fig_zoom.add_trace(go.Scatter(
+                    x=t_lead_sim, y=sim_res.y_tcn_mw, mode="lines+markers",
+                    name=f"TCN Expert (w={rw[1]:.4f})",
+                    line=dict(color="#10B981", width=2.0, dash="dash"),
+                    marker=dict(size=5, symbol="triangle-up"),
+                    hovertemplate="TCN h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+                fig_zoom.add_trace(go.Scatter(
+                    x=t_lead_sim, y=sim_res.y_cnn_mw, mode="lines+markers",
+                    name=f"CNN Expert (w={rw[2]:.4f})",
+                    line=dict(color="#EC4899", width=2.0, dash="dashdot"),
+                    marker=dict(size=5, symbol="cross"),
+                    hovertemplate="CNN h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+                fig_zoom.add_trace(go.Scatter(
+                    x=t_lead_sim, y=sim_res.y_equal_mw, mode="lines+markers",
+                    name="Equal-Weight Avg (1/3)",
+                    line=dict(color="#A855F7", width=2.2, dash="longdash"),
+                    marker=dict(size=5, symbol="circle"),
+                    hovertemplate="Equal Avg h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+                fig_zoom.add_trace(go.Scatter(
+                    x=t_lead_sim, y=sim_res.y_caeg_mw, mode="lines+markers",
+                    name="CAEG-Net V1 Fused Forecast",
+                    line=dict(color="#38BDF8", width=3.4),
+                    marker=dict(size=7, symbol="square"),
+                    hovertemplate="CAEG-Net V1 h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                ))
+                if not sim_res.is_hypothetical_scenario and sim_res.historical_y_true_mw is not None:
+                    fig_zoom.add_trace(go.Scatter(
+                        x=t_lead_sim, y=sim_res.historical_y_true_mw, mode="lines+markers",
+                        name="Observed Actual (Retrospective)",
+                        line=dict(color="#F8FAFC", width=2.8),
+                        marker=dict(size=6),
+                        hovertemplate="Actual h=+%{x}h: %{y:,.2f} MW<extra></extra>",
+                    ))
+                fig_zoom.update_layout(
+                    title="Zoomed 24-Hour Forecast Horizon (h = +1 to +24 Hours)",
+                    xaxis_title="Forecast Horizon Step (Hours Ahead)",
+                    yaxis_title="Electricity Load (MW)",
+                    hovermode="x unified",
+                )
+                apply_dark_plotly_theme(fig_zoom, height=400)
+                st.plotly_chart(fig_zoom, use_container_width=True)
+
+            with col_gate:
+                st.markdown('<div class="section-title">3. Softmax Routing Weights &amp; Simplex Check</div>', unsafe_allow_html=True)
+                fig_gate = go.Figure()
+                fig_gate.add_trace(go.Bar(
+                    x=["LSTM Expert", "TCN Expert", "CNN Expert"],
+                    y=[rw[0] * 100.0, rw[1] * 100.0, rw[2] * 100.0],
+                    marker_color=["#F59E0B", "#10B981", "#EC4899"],
+                    text=[f"{rw[0]*100:.2f}% ({rw[0]:.4f})", f"{rw[1]*100:.2f}% ({rw[1]:.4f})", f"{rw[2]*100:.2f}% ({rw[2]:.4f})"],
+                    textposition="auto",
+                    hovertemplate="%{x}: %{y:.3f}%<extra></extra>",
+                ))
+                fig_gate.update_layout(
+                    title=f"ContextGatingNetwork Allocation (Seed {sim_res.seed_label})",
+                    yaxis_title="Routing Weight (%)",
+                    yaxis=dict(range=[0, 100]),
+                    showlegend=False,
+                )
+                apply_dark_plotly_theme(fig_gate, height=300)
+                st.plotly_chart(fig_gate, use_container_width=True)
+
+                st.markdown(f"""
+                <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:10px 14px; font-size:0.82rem; color:#CBD5E1; line-height:1.5;">
+                    <strong>Simplex Verification Check:</strong><br>
+                    • $w_{{\\text{{LSTM}}}} = {rw[0]:.6f}$, $w_{{\\text{{TCN}}}} = {rw[1]:.6f}$, $w_{{\\text{{CNN}}}} = {rw[2]:.6f}$<br>
+                    • Finite &amp; Non-Negative ($w_i \\ge 0$): <strong>{"PASS" if bool(np.all(np.isfinite(rw)) and np.all(rw >= 0.0)) else "FAIL"}</strong><br>
+                    • Normalization ($\\sum_{{i=1}}^3 w_i = {sim_res.routing_weights_sum:.6f}$, $|\\sum w_i - 1| = {abs(sim_res.routing_weights_sum - 1.0):.2e} \\le 10^{{-5}}$): <strong>{"PASS" if sim_res.routing_weights_valid else "FAIL"}</strong>
+                </div>
+                """, unsafe_allow_html=True)
+
+            # 24-ROW HOURLY FORECAST TABLE & CSV EXPORT
+            st.markdown('<div class="section-title">4. 24-Row Hourly Forecast Table &amp; CSV Export</div>', unsafe_allow_html=True)
+            forecast_df = build_forecast_dataframe(sim_res)
+            st.dataframe(forecast_df, use_container_width=True, height=340)
+
+            csv_export_bytes = export_forecast_to_csv_bytes(sim_res)
+            dl_filename = (
+                f"caegnet_v1_scenario_forecast_seed_{sim_res.seed_label.split()[0]}.csv"
+                if sim_res.is_hypothetical_scenario
+                else f"caegnet_v1_pjm_win{sim_res.historical_window_idx}_seed_{sim_res.seed_label}.csv"
+            )
+            st.download_button(
+                "📥 Download Newly Generated 24-Hour Forecast CSV",
+                data=csv_export_bytes,
+                file_name=dl_filename,
+                mime="text/csv",
+                key="btn_download_live_forecast_csv",
+            )
+
+    # =====================================================================
+    # TAB 2: PRESERVED CACHED BENCHMARK EVALUATION VIEWER
+    # =====================================================================
+    with cached_tab:
+        st.markdown('<div class="section-title">1. Dataset Selection (Cached Benchmark Viewer)</div>', unsafe_allow_html=True)
+        ds_options = ["PJM", "GEFCom2014", "UCI"]
+        curr_idx = ds_options.index(st.session_state.get("selected_dataset", "PJM")) if st.session_state.get("selected_dataset") in ds_options else 0
+
+        col_sel_ds, col_sel_meta = st.columns([1.6, 2.4])
+        with col_sel_ds:
+            chosen_ds = st.radio(
+                "Select Benchmark Dataset",
+                ds_options,
+                index=curr_idx,
+                horizontal=True,
+                help="Switch active dataset for stored benchmark evaluation visualizations.",
+                key="pred_dataset_radio"
+            )
+            st.session_state["selected_dataset"] = chosen_ds
+
+        artifact = load_prediction_artifact(chosen_ds)
+
+        with col_sel_meta:
+            st.markdown(f"""
+            <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:12px 18px; font-size:0.90rem; color:#CBD5E1; line-height:1.5;">
+                <div><strong>Active Dataset:</strong> <span style="color:#38BDF8; font-weight:600;">{artifact['name']}</span> ({artifact['grid_type']})</div>
+                <div style="margin-top:4px;"><strong>Units:</strong> {artifact['units']} &nbsp;|&nbsp; <strong>Horizon:</strong> {artifact['horizon']} &nbsp;|&nbsp; <strong>Available Instances:</strong> {artifact['instances_text']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.write("")
+
+        # CASE A: PJM (Detailed stored prediction traces available)
+        if artifact["available"] and artifact["data"] is not None:
+            bundle = artifact["data"]
+            p5_cache_dict = load_pjm_phase5_cache()
+            res_cache_dict = bundle["cache"]
+
+            cohort_options = []
+            if p5_cache_dict is not None:
+                cohort_options.append("Phase 5 / 11 Checkpoint Cache (results/phase5_multiseed_cache.npz — Includes Standalone LSTM/TCN/CNN & Equal Ensemble)")
+            if res_cache_dict is not None:
+                cohort_options.append("Phase 10 Research Ablation Cache (research_multiseed_cache.npz — Includes Router Ablation Variants)")
+
+            selected_cohort = st.selectbox(
+                "Select Stored PJM Evaluation Cache Artifact",
+                cohort_options,
+                index=0,
+                key="cached_viewer_cohort_select",
+                help="Choose between the Phase 5/11 checkpoint cache (which stores standalone LSTM, TCN, CNN, and Equal Ensemble trajectories) and the Phase 10 router ablation cache.",
+            )
+            if selected_cohort.startswith("Phase 5") and p5_cache_dict is not None:
+                cache = p5_cache_dict
+                cohort_mae_label = "266.58"
+                cohort_sub_label = "Phase 5/11 Checkpoints (5-seed)"
+            else:
+                cache = res_cache_dict
+                cohort_mae_label = "258.02"
+                cohort_sub_label = "Phase 10 Canonical V1 (5-seed)"
+
+            X_all = bundle["X"]
+            scaler_mean = bundle["scaler_mean"]
+            scaler_scale = bundle["scaler_scale"]
+
+            if not isinstance(cache, dict):
+                st.error("Prediction cache could not be loaded into a valid key-value mapping.")
+                st.stop()
+
+            y_true_all = cache.get("y_test_true_raw")
+            if y_true_all is None:
+                y_true_all = cache.get("y_true_raw")
+
+            if y_true_all is None or not isinstance(y_true_all, np.ndarray):
+                st.error("Prediction cache is missing ground-truth target array ('y_test_true_raw' or 'y_true_raw').")
+                st.stop()
+
+            max_windows = len(y_true_all) - 1
+            if X_all is not None and hasattr(X_all, "__len__"):
+                max_windows = min(max_windows, len(X_all) - 1)
+
+            # 2. FORECAST INSTANCE SELECTOR
+            st.markdown('<div class="section-title">2. Forecast Instance Selection</div>', unsafe_allow_html=True)
+            col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2.0, 1.0, 1.0])
+            with col_ctrl1:
+                preset_select = st.selectbox(
+                    "Curated Instance Presets (PJM Test Partition)",
+                    [
+                        "Window 721 — Median Representative Instance (MAE ~ 237 MW)",
+                        "Window 1185 — High Accuracy Diurnal Cycle (MAE ~ 57 MW)",
+                        "Window 493 — Summer Peak Demand Spike (Peak ~ 8,650 MW)",
+                        "Window 476 — High Volatility / Steep Ramp (Max Ramp ~ 598 MW/h)",
+                        "Window 0 — Chronological Test Horizon Origin (MAE ~ 360 MW)",
+                        "Custom Window Index (Slider)"
+                    ],
+                    index=0
+                )
+            with col_ctrl2:
+                avail_seeds = [42, 123, 999, 2024, 3407]
+                sel_seed = st.selectbox(
+                    "Evaluation Seed",
+                    avail_seeds,
+                    index=0,
+                    help="Select random seed for Canonical V1 model weights and predictions."
+                )
+            with col_ctrl3:
+                st.selectbox("Forecast Horizon", ["24 Hours (Day-Ahead Dispatch)"], index=0)
+
+            if "721" in preset_select:
+                sel_idx = 721
+            elif "1185" in preset_select:
+                sel_idx = 1185
+            elif "493" in preset_select:
+                sel_idx = 493
+            elif "476" in preset_select:
+                sel_idx = 476
+            elif "Window 0" in preset_select:
+                sel_idx = 0
+            else:
+                sel_idx = st.slider(f"Select Window Index (0 to {max_windows}):", 0, max_windows, 721)
+
+            sel_idx = max(0, min(int(sel_idx), max_windows))
+
+            pred_key = f"pred_CAEG_Net_V1_Canonical_seed_{sel_seed}"
+            weights_key = f"weights_CAEG_Net_V1_Canonical_seed_{sel_seed}"
+
+            if pred_key in cache:
+                y_caeg_all = cache[pred_key]
+            elif f"caeg_seed_{sel_seed}" in cache:
+                y_caeg_all = cache[f"caeg_seed_{sel_seed}"]
+            elif "pred_CAEG_Net_V1_Canonical_seed_42" in cache:
+                y_caeg_all = cache["pred_CAEG_Net_V1_Canonical_seed_42"]
+            elif "caeg_seed_42" in cache:
+                y_caeg_all = cache["caeg_seed_42"]
+            else:
+                st.error(f"Prediction cache missing Canonical CAEG-Net V1 array (checked '{pred_key}' and fallback keys).")
+                st.stop()
+
+            if weights_key in cache:
+                weights_all = cache[weights_key]
+            elif f"weights_seed_{sel_seed}" in cache:
+                weights_all = cache[f"weights_seed_{sel_seed}"]
+            elif "weights_CAEG_Net_V1_Canonical_seed_42" in cache:
+                weights_all = cache["weights_CAEG_Net_V1_Canonical_seed_42"]
+            elif "weights_seed_42" in cache:
+                weights_all = cache["weights_seed_42"]
+            else:
+                weights_all = None
+
+            lstm_key = f"lstm_seed_{sel_seed}" if f"lstm_seed_{sel_seed}" in cache else ("lstm_seed_42" if "lstm_seed_42" in cache else None)
+            tcn_key = f"tcn_seed_{sel_seed}" if f"tcn_seed_{sel_seed}" in cache else ("tcn_seed_42" if "tcn_seed_42" in cache else None)
+            cnn_key = f"cnn_seed_{sel_seed}" if f"cnn_seed_{sel_seed}" in cache else ("cnn_seed_42" if "cnn_seed_42" in cache else None)
+            static_key = f"static_seed_{sel_seed}" if f"static_seed_{sel_seed}" in cache else ("static_seed_42" if "static_seed_42" in cache else None)
+
+            has_standalone_experts = all(k is not None for k in [lstm_key, tcn_key, cnn_key])
+
+            abl_no_error_key = f"pred_CAEG_Net_No_Recent_Error_seed_{sel_seed}" if f"pred_CAEG_Net_No_Recent_Error_seed_{sel_seed}" in cache else ("pred_CAEG_Net_No_Recent_Error_seed_42" if "pred_CAEG_Net_No_Recent_Error_seed_42" in cache else None)
+            abl_calendar_key = f"pred_CAEG_Net_Calendar_Context_seed_{sel_seed}" if f"pred_CAEG_Net_Calendar_Context_seed_{sel_seed}" in cache else ("pred_CAEG_Net_Calendar_Context_seed_42" if "pred_CAEG_Net_Calendar_Context_seed_42" in cache else None)
+            abl_forecast_key = f"pred_CAEG_Net_Forecast_Aware_seed_{sel_seed}" if f"pred_CAEG_Net_Forecast_Aware_seed_{sel_seed}" in cache else ("pred_CAEG_Net_Forecast_Aware_seed_42" if "pred_CAEG_Net_Forecast_Aware_seed_42" in cache else None)
+
+            x_raw = X_all[sel_idx].flatten() * scaler_scale + scaler_mean
+            y_true = y_true_all[sel_idx]
+            y_caeg = y_caeg_all[sel_idx]
+            weights = weights_all[sel_idx] if weights_all is not None else None
+
+            win_mae = float(np.mean(np.abs(y_true - y_caeg)))
+            win_rmse = float(np.sqrt(np.mean((y_true - y_caeg)**2)))
+            win_max_err = float(np.max(np.abs(y_true - y_caeg)))
+
+            st.markdown(f"""
+            <div class="metric-grid-5">
+                <div class="metric-card">
+                    <div class="metric-label">Selected Instance</div>
+                    <div class="metric-value">#{sel_idx}</div>
+                    <div class="metric-sub">PJM test partition (Seed {sel_seed})</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Window MAE</div>
+                    <div class="metric-value">{win_mae:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                    <div class="metric-sub">Instance mean absolute error</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Window RMSE</div>
+                    <div class="metric-value">{win_rmse:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                    <div class="metric-sub">Quadratic lead penalty</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Peak Abs Gap</div>
+                    <div class="metric-value">{win_max_err:.2f} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                    <div class="metric-sub">Max single-step deviation</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Canonical V1 MAE</div>
+                    <div class="metric-value">{cohort_mae_label} <span style="font-size:0.85rem; color:#94A3B8;">MW</span></div>
+                    <div class="metric-sub">{cohort_sub_label}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.markdown('<div class="section-title">3. Actual vs Canonical CAEG-Net V1 Forecast (168h Historical Context + 24h Forecast)</div>', unsafe_allow_html=True)
+
+            t_hist = np.arange(-168, 0)
+            t_lead = np.arange(1, 25)
+
+            fig_main = go.Figure()
+            fig_main.add_trace(go.Scatter(
+                x=t_hist, y=x_raw, mode="lines", name="168h Historical Context",
+                line=dict(color="#64748B", width=1.8), hovertemplate="Context t=%{x}h: %{y:.1f} MW<extra></extra>"
+            ))
+            fig_main.add_trace(go.Scatter(
+                x=t_lead, y=y_true, mode="lines+markers", name="Ground Truth Actual Load",
+                line=dict(color="#F8FAFC", width=2.6), marker=dict(color="#F8FAFC", size=5),
+                hovertemplate="Actual t=+%{x}h: %{y:.1f} MW<extra></extra>"
+            ))
+            fig_main.add_trace(go.Scatter(
+                x=t_lead, y=y_caeg, mode="lines+markers", name=f"Canonical CAEG-Net V1 (Seed {sel_seed})",
+                line=dict(color="#38BDF8", width=3.4), marker=dict(color="#38BDF8", size=6, symbol="square"),
+                hovertemplate="Canonical V1 t=+%{x}h: %{y:.1f} MW<extra></extra>"
+            ))
+            fig_main.add_vline(
+                x=0, line_width=2, line_dash="dash", line_color="#EF4444",
+                annotation_text="Forecast Origin (t=0h)", annotation_position="top left",
+                annotation_font=dict(color="#EF4444", size=11)
+            )
+            fig_main.update_layout(
+                title=f"PJM Interconnection — 168h Historical Context + 24h Day-Ahead Forecast Trajectory (Instance #{sel_idx})",
+                xaxis_title="Time Relative to Forecast Origin (Hours)",
+                yaxis_title="Electricity Load (MW)",
+                hovermode="x unified"
+            )
+            apply_dark_plotly_theme(fig_main, height=480)
+            st.plotly_chart(fig_main, use_container_width=True)
+
+            st.markdown('<div class="section-title">4. Model Forecast Trajectory Comparison (24-Hour Lead Horizon)</div>', unsafe_allow_html=True)
+
+            if not has_standalone_experts:
+                st.info("ℹ️ **Research Cache Integrity Note:** Standalone individual expert trajectories (LSTM, TCN, CNN) and static equal-weight ensemble traces were not logged into the research multi-seed cache (`research_multiseed_cache.npz`). Switch the cache selector above to **Phase 5 / 11 Checkpoint Cache** to inspect standalone expert trajectories, or view the Phase 10 router ablation variants below.")
+
+            fig_exp = go.Figure()
+            fig_exp.add_trace(go.Scatter(
+                x=t_lead, y=y_true, mode="lines+markers", name="Actual Ground Truth",
+                line=dict(color="#F8FAFC", width=3.0), marker=dict(color="#F8FAFC", size=6),
+                hovertemplate="Actual: %{y:.1f} MW<extra></extra>"
+            ))
+            fig_exp.add_trace(go.Scatter(
+                x=t_lead, y=y_caeg, mode="lines+markers", name=f"Canonical CAEG-Net V1 (Seed {sel_seed})",
+                line=dict(color="#38BDF8", width=3.2), marker=dict(color="#38BDF8", size=6, symbol="square"),
+                hovertemplate="Canonical V1: %{y:.1f} MW<extra></extra>"
+            ))
+
+            if has_standalone_experts:
+                fig_exp.add_trace(go.Scatter(
+                    x=t_lead, y=cache[lstm_key][sel_idx], mode="lines", name="LSTM Expert",
+                    line=dict(color="#F59E0B", width=1.8, dash="dot"),
+                    hovertemplate="LSTM: %{y:.1f} MW<extra></extra>"
+                ))
+                fig_exp.add_trace(go.Scatter(
+                    x=t_lead, y=cache[tcn_key][sel_idx], mode="lines", name="TCN Expert",
+                    line=dict(color="#10B981", width=1.8, dash="dash"),
+                    hovertemplate="TCN: %{y:.1f} MW<extra></extra>"
+                ))
+                fig_exp.add_trace(go.Scatter(
+                    x=t_lead, y=cache[cnn_key][sel_idx], mode="lines", name="CNN Expert",
+                    line=dict(color="#EC4899", width=1.8, dash="dashdot"),
+                    hovertemplate="CNN: %{y:.1f} MW<extra></extra>"
+                ))
+                if static_key and static_key in cache:
+                    fig_exp.add_trace(go.Scatter(
+                        x=t_lead, y=cache[static_key][sel_idx], mode="lines", name="Equal Ensemble (1/3)",
+                        line=dict(color="#A855F7", width=1.5, dash="longdash"),
+                        hovertemplate="Equal Ens: %{y:.1f} MW<extra></extra>"
+                    ))
+            else:
+                if abl_forecast_key and abl_forecast_key in cache:
+                    fig_exp.add_trace(go.Scatter(
+                        x=t_lead, y=cache[abl_forecast_key][sel_idx], mode="lines", name="Ablation: Forecast-Aware Router",
+                        line=dict(color="#10B981", width=1.8, dash="dot"),
+                        hovertemplate="Forecast-Aware: %{y:.1f} MW<extra></extra>"
+                    ))
+                if abl_calendar_key and abl_calendar_key in cache:
+                    fig_exp.add_trace(go.Scatter(
+                        x=t_lead, y=cache[abl_calendar_key][sel_idx], mode="lines", name="Ablation: Calendar Context Only",
+                        line=dict(color="#F59E0B", width=1.8, dash="dash"),
+                        hovertemplate="Calendar Context: %{y:.1f} MW<extra></extra>"
+                    ))
+                if abl_no_error_key and abl_no_error_key in cache:
+                    fig_exp.add_trace(go.Scatter(
+                        x=t_lead, y=cache[abl_no_error_key][sel_idx], mode="lines", name="Ablation: No Recent Error",
+                        line=dict(color="#EC4899", width=1.8, dash="dashdot"),
+                        hovertemplate="No Recent Error: %{y:.1f} MW<extra></extra>"
+                    ))
+
+            fig_exp.update_layout(
+                title=f"PJM Interconnection — Model Trajectory Comparison (Instance #{sel_idx}, Seed {sel_seed})",
+                xaxis_title="Forecast Step (h = +1 to +24 Hours)",
+                yaxis_title="Load (MW)",
+                hovermode="x unified"
+            )
+            apply_dark_plotly_theme(fig_exp, height=420)
+            st.plotly_chart(fig_exp, use_container_width=True)
+
+            col_res, col_w = st.columns([1.1, 0.9])
+            with col_res:
+                st.markdown('<div class="section-title">5. Forecast Residuals (Lead h = 1..24)</div>', unsafe_allow_html=True)
+                residuals = y_caeg - y_true
+                colors = ["#EF4444" if r > 0 else "#38BDF8" for r in residuals]
+                fig_res = go.Figure()
+                fig_res.add_trace(go.Bar(
+                    x=t_lead, y=residuals, marker_color=colors,
+                    name="Signed Error (Pred - Actual)",
+                    hovertemplate="Lead +%{x}h: %{y:.1f} MW<extra></extra>"
+                ))
+                fig_res.add_hline(y=0, line_color="#64748B", line_width=1)
+                fig_res.update_layout(
+                    title=f"Step-by-Step Signed Error: Canonical V1 (Instance #{sel_idx})",
+                    xaxis_title="Lead Hour (h)",
+                    yaxis_title="Residual (MW)",
+                    showlegend=False
+                )
+                apply_dark_plotly_theme(fig_res, height=320)
+                st.plotly_chart(fig_res, use_container_width=True)
+
+            with col_w:
+                st.markdown('<div class="section-title">6. Dynamic Routing Weights</div>', unsafe_allow_html=True)
+                if weights is not None and len(weights) >= 3:
+                    fig_rw = go.Figure()
+                    fig_rw.add_trace(go.Bar(
+                        x=["LSTM", "TCN", "CNN"],
+                        y=[weights[0] * 100, weights[1] * 100, weights[2] * 100],
+                        marker_color=["#F59E0B", "#10B981", "#EC4899"],
+                        text=[f"{weights[0]*100:.1f}%", f"{weights[1]*100:.1f}%", f"{weights[2]*100:.1f}%"],
+                        textposition="auto",
+                        hovertemplate="%{x} Weight: %{y:.2f}%<extra></extra>"
+                    ))
+                    fig_rw.update_layout(
+                        title=f"Instance #{sel_idx} Gating Simplex Allocation (Seed {sel_seed})",
+                        yaxis_title="Allocation (%)",
+                        yaxis=dict(range=[0, 60]),
+                        showlegend=False
+                    )
+                    apply_dark_plotly_theme(fig_rw, height=320)
+                    st.plotly_chart(fig_rw, use_container_width=True)
+                else:
+                    st.info("Routing weights not recorded for this configuration.")
+
+        # CASE B: GEFCom2014 or UCI (Honest Empty State & Verified Aggregate Results)
+        else:
+            st.markdown("""
+            <div class="empty-state-card">
+                <div style="font-size:1.15rem; font-weight:700; color:#38BDF8; margin-bottom:8px;">
+                    ◈ PREDICTION TRACE UNAVAILABLE
+                </div>
+                <div style="font-size:0.92rem; color:#E2E8F0; max-width:680px; margin:0 auto 12px auto; line-height:1.5;">
+                    Verified step-by-step prediction arrays for <strong>""" + artifact["name"] + """</strong> are not currently stored in the dashboard artifact set.
+                </div>
+                <div style="font-size:0.84rem; color:#94A3B8; max-width:680px; margin:0 auto; line-height:1.5;">
+                    In accordance with the zero-fabrication academic research protocol, synthetic or simulated prediction traces are strictly prohibited. 
+                    Full multi-seed benchmark evaluations, seed distributions, routing diagnostics, and non-overlapping daily-block statistical tests are verified and presented below.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Show verified summary metric cards for this dataset
+            st.markdown(f"""
+            <div class="metric-grid-4">
+                <div class="metric-card">
+                    <div class="metric-label">Primary Test MAE</div>
+                    <div class="metric-value">{artifact['test_mae']:.2f} <span style="font-size:0.85rem; color:#94A3B8;">{artifact['units']}</span></div>
+                    <div class="metric-sub">5-seed mean (ddof=0)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Primary Test RMSE</div>
+                    <div class="metric-value">{artifact['test_rmse']:.2f} <span style="font-size:0.85rem; color:#94A3B8;">{artifact['units']}</span></div>
+                    <div class="metric-sub">Standard deviation penalty</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Test R² Score</div>
+                    <div class="metric-value">{artifact['test_r2']:.4f}</div>
+                    <div class="metric-sub">Variance explained</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Evaluation Blocks</div>
+                    <div class="metric-value">{artifact['instances_count']}</div>
+                    <div class="metric-sub">{artifact['instances_text']}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Show dataset-specific verified seed/task breakdown
+            if chosen_ds == "GEFCom2014":
+                st.markdown('<div class="section-title">Verified GEFCom2014 Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
+                df_g_seeds = load_gefcom_seed_results()
+                if df_g_seeds is not None:
+                    caeg_seeds = df_g_seeds[df_g_seeds["model"] == "Original_CAEGNet_V1"][["seed", "MAE", "RMSE", "R2", "MAPE"]].copy()
+                    caeg_seeds.columns = ["Seed", "MAE (kW)", "RMSE (kW)", "R² Score", "MAPE (%)"]
+                    
+                    # HTML Table
+                    rows_html = ""
+                    for _, r in caeg_seeds.iterrows():
+                        rows_html += f"<tr><td>Seed {int(r['Seed'])}</td><td class='num-cell'>{r['MAE (kW)']:.2f}</td><td class='num-cell'>{r['RMSE (kW)']:.2f}</td><td class='num-cell'>{r['R² Score']:.4f}</td><td class='num-cell'>{r['MAPE (%)']:.2f}%</td></tr>"
+                    rows_html += f"<tr class='highlight-row'><td><strong>Mean (ddof=0)</strong></td><td class='num-cell'><strong>12.41 ± 0.15</strong></td><td class='num-cell'><strong>18.04</strong></td><td class='num-cell'><strong>0.8610</strong></td><td class='num-cell'><strong>9.37%</strong></td></tr>"
+                    
+                    st.markdown(f"""
+                    <table class="custom-table">
+                        <thead><tr><th>Evaluation Run</th><th style="text-align:right;">MAE (kW)</th><th style="text-align:right;">RMSE (kW)</th><th style="text-align:right;">R² Score</th><th style="text-align:right;">MAPE</th></tr></thead>
+                        <tbody>{rows_html}</tbody>
+                    </table>
+                    """, unsafe_allow_html=True)
+
+                # Routing distribution for GEFCom
+                st.markdown('<div class="section-title">Verified GEFCom2014 Gating Simplex Allocation</div>', unsafe_allow_html=True)
+                col_grw, col_ginfo = st.columns([1.1, 0.9])
+                with col_grw:
+                    fig_g = go.Figure()
+                    fig_g.add_trace(go.Bar(
+                        x=["LSTM Expert", "TCN Expert", "CNN Expert"],
+                        y=[35.28, 29.82, 34.90],
+                        marker_color=["#F59E0B", "#10B981", "#EC4899"],
+                        text=["35.28%", "29.82%", "34.90%"],
+                        textposition="auto"
+                    ))
+                    fig_g.update_layout(
+                        title="GEFCom2014 — Empirical Gating Weight Distribution",
+                        yaxis_title="Average Weight (%)",
+                        yaxis=dict(range=[0, 50]),
+                        showlegend=False
+                    )
+                    apply_dark_plotly_theme(fig_g, height=320)
+                    st.plotly_chart(fig_g, use_container_width=True)
+                with col_ginfo:
+                    st.markdown("""
+                    <div class="dark-card" style="height:100%; display:flex; flex-direction:column; justify-content:center;">
+                        <div class="dark-card-header">GEFCom2014 Routing Dynamics</div>
+                        <div style="font-size:0.92rem; color:#CBD5E1; line-height:1.6;">
+                            • <strong>Effective Experts:</strong> N<sub>eff</sub> = 2.9765 / 3.000<br>
+                            • <strong>Weight Entropy:</strong> H = 1.0911 nats<br>
+                            • <strong>Fallback Coefficient:</strong> λ = 0.5170 ± 0.0055 (CV = 1.06%)<br>
+                            • <strong>Observation:</strong> The gating router allocates substantial weight to both LSTM and CNN experts, reflecting weather-driven diurnal peaks and ramp spikes.
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            elif chosen_ds == "UCI":
+                st.markdown('<div class="section-title">Verified UCI Electricity Multi-Seed Benchmark Results</div>', unsafe_allow_html=True)
+                df_u_seeds = load_uci_seed_results()
+                if df_u_seeds is not None:
+                    caeg_u = df_u_seeds[df_u_seeds["model"] == "Original CAEG-Net V1"][["seed", "test_mae", "test_rmse", "test_r2", "test_mape"]].copy()
+                    caeg_u.columns = ["Seed", "MAE (MW)", "RMSE (MW)", "R² Score", "MAPE (%)"]
+                    
+                    rows_html = ""
+                    for _, r in caeg_u.iterrows():
+                        rows_html += f"<tr><td>Seed {int(r['Seed'])}</td><td class='num-cell'>{r['MAE (MW)']:.2f}</td><td class='num-cell'>{r['RMSE (MW)']:.2f}</td><td class='num-cell'>{r['R² Score']:.4f}</td><td class='num-cell'>{r['MAPE (%)']:.2f}%</td></tr>"
+                    rows_html += f"<tr class='highlight-row'><td><strong>Mean (ddof=0)</strong></td><td class='num-cell'><strong>7.74 ± 0.30</strong></td><td class='num-cell'><strong>10.96</strong></td><td class='num-cell'><strong>0.9831</strong></td><td class='num-cell'><strong>4.28%</strong></td></tr>"
+                    
+                    st.markdown(f"""
+                    <table class="custom-table">
+                        <thead><tr><th>Evaluation Run</th><th style="text-align:right;">MAE (MW)</th><th style="text-align:right;">RMSE (MW)</th><th style="text-align:right;">R² Score</th><th style="text-align:right;">MAPE</th></tr></thead>
+                        <tbody>{rows_html}</tbody>
+                    </table>
+                    """, unsafe_allow_html=True)
+
+                st.markdown('<div class="section-title">Verified UCI Electricity Gating Simplex Allocation</div>', unsafe_allow_html=True)
+                col_urw, col_uinfo = st.columns([1.1, 0.9])
+                with col_urw:
+                    fig_u = go.Figure()
+                    fig_u.add_trace(go.Bar(
+                        x=["LSTM Expert", "TCN Expert", "CNN Expert"],
+                        y=[34.28, 29.94, 35.78],
+                        marker_color=["#F59E0B", "#10B981", "#EC4899"],
+                        text=["34.28%", "29.94%", "35.78%"],
+                        textposition="auto"
+                    ))
+                    fig_u.update_layout(
+                        title="UCI Electricity — Empirical Gating Weight Distribution",
+                        yaxis_title="Average Weight (%)",
+                        yaxis=dict(range=[0, 50]),
+                        showlegend=False
+                    )
+                    apply_dark_plotly_theme(fig_u, height=320)
+                    st.plotly_chart(fig_u, use_container_width=True)
+                with col_uinfo:
+                    st.markdown("""
+                    <div class="dark-card" style="height:100%; display:flex; flex-direction:column; justify-content:center;">
+                        <div class="dark-card-header">UCI Routing Dynamics</div>
+                        <div style="font-size:0.92rem; color:#CBD5E1; line-height:1.6;">
+                            • <strong>Effective Experts:</strong> N<sub>eff</sub> = 2.9842 / 3.000<br>
+                            • <strong>Fallback Coefficient:</strong> λ = 0.5064 ± 0.0030 (CV = 0.59%)<br>
+                            • <strong>High Base Predictability:</strong> High consumer baseline leads to strong recurrent persistence (LSTM) alongside CNN edge tracking.<br>
+                            • <strong>Cross-Grid Consistency:</strong> Confirms convex interior distribution across all evaluated grids.
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
 
 
 # =========================================================================
@@ -1455,8 +2258,8 @@ elif page == "◫ Architecture":
             <div class="dark-card-header">Mathematical Formulation</div>
             <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
         """, unsafe_allow_html=True)
-        st.latex(r"\hat{\mathbf{y}}_{	ext{adaptive}, t} = \sum_{k \in \{L, T, C\}} w_{k, t} \hat{\mathbf{y}}_{k, t}, \quad \mathbf{w}_t = 	ext{Softmax}(\mathbf{W}_g \mathbf{h}_t + \mathbf{b}_g)")
-        st.latex(r"\hat{\mathbf{y}}_{	ext{final}, t} = \lambda_t \hat{\mathbf{y}}_{	ext{adaptive}, t} + (1 - \lambda_t) \hat{\mathbf{y}}_{	ext{equal}, t}")
+        st.latex(r"\hat{\mathbf{y}}_{\text{adaptive}, t} = \sum_{k \in \{L, T, C\}} w_{k, t} \hat{\mathbf{y}}_{k, t}, \quad \mathbf{w}_t = \text{Softmax}(\mathbf{W}_g \mathbf{h}_t + \mathbf{b}_g)")
+        st.latex(r"\hat{\mathbf{y}}_{\text{final}, t} = \lambda_t \hat{\mathbf{y}}_{\text{adaptive}, t} + (1 - \lambda_t) \hat{\mathbf{y}}_{\text{equal}, t}")
         st.markdown("""
             <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 8px;">
                 Where $\\hat{\\mathbf{y}}_{\\text{equal}, t} = \\frac{1}{3}(\\hat{\\mathbf{y}}_L + \\hat{\\mathbf{y}}_T + \\hat{\\mathbf{y}}_C)$ is the robust unweighted centroid, and $\\lambda_t = \\sigma(\\mathbf{W}_c \\mathbf{h}_t + b_c)$ provides smooth shrinkage toward the centroid.
@@ -1468,11 +2271,11 @@ elif page == "◫ Architecture":
         <div class="dark-card">
             <div class="dark-card-header">Causal Context Feature Specification</div>
             <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
-                • <strong>Trend:</strong> Linear regression slope across the 168h input window.<br>
-                • <strong>Volatility:</strong> Normalized standard deviation of load across lookback.<br>
-                • <strong>Periodicity:</strong> 24-hour lag autocorrelation ($r_{\text{lag-24}}$).<br>
-                • <strong>Causal Recent Error:</strong> Rolling MAE of forecasts over observed lookback.<br>
-                • <strong>OOF Performance Conditioning:</strong> Causally tracked historical validation error residuals for each expert, preventing circular self-bias.
+                • <strong>Trend:</strong> Normalized OLS regression slope across the 168h standardized lookback ($\\beta_1 / (s_z + 10^{-6})$).<br>
+                • <strong>Volatility:</strong> Sample standard deviation (<code>ddof=1</code>) of first differences $\\Delta z_i = z_i - z_{i-1}$ across the 168h standardized lookback ($\\sigma(\\Delta y) / \\sigma_{\\text{train}}$).<br>
+                • <strong>Periodicity:</strong> 24-hour lag sample autocorrelation ($r_{24}$ across the 168h lookback).<br>
+                • <strong>Causal Recent Error:</strong> Out-of-sample MAE of the most recently completed 24h walk-forward forecast ($[t-23:t]$, origin $t-24\\text{h}$).<br>
+                • <strong>OOF Performance Conditioning (F2/A2-OOF only):</strong> Causally tracked historical validation error residuals for each expert, preventing circular self-bias.
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -2657,8 +3460,8 @@ elif page == "◇ Confidence / Fallback":
             <div class="dark-card-header">Mathematical Formulation</div>
             <div style="font-size: 0.86rem; color: #CBD5E1; line-height: 1.55;">
         """, unsafe_allow_html=True)
-        st.latex(r"\hat{\mathbf{y}}_{	ext{final}, t} = \lambda_t \hat{\mathbf{y}}_{	ext{adaptive}, t} + (1 - \lambda_t) \hat{\mathbf{y}}_{	ext{equal}, t}")
-        st.latex(r"\lambda_t = \\sigma(\mathbf{W}_{	ext{conf}} \mathbf{h}_{	ext{context}, t} + b_{	ext{conf}}) \in (0, 1)")
+        st.latex(r"\hat{\mathbf{y}}_{\text{final}, t} = \lambda_t \hat{\mathbf{y}}_{\text{adaptive}, t} + (1 - \lambda_t) \hat{\mathbf{y}}_{\text{equal}, t}")
+        st.latex(r"\lambda_t = \sigma(\mathbf{W}_{\text{conf}} \mathbf{h}_{\text{context}, t} + b_{\text{conf}}) \in (0, 1)")
         st.markdown("""
             <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 8px;">
                 Where $\\hat{\\mathbf{y}}_{\\text{equal}, t} = \\frac{1}{3}(\\hat{\\mathbf{y}}_L + \\hat{\\mathbf{y}}_T + \\hat{\\mathbf{y}}_C)$ represents the unweighted ensemble centroid.

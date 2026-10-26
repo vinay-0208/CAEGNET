@@ -69,24 +69,36 @@ desktop.ini
 # Temporary and test logs
 *.log
 
-# Phase checkpoints
-research/checkpoints/phase7/
-research/results/*.pkl
-
 # Dataset files (raw external datasets)
 data/Modern_PJM/
 data/Load/
 data/ElectricityLoadDiagrams20112014/
 data/__MACOSX/
 
-# Research track history (maintained exclusively on research-track branch)
-research/archive/
-research/checkpoints/
-research/experiments/
-research/results/
-research/*.py
-# Public notebooks
-!notebooks/
-!notebooks/CAEG_Net_Faculty_Review.ipynb
+# Model checkpoints and weights
+checkpoints/
+
+# Benchmark artifacts and execution logs
+artifacts/
+audit_reports/
+reports/
+results/
+tmp_inspect/
+colab_implementation/
+implementation_docs/
+
+# Research track internal experiments and artifacts
+research/
 !research/tests/
 !research/tests/test_causality.py
+
+# Scripts: strictly track authoritative verification and runner scripts
+scripts/*
+!scripts/evaluate_benchmarks.py
+!scripts/run_dashboard.py
+!scripts/verify_reproducibility.py
+
+# Public notebooks: strictly track only the two authoritative public notebooks
+notebooks/*.ipynb
+!notebooks/CAEG_Net_Faculty_Review.ipynb
+!notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb

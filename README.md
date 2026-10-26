@@ -4,35 +4,33 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-brightgreen.svg)](requirements.txt)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange.svg)](requirements.txt)
-[![Status: Final Locked Champion](https://img.shields.io/badge/Status-Final%20Locked%20Champion-success.svg)](configs/final_caeg_net.yaml)
+[![Architecture: Canonical V1 (121,531 Params)](https://img.shields.io/badge/Architecture-Canonical%20V1%20(121%2C531%20Params)-success.svg)](caeg_net.py)
 
 ---
 
 ## Overview
 
-**CAEG-Net** (Context-Adaptive Expert Gating Network; internal experiment identifier: **F2/A2-OOF**) is a specialized neural mixture-of-experts architecture developed for short-term electricity load forecasting (STLF). Short-term load forecasting represents a critical operational requirement for modern power grid transmission operators, energy market clearinghouses, and renewable integration dispatchers, who must accurately anticipate demand across 24-hour lead horizons.
+**CAEG-Net** (Context-Adaptive Expert Gating Network; frozen benchmark architecture: **Canonical CAEG-Net V1**) is a neural mixture-of-experts architecture developed for short-term electricity load forecasting (STLF). Short-term load forecasting is a core operational requirement for power grid transmission operators, energy market clearinghouses, and dispatchers anticipating demand across a 24-hour day-ahead horizon.
 
-Monolithic neural architectures typically suffer from structural trade-offs: recurrent models (LSTM) capture long-range diurnal persistence but struggle with high-frequency ramp events; dilated convolutional models (TCN) capture multi-scale patterns with broad receptive fields but exhibit parameter rigidity across shifting volatility regimes; and shallow convolutional networks (CNN) excel at localized edge motifs while lacking global context. CAEG-Net resolves these trade-offs by orchestrating heterogeneous temporal experts through a lightweight context-adaptive gating router and a regularized confidence fallback mechanism.
-
-Rather than relying on unconstrained end-to-end routing that risks expert starvation or routing instability, CAEG-Net conditions its convex gating weights on a distilled 7-dimensional causal conditioning vector (comprising 4 physical context features and 3 causal out-of-fold relative expert-performance features). A dedicated confidence fallback head anchors predictions toward the robust equal-expert centroid ($\lambda \approx 0.51$), preventing single-expert overconfidence during abrupt regime transitions.
+Monolithic neural architectures face distinct structural trade-offs on univariate load series: recurrent networks (`LSTM`) capture smooth diurnal persistence; dilated causal convolutional networks (`TCN`) capture multi-scale temporal patterns across broad receptive fields; and localized convolutional networks (`CNN`) extract short-range ramp motifs. **Canonical CAEG-Net V1** coordinates these three heterogeneous temporal experts through a lightweight context-adaptive gating network (`1,027` routing parameters) conditioned on a 4-dimensional causal physical context vector extracted strictly from the 168-hour historical lookback window.
 
 ---
 
 ## Research Question
 
-> **Can a lightweight, context-aware adaptive gating mechanism coordinating heterogeneous temporal neural inductive biases (LSTM, TCN, CNN)—conditioned on observable domain features and causal out-of-fold relative performance indicators—consistently outperform both standalone individual experts and static ensemble baselines across structurally diverse electrical power grids under a zero-leakage causal protocol?**
+> **Can a lightweight, context-aware adaptive gating mechanism coordinating heterogeneous temporal neural experts (LSTM, TCN, CNN)—conditioned strictly on causal historical sequence statistics—improve day-ahead forecasting accuracy over standalone experts and static equal-weight ensemble fusion across diverse electrical power grids?**
 
 ---
 
-## Architecture
+## Architecture (Canonical CAEG-Net V1)
 
-CAEG-Net transforms a 168-hour historical sequence of univariate electricity demand observations into an authoritative 24-hour day-ahead forecast trajectory.
+Canonical CAEG-Net V1 (`caeg_net.py`, **121,531 trainable parameters**) maps a 168-hour historical sequence of univariate electricity demand observations and its 4-dimensional causal context vector into a 24-hour day-ahead load forecast.
 
 ```mermaid
 graph TD
-    subgraph Inputs ["Input Processing"]
+    subgraph Inputs ["Causal Input Processing"]
         X["168-Hour Historical Load Sequence<br/>[B, 168, 1]"]
-        Ctx["7D Causal Conditioning Vector<br/>[4 Context Features + 3 OOF Error Indicators]"]
+        Ctx["4D Causal Context Vector<br/>[Trend, First-Diff Volatility, Lag-24 Autocorr, Recent Error]"]
     end
 
     subgraph Experts ["Heterogeneous Temporal Experts (120,504 Parameters)"]
@@ -41,155 +39,158 @@ graph TD
         CNN["CNN Expert (27,400 Params)<br/>3-Stage Multi-Scale 1D CNN [k=3, 5, 3]"]
     end
 
-    subgraph Coordination ["Adaptive Coordination (1,220 Parameters)"]
-        Router["Context Router (1,075 Params)<br/>MLP with Softmax Simplex Allocation"]
-        Fallback["Confidence Fallback Head (145 Params)<br/>Sigmoid Gated Shrinkage (Learned λ ≈ 0.51)"]
+    subgraph Routing ["Context-Adaptive Gating (1,027 Parameters)"]
+        Enc["ContextFeatureEncoder (384 Params)<br/>Linear(4→16) + LayerNorm + GELU + Linear(16→16)"]
+        Gate["ContextGatingNetwork (643 Params)<br/>MLP(16→32→16→3) + Temperature-Scaled Softmax"]
     end
 
     subgraph Output ["Forecast Output"]
-        Y["24-Hour Day-Ahead Load Forecast<br/>[B, 24]"]
+        Y["24-Hour Day-Ahead Load Forecast<br/>ŷ = w_L·ŷ_L + w_T·ŷ_T + w_C·ŷ_C  [B, 24]"]
     end
 
     X --> LSTM
     X --> TCN
     X --> CNN
-    
-    Ctx --> Router
-    Ctx --> Fallback
 
-    LSTM -->|"ŷ_L (24h)"| Router
-    TCN -->|"ŷ_T (24h)"| Router
-    CNN -->|"ŷ_C (24h)"| Router
+    Ctx --> Enc
+    Enc --> Gate
 
-    Router -->|"Adaptive Prediction ŷ_gate"| Fallback
-    Fallback -->|"λ · ŷ_gate + (1-λ) · ŷ_equal"| Y
+    LSTM -->|"ŷ_L [B, 24]"| Y
+    TCN -->|"ŷ_T [B, 24]"| Y
+    CNN -->|"ŷ_C [B, 24]"| Y
+    Gate -->|"Simplex Weights w = [w_L, w_T, w_C]"| Y
 ```
 
-### Flow of Tensors:
-1. **168-Hour Historical Load** ($\mathbf{X}_t \in \mathbb{R}^{168 \times 1}$): Passed simultaneously into the three parallel temporal backbones.
-2. **Context Encoder** ($\mathbf{c}_t \in \mathbb{R}^7$): Evaluates 4 causal sequence statistics (trend slope, short-term volatility, lag-24 autocorrelation, recent tracking error) and 3 causal out-of-fold relative expert error indicators.
-3. **LSTM / TCN / CNN Experts**: Produce independent candidate 24-hour forecasts $\hat{\mathbf{y}}_L, \hat{\mathbf{y}}_T, \hat{\mathbf{y}}_C \in \mathbb{R}^{24}$.
-4. **Adaptive Routing**: Softmax gating network maps $\mathbf{c}_t$ to simplex weights $\mathbf{w}_t = [w_L, w_T, w_C]^\top$ ($\sum w_i = 1.0, w_i > 0$) to compute adaptive blend $\hat{\mathbf{y}}_{\text{gate}} = \sum w_i \hat{\mathbf{y}}_i$.
-5. **Confidence Fallback**: Evaluates gating certainty and adaptively shrinks toward the equal-expert centroid $\hat{\mathbf{y}}_{\text{equal}} = \frac{1}{3}(\hat{\mathbf{y}}_L + \hat{\mathbf{y}}_T + \hat{\mathbf{y}}_C)$ via learned shrinkage parameter $\lambda_t \in [0, 1]$:
-   $$\hat{\mathbf{y}}_{\text{final}} = \lambda_t \hat{\mathbf{y}}_{\text{gate}} + (1 - \lambda_t) \hat{\mathbf{y}}_{\text{equal}}$$
-6. **24-Hour Forecast** ($\hat{\mathbf{y}}_{\text{final}} \in \mathbb{R}^{24}$): Inverted back to physical engineering units (MW or kW).
+### Tensor Flow
+1. **168-Hour Historical Load** ($\mathbf{X}_t \in \mathbb{R}^{168 \times 1}$): Standardized using training-split parameters ($\mu_{\text{train}}, \sigma_{\text{train}}$) and passed in parallel to the three temporal expert backbones.
+2. **4D Causal Context Vector** ($\mathbf{c}_t \in \mathbb{R}^4$): Computed strictly from historical observations without future leakage:
+   - `c[0]` **Trend**: Ordinary least-squares linear slope fitted across the 168-hour lookback window.
+   - `c[1]` **Volatility**: Standard deviation of first-order hourly differences $\text{std}(\Delta x_t)$ over the 168-hour lookback window.
+   - `c[2]` **Daily Seasonality Strength**: Lag-24 autocorrelation across the 168-hour lookback window.
+   - `c[3]` **Causal Recent Forecast Error**: Trailing 24-hour persistence proxy MAE (`mean(|x[-24:] - x[-48:-24]|)`), Z-score normalized using training-set context statistics.
+3. **Expert Predictions**: Each expert outputs an independent 24-hour trajectory $\hat{\mathbf{y}}_L, \hat{\mathbf{y}}_T, \hat{\mathbf{y}}_C \in \mathbb{R}^{24}$.
+4. **Horizon-Shared Softmax Gating**: `ContextFeatureEncoder` and `ContextGatingNetwork` map $\mathbf{c}_t$ to convex simplex weights $\mathbf{w}_t = [w_L, w_T, w_C]^\top$ ($w_k > 0, \sum_{k=1}^3 w_k = 1$) applied across the 24-hour forecast horizon:
+   $$\hat{\mathbf{y}}_t = w_{t,L}\hat{\mathbf{y}}_{t,L} + w_{t,T}\hat{\mathbf{y}}_{t,T} + w_{t,C}\hat{\mathbf{y}}_{t,C}$$
 
 ---
 
 ## Model Specification
 
-| Specification Dimension | Parameter Value / Configuration |
+| Specification | Canonical CAEG-Net V1 Configuration |
 | :--- | :--- |
-| **Public Model Name** | CAEG-Net (Context-Adaptive Expert Gating Network) |
-| **Internal Experiment ID** | F2 / A2-OOF |
-| **Total Trainable Parameters** | **121,724** |
-| **Backbone Parameters** | 120,504 (LSTM: 56,152; TCN: 36,952; CNN: 27,400) |
-| **Routing & Fallback Parameters** | 1,220 (Context Router: 1,075; Confidence Head: 145) |
-| **Input Sequence Length** | 168 Hours (7 contiguous days of hourly load) |
-| **Forecast Horizon** | 24 Hours (Day-ahead hourly dispatch profile) |
-| **Temporal Experts** | LSTM (2 layers), TCN (6 dilated stages), CNN (3 multi-scale stages) |
-| **Evaluation Datasets** | PJM Interconnection (MW), GEFCom2014 Zone 21 (kW), UCI Electricity (MW) |
-| **Random Evaluation Seeds** | 5 canonical initialization seeds [42, 123, 999, 2024, 3407] |
-| **Primary Metric** | Mean Absolute Error (MAE) with population standard deviation ($\text{ddof}=0$) |
+| **Authoritative Implementation** | [`caeg_net.py`](caeg_net.py) (`CAEGNet`) |
+| **Total Trainable Parameters** | **121,531** |
+| **Expert Backbone Parameters** | **120,504** (`LSTMExpert`: 56,152; `TCNExpert`: 36,952; `CNNExpert`: 27,400) |
+| **Context Routing Parameters** | **1,027** (`ContextFeatureEncoder`: 384; `ContextGatingNetwork`: 643) |
+| **Input Lookback Window** | 168 Hours (7 contiguous days of hourly load) |
+| **Forecast Horizon** | 24 Hours (day-ahead hourly profile) |
+| **Causal Context Features (4D)** | `[Trend, First-Difference Volatility, Lag-24 Autocorrelation, Causal Recent Error]` |
+| **Gating Mechanism** | Horizon-shared softmax simplex weights $\mathbf{w}_t \in \Delta^2$ (`[B, 3, 1]`) |
+| **Evaluation Datasets** | Modern PJM (`MW`, 1,294 test windows), GEFCom2014 (`kW`, 10,944 test windows), UCI Cohort 320 (`MW`, 3,922 test windows) |
+| **Evaluation Seeds** | 5 random initialization seeds `[42, 123, 999, 2024, 3407]` |
 
 ---
 
 ## Results
 
-**CAEG-Net provides the strongest overall balance across the evaluated datasets and achieves competitive performance against both standalone experts and ensemble controls.**
+All metrics below are computed directly from the repository's verified multi-seed evaluation records and Phase 11 non-overlapping daily-block statistical tests.
 
-### Primary Final Benchmark Comparison
+### Table A — Main Forecasting Results (5-Seed Benchmarks)
 
-| Dataset | CAEG-Net MAE (F2 / A2-OOF) | Best Standalone MAE | Static Equal Ensemble MAE | Fixed Shrinkage MAE | Lowest MAE in Dataset | Relative Result / Interpretation |
-| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **PJM Interconnection** (MW) | **250.9747 ± 10.6938** | 259.3264 (TCN) | 279.8282 | 253.5008 ± 8.0264 | **CAEG-Net (250.97 MW)** | CAEG-Net achieves lowest overall MAE; TCN is lowest standalone baseline (-3.22% vs TCN, -10.31% vs Equal Ens) |
-| **GEFCom2014** (kW) | 12.4077 ± 0.1525 | 12.5729 (TCN) | 12.6248 | **12.3607 ± 0.1841** | **Fixed Shrinkage (12.36 kW)** | Fixed Shrinkage achieves slightly lower MAE (-0.38% vs CAEG-Net); CAEG-Net outperforms all standalone experts (-1.31% vs TCN) |
-| **UCI Electricity** (MW) | 7.7371 ± 0.3037 | **7.5542 (LSTM)** | 8.1675 | 7.7523 ± 0.1814 | **Standalone LSTM (7.55 MW)** | Standalone LSTM achieves lower MAE; CAEG-Net outperforms Equal Ensemble (-5.27%) and Fixed Shrinkage (-0.20%) |
+Every model below was trained and evaluated across the same 5 initialization seeds (`[42, 123, 999, 2024, 3407]`) within each dataset cohort. Values report **Mean ± Sample SD ($s$, $\text{ddof}=1$)** across the 5 seeds.
 
-### Detailed Model Comparison (Table B)
+| Dataset | Model | Parameters | MAE (mean ± SD) | RMSE (mean ± SD) | $R^2$ (mean ± SD) | Unit |
+| :--- | :--- | ---: | ---: | ---: | ---: | :--- |
+| **PJM** | **CAEG-Net V1** | 121,531 | **251.44 ± 9.74** | **334.32 ± 11.09** | **0.8723 ± 0.0086** | MW |
+| PJM | Static Equal Fusion | 120,504 | 295.48 ± 15.54 | 404.24 ± 14.61 | 0.8133 ± 0.0138 | MW |
+| PJM | TCN Expert (Best Standalone) | 36,952 | 259.86 ± 8.54 | 351.37 ± 11.19 | 0.8590 ± 0.0091 | MW |
+| PJM | LSTM Expert | 56,152 | 301.45 ± 19.17 | 414.81 ± 21.86 | 0.8032 ± 0.0203 | MW |
+| PJM | CNN Expert | 27,400 | 469.53 ± 58.34 | 628.85 ± 61.63 | 0.5452 ± 0.0882 | MW |
+| **GEFCom2014** | **CAEG-Net V1** | 121,531 | 12.55 ± 0.13 | 18.28 ± 0.17 | 0.8573 ± 0.0026 | kW |
+| GEFCom2014 | Static Equal Fusion | 120,504 | 12.53 ± 0.11 | 18.08 ± 0.14 | 0.8604 ± 0.0021 | kW |
+| GEFCom2014 | **TCN Expert (Best Standalone)** | 36,952 | **12.40 ± 0.12** | **18.02 ± 0.12** | **0.8613 ± 0.0018** | kW |
+| GEFCom2014 | LSTM Expert | 56,152 | 13.23 ± 0.10 | 18.94 ± 0.16 | 0.8468 ± 0.0025 | kW |
+| GEFCom2014 | CNN Expert | 27,400 | 14.50 ± 0.23 | 20.25 ± 0.11 | 0.8248 ± 0.0019 | kW |
+| **UCI ElectricityLoadDiagrams** | **CAEG-Net V1** | 121,531 | **8.10 ± 0.48** | **11.35 ± 0.52** | **0.9818 ± 0.0016** | MW |
+| UCI ElectricityLoadDiagrams | Static Equal Fusion | 120,504 | 8.43 ± 0.28 | 12.10 ± 0.32 | 0.9794 ± 0.0011 | MW |
+| UCI ElectricityLoadDiagrams | LSTM Expert (Best Standalone) | 56,152 | 8.25 ± 0.44 | 11.94 ± 0.71 | 0.9799 ± 0.0023 | MW |
+| UCI ElectricityLoadDiagrams | TCN Expert | 36,952 | 8.34 ± 0.13 | 11.90 ± 0.16 | 0.9800 ± 0.0005 | MW |
+| UCI ElectricityLoadDiagrams | CNN Expert | 27,400 | 11.71 ± 1.19 | 15.81 ± 1.43 | 0.9646 ± 0.0067 | MW |
 
-| Dataset | Model Formulation | Mean MAE | Sample SD ($s$) | Population SD ($\sigma$) | RMSE | R² Score | CV (%) | Evaluation Role |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **PJM** (MW) | **CAEG-Net (F2 / A2-OOF)** | **250.9747** | **10.6938** | **9.5648** | **335.3822** | **0.8714** | **4.26%** | **PROPOSED MODEL** |
-| PJM (MW) | Dynamic Confidence Control | 251.9419 | 9.7996 | 8.7650 | 336.7396 | 0.8704 | 3.89% | CONTROL / ABLATION |
-| PJM (MW) | Fixed Shrinkage Control | 253.5008 | 8.0264 | 7.1790 | 338.9532 | 0.8688 | 3.17% | CONTROL / ABLATION |
-| PJM (MW) | Horizon Routing Control | 257.5450 | 5.3670 | 4.8004 | 343.9132 | 0.8650 | 2.08% | CONTROL / ABLATION |
-| PJM (MW) | TCN Expert | 259.3264 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| PJM (MW) | Static Equal Ensemble | 279.8282 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
-| PJM (MW) | LSTM Expert | 291.7300 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| PJM (MW) | CNN Expert | 432.0800 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| **GEFCom** (kW) | **Fixed Shrinkage Control** | **12.3607** | 0.1841 | 0.1647 | 18.0181 | 0.8614 | 1.49% | CONTROL / ABLATION |
-| GEFCom (kW) | CAEG-Net (F2 / A2-OOF) | 12.4077 | 0.1525 | 0.1364 | 18.0446 | 0.8610 | 1.23% | PROPOSED MODEL |
-| GEFCom (kW) | Dynamic Confidence Control | 12.4855 | 0.2685 | 0.2402 | 18.1019 | 0.8601 | 2.15% | CONTROL / ABLATION |
-| GEFCom (kW) | TCN Expert | 12.5729 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| GEFCom (kW) | Static Equal Ensemble | 12.6248 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
-| GEFCom (kW) | Horizon Routing Control | 12.8582 | 0.2520 | 0.2254 | 18.4392 | 0.8548 | 1.96% | CONTROL / ABLATION |
-| GEFCom (kW) | LSTM Expert | 13.2300 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| GEFCom (kW) | CNN Expert | 14.5000 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| **UCI** (MW) | **Standalone LSTM Expert** | **7.5542** | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | **STANDALONE EXPERTS** |
-| UCI (MW) | CAEG-Net (F2 / A2-OOF) | 7.7371 | 0.3037 | 0.2716 | 10.9556 | 0.9831 | 3.93% | PROPOSED MODEL |
-| UCI (MW) | Fixed Shrinkage Control | 7.7523 | 0.1814 | 0.1622 | 10.9893 | 0.9830 | 2.34% | CONTROL / ABLATION |
-| UCI (MW) | Dynamic Confidence Control | 7.8177 | 0.2838 | 0.2538 | 10.9980 | 0.9830 | 3.63% | CONTROL / ABLATION |
-| UCI (MW) | Horizon Routing Control | 8.1309 | 0.4048 | 0.3621 | 11.4837 | 0.9814 | 4.98% | CONTROL / ABLATION |
-| UCI (MW) | Static Equal Ensemble | 8.1675 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | ENSEMBLE BASELINE |
-| UCI (MW) | TCN Expert | 8.3400 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
-| UCI (MW) | CNN Expert | 11.7100 | *N/A (single run)* | *N/A (single run)* | *N/A (logged MAE only)* | *N/A (logged MAE only)* | *N/A (single run)* | STANDALONE EXPERTS |
+> **Source Artifacts for Table A:**
+> - **PJM (`MW`):** [`results/phase5_multiseed_results.csv`](results/phase5_multiseed_results.csv) and [`results/phase5_summary.csv`](results/phase5_summary.csv).
+> - **GEFCom2014 (`kW`):** [`dashboard/assets/data/gefcom_seed_results.csv`](dashboard/assets/data/gefcom_seed_results.csv).
+> - **UCI ElectricityLoadDiagrams (`MW`):** [`dashboard/assets/data/uci_seed_results.csv`](dashboard/assets/data/uci_seed_results.csv).
+> - **Phase 10 Cross-Dataset Screening Note:** Under the separate Phase 10 fast-screening protocol (`batch_size=64, max_epochs=25, patience=6`; [`research/results/phase10_candidate_comparison.csv`](research/results/phase10_candidate_comparison.csv)), 5-seed Canonical CAEG-Net V1 (`A0_Canonical_V1`, population SD $\text{ddof}=0$) achieved **`251.17 ± 12.61 MW`** on PJM, **`12.81 ± 0.34 kW`** on GEFCom2014, and **`8.08 ± 0.39 MW`** on UCI.
 
-> *Table Notes:* Cells with *N/A* indicate standalone models evaluated under the single-run benchmark protocol where only test MAE was logged in the repository evidence. Multi-seed models report both Sample Standard Deviation ($s$, $N-1$ denominator) and Population Standard Deviation ($\sigma$, $N$ denominator), with Coefficient of Variation $\text{CV} = (s / \text{Mean}) \times 100$.
+---
 
-> **Academic Assessment:** F2/A2-OOF is the final CAEG-Net formulation. Fixed shrinkage achieves a slightly lower mean MAE on GEFCom2014, while the standalone LSTM has a lower MAE on UCI Electricity. CAEG-Net is therefore presented as the strongest overall balance across the evaluated datasets, not as universally best on every dataset.
+### Table B — Non-Overlapping Daily-Block Statistical Comparisons (Phase 11)
+
+Because rolling 1-hour-stride test windows overlap by 23 forecast hours, inferential hypothesis tests are conducted on **non-overlapping 24-hour daily blocks** (stride = 24 hours) from [`research/results/phase11_statistical_tests.csv`](research/results/phase11_statistical_tests.csv).
+
+**Sign Convention:** $\Delta\text{MAE}_d = \text{MAE}_{\text{CAEG-Net V1}, d} - \text{MAE}_{\text{Static Equal}, d}$. **Negative values ($\Delta\text{MAE} < 0$) favor CAEG-Net V1**; **positive values ($\Delta\text{MAE} > 0$) favor Static Equal Fusion**.
+
+| Dataset | Block Count ($K$) | Mean Daily $\Delta$MAE | 95% CI | Holm-Adjusted $p$ ($t$-test / Wilcoxon) | Conclusion |
+| :--- | ---: | ---: | :---: | :---: | :--- |
+| **PJM** (`MW`) | 53 | **-13.91 MW** | `[-31.52, +3.71] MW` | `0.3834` / `0.1239` | Favors CAEG-Net V1 in point estimate; not statistically significant overall after Holm correction (significant in low-disagreement regime: `-30.20 MW`, Holm $p_W = 0.0015$) |
+| **GEFCom2014** (`kW`) | 456 | **+0.36 kW** | `[+0.17, +0.55] kW` | `0.0012` / `0.0011` | Statistically significant in favor of Static Equal Fusion |
+| **UCI ElectricityLoadDiagrams** (`MW`) | 163 | **-0.11 MW** | `[-0.28, +0.06] MW` | `0.8580` / `0.5928` | Favors CAEG-Net V1 in point estimate; not statistically significant overall (significant in medium-disagreement regime: `-0.34 MW`, Holm $p_W = 0.0400$) |
+
+> **Summary of Findings:**
+> 1. **Modern PJM (`MW`):** Across 5 seeds, CAEG-Net V1 achieves the lowest mean MAE (`251.44 ± 9.74 MW`), improving over Static Equal Fusion (`295.48 ± 15.54 MW`, `-14.9%`) and the best standalone expert (`TCN`, `259.86 ± 8.54 MW`, `-3.2%`). In the single-seed Phase 11 daily-block test ($K=53$), the full-dataset block difference (`-13.91 MW`) does not cross the Holm-adjusted threshold ($p_t = 0.3834$), whereas under the 5-seed ensemble predictions on the same $K=53$ disjoint blocks (`results/phase5_multiseed_results.csv`), the daily block difference is `-25.80 MW` (`95% CI [-47.84, -3.76] MW`, unadjusted $p_t = 0.0258$).
+> 2. **GEFCom2014 (`kW`):** Standalone TCN (`12.40 ± 0.12 kW`) and Static Equal Fusion (`12.53 ± 0.11 kW`) outperform CAEG-Net V1 (`12.55 ± 0.13 kW`), and the daily-block difference (`+0.36 kW`, $K=456$) is statistically significant in favor of Static Equal Fusion ($p_{\text{Holm}} = 0.0012$).
+> 3. **UCI ElectricityLoadDiagrams (`MW`):** Across 5 seeds, CAEG-Net V1 achieves the lowest mean MAE (`8.10 ± 0.48 MW`) compared to Standalone LSTM (`8.25 ± 0.44 MW`), Standalone TCN (`8.34 ± 0.13 MW`), and Static Equal Fusion (`8.43 ± 0.28 MW`), though the single-seed daily-block difference (`-0.11 MW`, $K=163$) is not statistically significant overall ($p_{\text{Holm}} = 0.8580$).
 
 ---
 
 ## Methodology
 
-All experimental evaluations adhere strictly to an uncompromising causal research protocol:
+All experimental evaluations follow a strict zero-leakage causal protocol:
 
-1. **Strict Chronological Splitting (70% Train / 15% Validation / 15% Test):**
-   Partitions are segmented chronologically without temporal shuffling, cross-validation mixing, or future-peeking.
-2. **Train-Only Scaling:**
-   `StandardScaler` parameters ($\mu, \sigma$) are computed exclusively on the 70% training set and applied forward. Test and validation statistics never influence normalization.
-3. **Causal Physical Context:**
-   Context features $c_t$ (trend, short-term volatility, lag-24 autocorrelation, recent tracking error) are calculated strictly within the 168-hour historical lookback window $[t-168, t)$. The future forecast window $[t, t+24)$ is strictly excluded.
-4. **Out-of-Fold (OOF) Expert-Performance Conditioning:**
-   Relative expert ranking features are derived from out-of-fold validation residuals, preventing circular self-bias and ensuring realistic gating inputs.
-5. **Five-Seed Stochastic Sensitivity Evaluation:**
-   To assess optimizer convergence variance rather than lucky initialization, models are trained and evaluated across 5 random seeds [42, 123, 999, 2024, 3407]. Multi-seed models report both sample SD and population SD.
-6. **Non-Overlapping Daily-Block Hypothesis Testing:**
-   Rolling test windows overlap by 167 hours, inducing extreme residual autocorrelation. To restore statistical independence, paired hypothesis testing (paired $t$-test, Wilcoxon signed-rank test, and Holm-Bonferroni correction) is evaluated across disjoint 24-hour daily blocks ($K=53$ on PJM, $K=456$ on GEFCom2014, $K=163$ on UCI Electricity).
+1. **Chronological Splitting (70% Train / 15% Validation / 15% Test):**
+   Time series are partitioned chronologically without shuffling or future leakage.
+2. **Train-Only Standardization:**
+   `StandardScaler` parameters ($\mu_{\text{train}}, \sigma_{\text{train}}$) and context normalization statistics are fitted exclusively on the 70% training split and applied forward to validation and test partitions.
+3. **Strict Causal Context Extraction:**
+   The 4D context vector $\mathbf{c}_t$ is computed strictly from historical load observations prior to forecast origin $t$. Future ground-truth values $[t, t+24)$ are never accessed during inference.
+4. **Five-Seed Stochastic Evaluation:**
+   Models are trained and evaluated across 5 fixed random seeds (`[42, 123, 999, 2024, 3407]`) to quantify initialization and optimization sensitivity.
+5. **Non-Overlapping Daily-Block Hypothesis Testing:**
+   To eliminate the autocorrelation induced by 1-hour-stride overlapping rolling windows, paired $t$-tests, Wilcoxon signed-rank tests, and Holm-Bonferroni multiplicity corrections are evaluated on disjoint 24-hour forecast blocks ($K=53$ on PJM, $K=456$ on GEFCom2014, $K=163$ on UCI).
 
 ---
 
 ## Limitations
 
-In the interest of academic integrity and rigorous scientific disclosure:
-- **Univariate Scope:** The primary benchmark operates exclusively on univariate load series; exogenous weather variables (temperature, solar irradiance) and calendar embeddings were excluded from the core formulation to benchmark pure temporal inductive biases.
-- **Deterministic Point Forecasts:** CAEG-Net produces deterministic point forecasts ($\hat{\mathbf{y}} \in \mathbb{R}^{24}$); probabilistic quantiles and prediction intervals were not included in the final champion model.
-- **Cross-Dataset Nuance:** CAEG-Net is not the lowest-error model on every individual dataset: fixed shrinkage is slightly superior on GEFCom2014 ($12.36\text{ kW}$ vs. $12.41\text{ kW}$), and standalone LSTM is superior on UCI Electricity ($7.55\text{ MW}$ vs. $7.74\text{ MW}$).
-- **Initialization Variance vs. Replications:** The five random initialization seeds evaluate optimizer convergence and parameter initialization variance; they do not represent independent real-world replications.
-- **Diagnostic Non-Deployability:** Empirical ex-post oracle figures ($232.06\text{ MW}$ on PJM) represent theoretical upper bounds calculated using post-hoc ground truth and are non-deployable in operational settings.
+- **Univariate Scope:** The benchmark evaluates pure univariate historical load sequences without exogenous weather forecasts (temperature, humidity, solar irradiance) or calendar holiday indicators.
+- **Deterministic Point Forecasts:** Canonical CAEG-Net V1 outputs deterministic 24-hour point forecasts rather than calibrated probabilistic intervals.
+- **Dataset-Dependent Gating Efficacy:** Adaptive context gating does not uniformly outperform simpler baselines on every grid. On the smooth, weather-driven GEFCom2014 load series, Standalone TCN and Static Equal Fusion achieve lower error than CAEG-Net V1.
+- **Diagnostic Oracle Non-Deployability:** Ex-post oracle routing metrics reported in diagnostic scripts use future ground truth to upper-bound theoretical expert selection and are not deployable forecasters.
 
 ---
 
-## Dashboard
+## Interactive Dashboard & Live Forecast Simulator
 
-Launch the interactive, web-based Streamlit research dashboard to explore all 12 academic panels, interactive trajectory plots, step-by-step residuals, and multi-seed realizations:
+Launch the Streamlit application to use the **Interactive CAEG-Net V1 Forecast Simulator (Live Inference)** (supporting custom 168-hour CSV/text input, synthetic scenario perturbations, and all 5 frozen Canonical V1 checkpoints) as well as the **Cached Benchmark Evaluation Viewer**:
 
 ```bash
 # Launch from repository root
 streamlit run dashboard/app.py
 ```
-The dashboard will open automatically in your browser at `http://localhost:8501`.
 
 ---
 
-## Faculty Review Notebook
+## Authoritative Jupyter Notebooks
 
-The authoritative, fully runnable Jupyter review notebook is located at:
+The repository provides two authoritative, self-contained Jupyter notebooks for faculty evaluation:
 
-[`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb)
+1. **Faculty Review & Benchmark Verification:**
+   - [`notebooks/CAEG_Net_Faculty_Review.ipynb`](notebooks/CAEG_Net_Faculty_Review.ipynb) — End-to-end evaluation, multi-seed statistical analysis, cross-dataset benchmarks, and causal validation checks.
+2. **Canonical V1 Audited Benchmark:**
+   - [`notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb`](notebooks/CAEG_Net_V1_Canonical_Audited_Benchmark.ipynb) — Audited Canonical CAEG-Net V1 baseline implementation, zero-retraining inference, and artifact provenance verification.
 
-To execute all code cells and verify the experimental tables and visualizations from the command line:
+To execute all cells in a fresh kernel:
 
 ```bash
 jupyter nbconvert --to notebook --execute --inplace notebooks/CAEG_Net_Faculty_Review.ipynb
