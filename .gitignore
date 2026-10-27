@@ -89,6 +89,7 @@ implementation_docs/
 
 # Binary document reports
 docs/*.pdf
+*.docx
 
 # Research track internal experiments and artifacts
 research/
@@ -96,6 +97,7 @@ research/
 # Auxiliary / untracked development scripts
 train.py
 experiments.py
+build_anonymous_report_docx.py
 
 # Scripts: strictly track authoritative verification and runner scripts
 scripts/*
