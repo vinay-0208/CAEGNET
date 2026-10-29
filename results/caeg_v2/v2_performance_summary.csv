@@ -1,0 +1,2 @@
+model,MAE_mean,MAE_std,MSE_mean,MSE_std,RMSE_mean,RMSE_std,R2_mean,R2_std,MAPE_mean,MAPE_std
+CAEG_Net_V2,255.72,9.76,115950.51,7078.57,340.38,10.54,0.8677,0.0081,4.77,0.22

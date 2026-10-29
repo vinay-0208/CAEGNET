@@ -24,7 +24,7 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# Virtual environments (5+ GB local environment)
 .env
 .venv
 env/
@@ -69,20 +69,14 @@ desktop.ini
 # Temporary and test logs
 *.log
 
-# Dataset files (raw external datasets)
-data/Modern_PJM/
-data/Load/
+# Heavy raw external dataset (> 100 MB, exceeds GitHub limit)
 data/ElectricityLoadDiagrams20112014/
 data/__MACOSX/
 
-# Model checkpoints and weights
-checkpoints/
-
-# Benchmark artifacts and execution logs
+# Raw experiment artifacts & historical training runs (> 190 MB logs)
 artifacts/
 audit_reports/
 reports/
-results/
 tmp_inspect/
 colab_implementation/
 implementation_docs/
@@ -90,8 +84,9 @@ implementation_docs/
 # Binary document reports
 docs/*.pdf
 *.docx
+!docs/CAEG_Net_Deep_Learning_Project_Report.docx
 
-# Research track internal experiments and artifacts
+# Research track internal experiments and archive (> 160 MB)
 research/
 
 # Auxiliary / untracked development scripts

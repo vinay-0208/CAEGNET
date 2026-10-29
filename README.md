@@ -195,6 +195,14 @@ jupyter nbconvert --to notebook --execute --inplace notebooks/CAEG_Net_Faculty_R
 
 ---
 
+## Academic Project Report
+
+The complete, publication-grade academic project report is available in Microsoft Word (`.docx`) format:
+
+- [`docs/CAEG_Net_Deep_Learning_Project_Report.docx`](docs/CAEG_Net_Deep_Learning_Project_Report.docx) — Complete 9-part report (Abstract, Introduction, Literature Survey, System Architecture, Implementation, Results & Discussion, Conclusion, References) with 14 high-resolution figures and 12 academic data tables.
+
+---
+
 ## Contributors
 
 - Sharun Kumar D
